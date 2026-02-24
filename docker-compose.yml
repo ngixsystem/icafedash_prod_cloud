@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: icafe_backend
+    restart: unless-stopped
+    volumes:
+      - backend_data:/app/data # persists config.json across restarts
+    environment:
+      - FLASK_ENV=production
+      - CONFIG_DIR=/app/data
+    ports:
+      - "5000:5000" # exposed for direct debugging (optional)
+    networks:
+      - icafe_net
+
+  frontend:
+    build:
+      context: ./frontend/icafedash-main
+      dockerfile: Dockerfile
+    container_name: icafe_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80" # open http://localhost in browser
+    depends_on:
+      - backend
+    networks:
+      - icafe_net
+
+volumes:
+  backend_data:
+
+
+networks:
+  icafe_net:
+    driver: bridge
