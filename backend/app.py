@@ -65,11 +65,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 with app.app_context():
     db.create_all()
     # Create default admin if none exists
-    if not User.query.filter_by(role='admin').first():
+    if not User.query.filter_by(username='admin').first():
+        print("🌱 Creating default admin user...")
         admin = User(username='admin', role='admin')
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
+        print("✅ Default admin user created successfully.")
 
 # ── Config file (legacy/compatibility) ────────────────────────────────────────
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")

@@ -11,14 +11,13 @@ services:
     environment:
       - FLASK_ENV=production
       - CONFIG_DIR=/app/data
-      - ICAFE_API_KEY=your_key_here
-      - ICAFE_CAFE_ID=your_id_here
       - DATABASE_URL=mysql+pymysql://icafe_user:icafe_password_change_me@db/icafedash
-      - JWT_SECRET_KEY=super-secret-key-change-me
+      - JWT_SECRET_KEY=change-this-to-a-secure-random-string
     ports:
       - "5000:5000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - icafe_net
 
@@ -31,6 +30,10 @@ services:
       MYSQL_DATABASE: icafedash
       MYSQL_USER: icafe_user
       MYSQL_PASSWORD: icafe_password_change_me
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 5s
+      retries: 5
     volumes:
       - icafe_db_data:/var/lib/mysql
     networks:

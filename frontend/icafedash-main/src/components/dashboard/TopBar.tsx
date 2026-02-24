@@ -154,30 +154,25 @@ const TopBar = () => {
         </h1>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 rounded-lg bg-card border border-border px-3 py-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              placeholder="Поиск..."
-              className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none w-32 lg:w-48"
-            />
-          </div>
+          {!isAdmin && (
+            <>
+              <div className="hidden sm:flex items-center gap-2 rounded-lg bg-card border border-border px-3 py-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input
+                  placeholder="Поиск..."
+                  className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none w-32 lg:w-48"
+                />
+              </div>
 
-          {isAdmin && (
-            <button
-              className="rounded-lg bg-primary/10 border border-primary/20 p-2 text-primary hover:bg-primary/20 transition-colors"
-              title="Панель администратора"
-            >
-              <Shield className="h-4 w-4" />
-            </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="rounded-lg bg-card border border-border p-2 text-muted-foreground hover:text-foreground transition-colors"
+                title="Настройки клуба"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            </>
           )}
-
-          <button
-            onClick={() => setShowSettings(true)}
-            className="rounded-lg bg-card border border-border p-2 text-muted-foreground hover:text-foreground transition-colors"
-            title="Настройки клуба"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

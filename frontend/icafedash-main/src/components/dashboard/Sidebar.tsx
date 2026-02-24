@@ -25,10 +25,9 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const clubName = cfg?.club_name || "iCafe";
   const clubLogo = cfg?.club_logo_url;
 
-  const displayNavItems = [...navItems];
-  if (isAdmin) {
-    displayNavItems.push({ icon: Shield, label: "Админка" });
-  }
+  const displayNavItems = isAdmin
+    ? [{ icon: Shield, label: "Админка" }]
+    : [...navItems];
 
   return (
     <>

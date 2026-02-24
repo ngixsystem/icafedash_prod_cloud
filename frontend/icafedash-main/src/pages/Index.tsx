@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
+import { useAuth } from "@/components/auth/AuthProvider";
 import StatCards from "@/components/dashboard/StatCards";
 import DailyIncomeChart from "@/components/dashboard/DailyIncomeChart";
 import TotalIncomeChart from "@/components/dashboard/TotalIncomeChart";
@@ -11,7 +12,8 @@ import MembersList from "@/components/dashboard/MembersList";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("Обзор");
+  const { isAdmin } = useAuth();
+  const [activeTab, setActiveTab] = useState(isAdmin ? "Админка" : "Обзор");
 
   return (
     <div className="min-h-screen bg-background">
