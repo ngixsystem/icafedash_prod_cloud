@@ -5,23 +5,47 @@
 
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
+function getHeaders() {
+    const token = localStorage.getItem("icafe_token");
+    const headers: Record<string, string> = {
+        "Accept": "application/json"
+    };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+}
+
 async function get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
     const url = new URL(`${BASE}${path}`, window.location.origin);
     if (params) {
         Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
     }
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), {
+        headers: getHeaders()
+    });
+    if (res.status === 401) {
+        localStorage.removeItem("icafe_token");
+        window.location.href = "/login";
+    }
     if (!res.ok) throw new Error(`API error ${res.status}`);
     return res.json();
 }
 
 async function post<T>(path: string, body: object): Promise<T> {
     const url = new URL(`${BASE}${path}`, window.location.origin);
+    const headers = getHeaders();
+    headers["Content-Type"] = "application/json";
+
     const res = await fetch(url.toString(), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
     });
+    if (res.status === 401) {
+        localStorage.removeItem("icafe_token");
+        window.location.href = "/login";
+    }
     if (!res.ok) throw new Error(`API error ${res.status}`);
     return res.json();
 }
@@ -114,8 +138,10 @@ export const api = {
     uploadLogo: async (file: File): Promise<{ url: string }> => {
         const formData = new FormData();
         formData.append("file", file);
+        const headers = getHeaders();
         const res = await fetch(`${BASE}/upload-logo`, {
             method: "POST",
+            headers,
             body: formData,
         });
         if (!res.ok) throw new Error("Upload failed");
@@ -128,6 +154,15 @@ export const api = {
         get<{ members: any[]; paging: any }>("/members", params),
 
     health: () => get<{ status: string; configured: boolean; timestamp: string }>("/health"),
+
+    // Admin routes
+    adminClubs: () => get<{ id: number, name: string, cafe_id: string }[]>("/admin/clubs"),
+    addClub: (data: { name: string, api_key: string, cafe_id: string }) => post<{ ok: boolean }>("/admin/clubs", data),
+    assignUser: (data: { username: string, password: string, club_id: string }) => post<{ ok: boolean }>("/admin/assign-user", data),
+
+    // Generic helpers for anything else
+    get: <T>(path: string, params?: any) => get<T>(path, params),
+    post: <T>(path: string, body: any) => post<T>(path, body),
 };
 
 /** Format a number as "1 234 567" with spaces */

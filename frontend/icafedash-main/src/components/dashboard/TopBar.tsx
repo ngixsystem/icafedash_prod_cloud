@@ -1,9 +1,20 @@
-import { Search, Bell, Settings, X } from "lucide-react";
+import { Search, Bell, Settings, X, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const SettingsModal = ({ onClose }: { onClose: () => void }) => {
+  const { isAdmin, user } = useAuth();
   const qc = useQueryClient();
   const { data: cfg } = useQuery({ queryKey: ["config"], queryFn: api.getConfig });
 
@@ -47,9 +58,9 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl mx-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl mx-4 animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-foreground">Настройки брендинга</h2>
+          <h2 className="text-lg font-bold text-foreground">Настройки клуба</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-5 w-5" />
           </button>
@@ -59,7 +70,7 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
           {/* Read-only API Info */}
           <div className="p-3 bg-secondary/50 rounded-lg border border-border space-y-2">
             <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-muted-foreground">
-              <span>Параметры API (Только чтение)</span>
+              <span>Параметры соединения</span>
               <Settings className="h-3 w-3" />
             </div>
             <div className="space-y-1">
@@ -73,7 +84,7 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
               </div>
             </div>
             <p className="text-[10px] text-muted-foreground/60 italic leading-tight">
-              * Измените <code>config.json</code> на сервере для обновления ключей.
+              * Настройки API задаются администратором платформы.
             </p>
           </div>
 
@@ -85,10 +96,11 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
                 onChange={(e) => setClubName(e.target.value)}
                 placeholder="Напр. TeamPro"
                 className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
+                disabled={!isAdmin && user?.role !== 'manager'}
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Логотип клуба (512x512)</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Логотип клуба</label>
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-xl border border-border bg-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
                   {clubLogo ? (
@@ -104,9 +116,6 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
                     {isUploading ? "Загрузка..." : "Выбрать файл"}
                     <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
                   </label>
-                  <p className="text-[10px] text-muted-foreground mt-1.5 px-1">
-                    PNG, JPG или WebP. Рекомендуем 512x512.
-                  </p>
                 </div>
               </div>
             </div>
@@ -121,9 +130,9 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
             Отмена
           </button>
           <button
+            className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
             onClick={() => save.mutate()}
             disabled={save.isPending || isUploading}
-            className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {save.isPending ? "Сохранение..." : "Сохранить"}
           </button>
@@ -135,11 +144,14 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
 
 const TopBar = () => {
   const [showSettings, setShowSettings] = useState(false);
+  const { user, logout, isAdmin } = useAuth();
 
   return (
     <>
       <header className="flex items-center justify-between px-4 py-4 lg:px-6">
-        <h1 className="text-xl font-bold text-foreground pl-10 lg:pl-0">Обзор</h1>
+        <h1 className="text-xl font-bold text-foreground pl-10 lg:pl-0">
+          {user?.club_name || "Дашборд"}
+        </h1>
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 rounded-lg bg-card border border-border px-3 py-2">
@@ -149,26 +161,50 @@ const TopBar = () => {
               className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none w-32 lg:w-48"
             />
           </div>
+
+          {isAdmin && (
+            <button
+              className="rounded-lg bg-primary/10 border border-primary/20 p-2 text-primary hover:bg-primary/20 transition-colors"
+              title="Панель администратора"
+            >
+              <Shield className="h-4 w-4" />
+            </button>
+          )}
+
           <button
             onClick={() => setShowSettings(true)}
             className="rounded-lg bg-card border border-border p-2 text-muted-foreground hover:text-foreground transition-colors"
-            title="Настройки API"
+            title="Настройки клуба"
           >
             <Settings className="h-4 w-4" />
           </button>
-          <button className="rounded-lg bg-card border border-border p-2 text-muted-foreground hover:text-foreground transition-colors relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-              АК
-            </div>
-            <div className="hidden md:block">
-              <p className="text-sm font-medium text-foreground">Админ</p>
-              <p className="text-xs text-muted-foreground">Управляющий</p>
-            </div>
-          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 outline-none">
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground uppercase">
+                  {user?.username.slice(0, 2)}
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-sm font-medium text-foreground leading-none">{user?.username}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 capitalize">{user?.role}</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-card border-border">
+              <DropdownMenuLabel>Мой аккаунт</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowSettings(true)}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Настройки клуба</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Выйти</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

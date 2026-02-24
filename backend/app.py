@@ -6,6 +6,9 @@ from functools import wraps
 import requests
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
 
 # Initialize Flask with static folder pointing to frontend build
@@ -13,6 +16,42 @@ app = Flask(__name__,
             static_folder=os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "icafedash-main", "dist"),
             static_url_path="/")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# Database & Auth Config
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///icafe.db")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dev-secret-key")
+
+db = SQLAlchemy(app)
+jwt = JWTManager(app)
+bcrypt = Bcrypt(app)
+
+# Models
+class Club(db.Model):
+    __tablename__ = 'clubs'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    api_key = db.Column(db.Text, nullable=False)
+    cafe_id = db.Column(db.String(50), nullable=False)
+    club_logo_url = db.Column(db.String(255), default="")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    users = db.relationship('User', backref='club', lazy=True)
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), default="manager") # admin or manager
+    club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
 
 # Handle persistent data paths for Docker
 CONFIG_DIR = os.environ.get("CONFIG_DIR", os.path.dirname(__file__))
@@ -22,7 +61,17 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# ── Config file (persisted to disk so settings survive restarts) ──────────────
+# Create tables if they don't exist
+with app.app_context():
+    db.create_all()
+    # Create default admin if none exists
+    if not User.query.filter_by(role='admin').first():
+        admin = User(username='admin', role='admin')
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+
+# ── Config file (legacy/compatibility) ────────────────────────────────────────
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 ICAFE_BASE = "https://api.icafecloud.com/api/v2"
@@ -30,8 +79,8 @@ ICAFE_BASE = "https://api.icafecloud.com/api/v2"
 
 def load_config() -> dict:
     defaults = {
-        "api_key": "eyJ...省略...",
-        "cafe_id": "57051",
+        "api_key": "",
+        "cafe_id": "",
         "club_name": "iCafe",
         "club_logo_url": ""
     }
@@ -67,69 +116,161 @@ def save_config(data: dict):
 # ── iCafeCloud API helper ─────────────────────────────────────────────────────
 
 def icafe_get(path: str, params: dict = None) -> dict | None:
-    cfg = load_config()
-    if not cfg.get("api_key") or not cfg.get("cafe_id"):
-        return None
+    # Get current user and their club's credentials
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or not user.club:
+        return {"code": 401, "message": "No club assigned to user"}
+    
     headers = {
-        "Authorization": f"Bearer {cfg['api_key']}",
-        "Accept": "application/json",
+        "Authorization": f"Bearer {user.club.api_key.strip()}",
+        "Accept": "application/json"
     }
-    url = f"{ICAFE_BASE}/cafe/{cfg['cafe_id']}{path}"
+    url = f"{ICAFE_BASE}/cafe/{user.club.cafe_id}{path}"
+    
     try:
-        resp = requests.get(url, headers=headers, params=params or {}, timeout=10)
-        resp.raise_for_status()
+        resp = requests.get(url, headers=headers, params=params, timeout=15)
         return resp.json()
     except Exception as e:
-        app.logger.error("iCafeCloud request error: %s", e)
+        print(f"API Error ({path}): {e}")
         return None
 
 
 def icafe_post(path: str, data: dict = None) -> dict | None:
-    cfg = load_config()
-    if not cfg.get("api_key") or not cfg.get("cafe_id"):
-        return None
+    # Get current user and their club's credentials
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or not user.club:
+        return {"code": 401, "message": "No club assigned to user"}
+
     headers = {
-        "Authorization": f"Bearer {cfg['api_key']}",
+        "Authorization": f"Bearer {user.club.api_key.strip()}",
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    url = f"{ICAFE_BASE}/cafe/{cfg['cafe_id']}{path}"
+    url = f"{ICAFE_BASE}/cafe/{user.club.cafe_id}{path}"
     try:
         resp = requests.post(url, headers=headers, json=data or {}, timeout=10)
-        resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        app.logger.error("iCafeCloud POST error: %s", e)
+        print(f"API Error ({path}): {e}")
         return None
 
+
+# ── Auth Routes ───────────────────────────────────────────────────────────────
+
+@app.post("/api/auth/login")
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    
+    user = User.query.filter_by(username=username).first()
+    if user and user.check_password(password):
+        access_token = create_access_token(identity=user.id)
+        return jsonify({
+            "access_token": access_token,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "role": user.role,
+                "club_name": user.club.name if user.club else None
+            }
+        })
+    return jsonify({"message": "Invalid credentials"}), 401
+
+# ── Admin Routes (Clubs Management) ───────────────────────────────────────────
+
+def admin_required(fn):
+    @wraps(fn)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        if user.role != 'admin':
+            return jsonify({"message": "Admin access required"}), 403
+        return fn(*args, **kwargs)
+    return wrapper
+
+@app.get("/api/admin/clubs")
+@admin_required
+def get_clubs():
+    clubs = Club.query.all()
+    return jsonify([{
+        "id": c.id,
+        "name": c.name,
+        "cafe_id": c.cafe_id,
+        "logo_url": c.club_logo_url
+    } for c in clubs])
+
+@app.post("/api/admin/clubs")
+@admin_required
+def add_club():
+    data = request.json
+    new_club = Club(
+        name=data.get("name"),
+        api_key=data.get("api_key"),
+        cafe_id=data.get("cafe_id")
+    )
+    db.session.add(new_club)
+    db.session.commit()
+    return jsonify({"message": "Club added successfully", "id": new_club.id})
+
+@app.post("/api/admin/assign-user")
+@admin_required
+def assign_user():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    club_id = data.get("club_id")
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        user = User(username=username, club_id=club_id)
+        user.set_password(password)
+        db.session.add(user)
+    else:
+        user.club_id = club_id
+        if password:
+            user.set_password(password)
+            
+    db.session.commit()
+    return jsonify({"message": "User assigned/updated successfully"})
 
 # ── Config endpoints ──────────────────────────────────────────────────────────
 
 @app.get("/api/config")
+@jwt_required()
 def get_config():
-    cfg = load_config()
-    # Never expose the full key — return masked version
-    key = cfg.get("api_key", "")
-    masked = (key[:6] + "…" + key[-4:]) if len(key) > 10 else ("*" * len(key))
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or not user.club:
+        return jsonify({"message": "No club assigned"}), 404
+        
     return jsonify({
-        "cafe_id": cfg.get("cafe_id", ""),
-        "api_key_masked": masked,
-        "configured": bool(key and cfg.get("cafe_id")),
-        "club_name": cfg.get("club_name", "iCafe"),
-        "club_logo_url": cfg.get("club_logo_url", "")
+        "club_name": user.club.name,
+        "club_logo_url": user.club.club_logo_url,
+        "api_key_masked": "***HIDDEN***",
+        "cafe_id": user.club.cafe_id,
+        "configured": True
     })
 
 
 @app.post("/api/config")
+@jwt_required()
 def set_config():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or not user.club:
+        return jsonify({"message": "No club assigned"}), 404
+        
     body = request.get_json(force=True) or {}
-    cfg = load_config()
-    # API Key and Cafe ID are now READ-ONLY from the dashboard
     if "club_name" in body:
-        cfg["club_name"] = body["club_name"].strip()
+        user.club.name = body["club_name"].strip()
     if "club_logo_url" in body:
-        cfg["club_logo_url"] = body["club_logo_url"].strip()
-    save_config(cfg)
+        user.club.club_logo_url = body["club_logo_url"].strip()
+    
+    db.session.commit()
     return jsonify({"ok": True})
 
 
@@ -161,6 +302,7 @@ def uploaded_file(filename):
 # ── Overview / Stats ──────────────────────────────────────────────────────────
 
 @app.get("/api/overview")
+@jwt_required()
 def overview():
     today = date.today()
     week_ago = today - timedelta(days=6)
@@ -250,6 +392,7 @@ def overview():
 # ── Daily income chart (last 7 days) ─────────────────────────────────────────
 
 @app.get("/api/charts/daily")
+@jwt_required()
 def daily_chart():
     today = date.today()
     result = icafe_get("/reports/reportChart", {
@@ -292,6 +435,7 @@ def daily_chart():
 # ── 30-day income chart (cash vs balance) ────────────────────────────────────
 
 @app.get("/api/charts/monthly")
+@jwt_required()
 def monthly_chart():
     today = date.today()
     result = icafe_get("/reports/reportChart", {
@@ -341,6 +485,7 @@ def monthly_chart():
 # ── Payment methods breakdown (last 7 days) ───────────────────────────────────
 
 @app.get("/api/charts/payments")
+@jwt_required()
 def payment_methods_chart():
     today = date.today()
     result = icafe_get("/reports/reportChart", {
@@ -391,6 +536,7 @@ def payment_methods_chart():
 # ── Monthly aggregated income (last 7 months) ─────────────────────────────────
 
 @app.get("/api/charts/income-monthly")
+@jwt_required()
 def income_monthly_chart():
     today = date.today()
     # Go back roughly 7 months (approx 210 days to be safe and cover full months)
@@ -442,6 +588,7 @@ def income_monthly_chart():
 # ── PCs monitoring ────────────────────────────────────────────────────────────
 
 @app.get("/api/pcs")
+@jwt_required()
 def get_pcs():
     result = icafe_get("/pcList")
     pcs = []
@@ -482,6 +629,7 @@ def get_pcs():
 # ── Members ───────────────────────────────────────────────────────────────────
 
 @app.get("/api/members")
+@jwt_required()
 def get_members():
     page = request.args.get("page", 1, type=int)
     search = request.args.get("search", "")
@@ -524,6 +672,7 @@ def get_members():
 # ── Billing logs ──────────────────────────────────────────────────────────────
 
 @app.get("/api/billing-logs")
+@jwt_required()
 def billing_logs():
     today = date.today()
     result = icafe_get("/billingLogs", {
@@ -551,6 +700,7 @@ def billing_logs():
 
 
 @app.get("/api/members/<int:member_id>/billings")
+@jwt_required()
 def member_billings(member_id):
     today = date.today()
     result = icafe_get("/billingLogs", {

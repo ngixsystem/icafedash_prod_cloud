@@ -1,88 +1,77 @@
-# 🚀 iCafeDash - iCafeCloud Admin Dashboard
+# 🚀 iCafeDash Platform - Multi-tenant Gaming Club Management
 
-A modern, powerful, and visually stunning web dashboard for administrators using **iCafeCloud**. Monitor your gaming club's health, analyze revenue trends, and manage members in real-time.
+A high-performance, multi-tenant SaaS platform for gaming lounge owners. Manage multiple clubs, assign managers, and monitor real-time metrics with a unified administrative interface.
 
-![iCafeDash Preview](https://via.placeholder.com/1200x600?text=iCafeDash+Modern+Gaming+Dashboard)
+![iCafeDash Platform](https://via.placeholder.com/1200x600?text=iCafeDash+Multi-tenant+Platform)
 
-## ✨ Features
+## ✨ Platform Features
 
-- **📊 Advanced Analytics**: Interactive bar charts for monthly and daily revenue trends.
-- **🖥️ Real-time Monitoring**: Track PC status (active, busy, locked) with direct integration to iCafeCloud API.
-- **👤 Member Management**: Searchable database of club participants with balance tracking and loyalty points status.
-- **🎨 Custom Branding**: White-label support. Upload your own logo and change the club name directly from the UI.
-- **🌑 Dark Mode Aesthetic**: Premium glassmorphism design optimized for high-end gaming lounges.
-- **🐳 Docker Ready**: Deployment-ready containers with automated Nginx proxying and persistent storage.
+- **🏢 Multi-tenancy**: Host multiple clubs on a single platform with strict data isolation.
+- **� JWT Authentication**: Secure, sessionless authentication for admins and club managers.
+- **� Admin Panel**: Centralized control to add new clubs (via API Keys) and create manager accounts.
+- **📊 Dynamic Dashboards**: Role-based access—managers see their specific club; admins see the entire platform.
+- **� Branding & Customization**: Each club can have its own name, logo, and settings.
+- **🐳 Enterprise Docker Stack**: Powered by MySQL 8.0 for persistent, structured data storage.
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React, Vite, Tailwind CSS, Recharts, Lucide Icons, TanStack Query.
-- **Backend**: Flask (Python), Requests (for API proxying), CORS.
-- **Deployment**: Docker, Docker Compose, Nginx.
+- **Frontend**: React, Vite, Tailwind CSS, Recharts, TanStack Query.
+- **Backend**: Flask (Python), SQLAlchemy ORM, Flask-JWT-Extended, Flask-Bcrypt.
+- **Database**: MySQL 8.0.
+- **Infrastructure**: Docker Compose, Nginx (ready).
 
 ---
 
-## 🚀 Quick Start (Docker - Recommended)
+## 🚀 Deployment Guide (Docker)
 
-The easiest way to get iCafeDash running is using Docker Compose.
+### 1. Requirements
+Ensure you have **Docker** and **Docker Compose** installed.
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/ngixsystem/icafedash.git
-cd icafedash
-```
+### 2. Configure Environment
+The platform requires a database connection and a JWT secret. These are pre-configured in `docker-compose.yml`. 
 
-### 2. Configure Credentials
-Edit the `docker-compose.yml` file and set your iCafeCloud credentials in the `backend` service environment variables:
-
-```yaml
-environment:
-  - ICAFE_API_KEY=your_key_here
-  - ICAFE_CAFE_ID=your_id_here
-```
-
-### 3. Start the stack
+### 3. Launch
 ```bash
 docker-compose up -d --build
 ```
-The dashboard will be available at **`http://localhost`**.
+
+### 4. Initial Login
+Once the stack is up, you can log in at `http://localhost/login` using the default administrator credentials:
+- **Username**: `admin`
+- **Password**: `admin123`
+
+> [!IMPORTANT]
+> **Change your password immediately** after the first login via the Admin Panel or Database.
 
 ---
 
-## 💻 Local Development
+## 🏗️ Platform Management
 
-If you want to run the project without Docker:
+1. **Adding a Club**: In the "Админка" (Admin) tab, enter the club's name, iCafeCloud Cafe ID, and API Key.
+2. **Creating Managers**: Assign a username and password to a manager and link them to a specific club.
+3. **Data Isolation**: Log in with a manager account to see only the dashboard for the assigned club.
 
-### Backend Setup
-1. Navigate to `backend/`
-2. Create a virtual environment: `python -m venv venv`
-3. Activate it: `source venv/bin/activate` (or `.\venv\Scripts\activate` on Windows)
-4. Install dependencies: `pip install -r requirements.txt`
-5. Run the server: `python app.py` (Runs on port 5000)
+## ⚙️ Development & Local Setup
 
-### Frontend Setup
-1. Navigate to `frontend/icafedash-main/`
-2. Install dependencies: `npm install`
-3. Start dev server: `npm run dev`
+### Backend (Flask + MySQL)
+1. Install dependencies: `pip install -r backend/requirements.txt`
+2. Set environment variables: `DATABASE_URL`, `JWT_SECRET_KEY`.
+3. Run: `python backend/app.py`
 
----
-
-## ⚙️ Configuration & Persistence
-
-- **API Keys**: Can be set via environment variables in Docker or manually in `backend/config.json`.
-- **Persistence**: When using Docker, configuration and uploaded logos are stored in a named volume (`icafe_data`), so they survive container restarts.
-- **Branding**: Change your club name and upload a logo in the **Settings** menu within the dashboard.
-
-## 🔒 Security
-
-- Sensitive credentials like the API Key and Cafe ID are set as **read-only** in the web interface to prevent unauthorized changes once deployed.
-- Ensure your server's Public IP is whitelisted in the [iCafeCloud Admin Panel](https://api.icafecloud.com).
+### Frontend (Vite)
+1. Install: `npm install` inside `frontend/icafedash-main/`
+2. Run: `npm run dev`
 
 ---
 
-## 🤝 Contributing
+## 🔒 Security & Best Practices
 
-Contributions are welcome! Feel free to open issues or submit pull requests to help improve the dashboard for everyone.
+- **DB Encryption**: All manager passwords are hashed using **Bcrypt**.
+- **Stateless Session**: JWT tokens are used for all API requests.
+- **Context-Aware API**: The backend dynamically fetches iCafeCloud data based on the authenticated user's club identity.
+
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.

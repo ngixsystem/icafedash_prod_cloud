@@ -8,6 +8,7 @@ import MonthlyIncomeChart from "@/components/dashboard/MonthlyIncomeChart";
 import StatusPanel from "@/components/dashboard/StatusPanel";
 import Monitoring from "@/components/dashboard/Monitoring";
 import MembersList from "@/components/dashboard/MembersList";
+import AdminDashboard from "@/components/dashboard/AdminDashboard";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("Обзор");
@@ -42,6 +43,8 @@ const Index = () => {
             <Monitoring />
           ) : activeTab === "Участники" ? (
             <MembersList />
+          ) : activeTab === "Админка" ? (
+            <AdminDashboard />
           ) : (
             <div className="flex items-center justify-center min-h-[400px]">
               <p className="text-muted-foreground">Вкладка "{activeTab}" находится в разработке</p>

@@ -1,7 +1,8 @@
-import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X } from "lucide-react";
+import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X, Shield } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Обзор" },
@@ -18,10 +19,16 @@ interface SidebarProps {
 
 const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAdmin } = useAuth();
   const { data: cfg } = useQuery({ queryKey: ["config"], queryFn: api.getConfig });
 
   const clubName = cfg?.club_name || "iCafe";
   const clubLogo = cfg?.club_logo_url;
+
+  const displayNavItems = [...navItems];
+  if (isAdmin) {
+    displayNavItems.push({ icon: Shield, label: "Админка" });
+  }
 
   return (
     <>
@@ -62,7 +69,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         </div>
 
         <nav className="flex-1 px-3 space-y-1">
-          {navItems.map((item) => (
+          {displayNavItems.map((item) => (
             <button
               key={item.label}
               onClick={() => {
