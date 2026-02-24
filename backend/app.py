@@ -207,42 +207,52 @@ def overview():
 @app.get("/api/charts/daily")
 def daily_chart():
     today = date.today()
-    days = []
-    # We fetch a single report for the whole week to avoid 7 requests
-    result = icafe_get("/financialReport", {
+    result = icafe_get("/reports/reportChart", {
         "date_start": (today - timedelta(days=6)).isoformat(),
         "date_end": today.isoformat(),
+        "data_source": "recent"
     })
     
-    # We'll build the 7-day list from the response data if available
-    # For now, let's keep the list structure but populate from a single call or defaults
+    days = []
+    total = 0
     ru_days = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
     
     if result and result.get("code") == 200:
-        # If API supports daily breakdown in results, parse here. 
-        # Otherwise, we might need a separate loop or handle the single total.
-        pass
+        data = result.get("data", {})
+        categories = data.get("categories", [])
+        series = data.get("series", [])
+        
+        # Aggregate totals across all payment series (Cash, Credit card, etc.)
+        daily_totals = [0.0] * len(categories)
+        for s in series:
+            s_data = s.get("data", [])
+            for i in range(min(len(daily_totals), len(s_data))):
+                daily_totals[i] += float(s_data[i] or 0)
+        
+        for i, cat in enumerate(categories):
+            try:
+                dt = datetime.fromisoformat(cat)
+                days.append({
+                    "day": ru_days[dt.weekday()],
+                    "date": cat,
+                    "value": daily_totals[i]
+                })
+                total += daily_totals[i]
+            except:
+                continue
 
-    # Fallback/Draft: still loop but use cached results or single call logic
-    for i in range(6, -1, -1):
-        d = today - timedelta(days=i)
-        days.append({
-            "day": ru_days[d.weekday()],
-            "date": d.isoformat(),
-            "value": 0, # To be populated by refined report parsing
-        })
-    
-    return jsonify({"days": days, "total": 0})
+    return jsonify({"days": days, "total": total})
 
 
 # ── 30-day income chart (cash vs balance) ────────────────────────────────────
 
 @app.get("/api/charts/monthly")
 def monthly_chart():
-    # Use /financialReport for 30 days
-    result = icafe_get("/financialReport", {
-        "date_start": (date.today() - timedelta(days=29)).isoformat(),
-        "date_end": date.today().isoformat(),
+    today = date.today()
+    result = icafe_get("/reports/reportChart", {
+        "date_start": (today - timedelta(days=29)).isoformat(),
+        "date_end": today.isoformat(),
+        "data_source": "recent"
     })
 
     points = []
@@ -251,10 +261,30 @@ def monthly_chart():
 
     if result and result.get("code") == 200:
         data = result.get("data", {})
-        total_cash = float(data.get("cash_amount", 0))
-        total_balance = float(data.get("balance_amount", 0))
-        # Add a dummy point for now to show data in graph
-        points.append({"date": date.today().isoformat(), "cash": total_cash, "balance": total_balance})
+        categories = data.get("categories", [])
+        series = data.get("series", [])
+        
+        cash_data = []
+        balance_data = []
+        for s in series:
+            s_name = s.get("name", "").lower()
+            if s_name == "cash":
+                cash_data = s.get("data", [])
+            elif "balance" in s_name or "coin" in s_name:
+                # Merge non-cash income into balance for simplicity in this chart
+                if not balance_data:
+                    balance_data = [float(v or 0) for v in s.get("data", [])]
+                else:
+                    s_vals = s.get("data", [])
+                    for i in range(min(len(balance_data), len(s_vals))):
+                        balance_data[i] += float(s_vals[i] or 0)
+
+        for i, cat in enumerate(categories):
+            c = float(cash_data[i] or 0) if i < len(cash_data) else 0
+            b = float(balance_data[i] or 0) if i < len(balance_data) else 0
+            total_cash += c
+            total_balance += b
+            points.append({"date": cat, "cash": c, "balance": b})
 
     return jsonify({
         "points": points,
@@ -266,25 +296,36 @@ def monthly_chart():
 # ── Payment methods breakdown (last 7 days) ───────────────────────────────────
 
 @app.get("/api/charts/payments")
-def payment_methods():
+def payment_methods_chart():
     today = date.today()
-    result = icafe_get("/financialReport", {
+    result = icafe_get("/reports/reportData", {
         "date_start": (today - timedelta(days=6)).isoformat(),
         "date_end": today.isoformat(),
+        "data_source": "recent"
     })
 
     methods = []
     if result and result.get("code") == 200:
-        data = result.get("data", {})
-        pay_types = data.get("pay_type_list") or data.get("payment_type_list", [])
-        total = sum(float(pt.get("amount", 0)) for pt in pay_types) or 1
-        for pt in pay_types:
-            amount = float(pt.get("amount", 0))
-            methods.append({
-                "name": pt.get("name", pt.get("type", "Unknown")),
-                "amount": amount,
-                "percent": round(amount / total * 100),
-            })
+        data = result.get("data", {}).get("income", {})
+        
+        mapping = {
+            "cash": "Наличные",
+            "credit_card": "Карта",
+            "qr": "QR-код",
+            "by_balance": "С баланса",
+            "coin": "Монеты"
+        }
+        
+        raw_vals = {label: float(data.get(key, 0) or 0) for key, label in mapping.items()}
+        total = sum(raw_vals.values()) or 1
+        
+        for label, val in raw_vals.items():
+            if val > 0:
+                methods.append({
+                    "name": label,
+                    "amount": val,
+                    "percent": round(val / total * 100),
+                })
 
     return jsonify({"methods": methods})
 
