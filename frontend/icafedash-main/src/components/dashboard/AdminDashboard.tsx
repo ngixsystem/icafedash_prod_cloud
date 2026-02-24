@@ -154,8 +154,7 @@ const AdminDashboard = () => {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <CardTitle>Активные клубы</CardTitle>
                     <Button
-                        variant="ghost"
-                        size="sm"
+                        className="h-8 px-3 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md transition-colors font-medium"
                         onClick={() => qc.invalidateQueries({ queryKey: ["admin", "clubs"] })}
                         disabled={isLoading}
                     >
