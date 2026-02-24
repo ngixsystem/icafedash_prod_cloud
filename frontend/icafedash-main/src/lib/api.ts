@@ -3,10 +3,10 @@
  * All components import from here instead of calling fetch() directly.
  */
 
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5000/api";
+const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 async function get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
-    const url = new URL(`${BASE}${path}`);
+    const url = new URL(`${BASE}${path}`, window.location.origin);
     if (params) {
         Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
     }
@@ -16,7 +16,8 @@ async function get<T>(path: string, params?: Record<string, string | number>): P
 }
 
 async function post<T>(path: string, body: object): Promise<T> {
-    const res = await fetch(`${BASE}${path}`, {
+    const url = new URL(`${BASE}${path}`, window.location.origin);
+    const res = await fetch(url.toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
