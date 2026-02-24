@@ -26,6 +26,27 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 
+# JWT Debugging
+app.config["PROPAGATE_EXCEPTIONS"] = True
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({"message": "The token has expired", "error": "token_expired"}), 401
+
+@jwt.invalid_token_loader
+def invalid_token_callback(error):
+    return jsonify({"message": "Signature verification failed", "error": "invalid_token"}), 422
+
+@jwt.unauthorized_loader
+def missing_token_callback(error):
+    return jsonify({"message": "Request does not contain an access token", "error": "authorization_required"}), 401
+
+@app.before_request
+def log_request_info():
+    if request.path.startswith('/api/'):
+        auth_header = request.headers.get('Authorization')
+        print(f"DEBUG: {request.method} {request.path} | Auth Header: {auth_header[:20] if auth_header else 'None'}")
+
 # Models
 class Club(db.Model):
     __tablename__ = 'clubs'
@@ -119,7 +140,7 @@ def save_config(data: dict):
 
 def icafe_get(path: str, params: dict = None) -> dict | None:
     # Get current user and their club's credentials
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     if not user or not user.club:
         return {"code": 401, "message": "No club assigned to user"}
@@ -140,7 +161,7 @@ def icafe_get(path: str, params: dict = None) -> dict | None:
 
 def icafe_post(path: str, data: dict = None) -> dict | None:
     # Get current user and their club's credentials
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     if not user or not user.club:
         return {"code": 401, "message": "No club assigned to user"}
@@ -169,7 +190,8 @@ def login():
     
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
-        access_token = create_access_token(identity=user.id)
+        # Convert ID to string for best compatibility with JWT serialization
+        access_token = create_access_token(identity=str(user.id))
         return jsonify({
             "access_token": access_token,
             "user": {
@@ -187,7 +209,7 @@ def admin_required(fn):
     @wraps(fn)
     @jwt_required()
     def wrapper(*args, **kwargs):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         if user.role != 'admin':
             return jsonify({"message": "Admin access required"}), 403
@@ -244,7 +266,7 @@ def assign_user():
 @app.get("/api/config")
 @jwt_required()
 def get_config():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     if not user or not user.club:
         return jsonify({"message": "No club assigned"}), 404
