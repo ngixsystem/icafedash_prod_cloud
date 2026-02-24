@@ -8,10 +8,12 @@ ICAFE_BASE = "https://api.icafecloud.com/api/v2"
 API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYTllZWM3MGFjZTFmYzFiYTNlZWVhMzA1NGY5NjAxNWNmYWZhOGM4NDRhZmUxNjQ4NjYzZWQ3NmExNjM5YzJiYmJiNjU1YTNmYTc2NGQ3MDciLCJpYXQiOjE3NzE5MTQxODYuNTUwNzYzLCJuYmYiOjE3NzE5MTQxODYuNTUwNzY0LCJleHAiOjQ5Mjc1ODc3ODYuNTQ0MjE0LCJzdWIiOiIxNjEyODQ1NDk2NTcwNTEiLCJzY29wZXMiOltdfQ.KKIj35W0unwdOyr_ApuzfjlCWRp85Wp2SzkOZotolxzt4UCOrNh2uwywf5GNBfRSnU106LbiAcHFkMcMHJlJSc0YnGNPVaZseq5YVmYUwXjrOoVKfvfj97E411utb89TNbGd53exXt4whqMCpjSEknSazWUHyZkxA9VZKC7qmwfCFOnRbf_s1v5DYz0k2h1FT_2sDc1syNvRCTqvnMfAlbv-02MRgTqyi4iLEaE3VsXx2B2s5CvdtJU7D5oIUKcAb2xjpESAyRXiiIhbUEvMO25hcP2SvD-5qusK8hUuxj19649N52Sbu6RJX4pCcPSbxnpQAauf8_mu6qsaXW4oE_tHcsloBfaEb61mV6Vhu2qAYyHQCuH3uLmcB37BQ2k7pUfZsxeuhdqUssKSI7exbXht8YfWNr4Jer9rNmY7aJpDBgj-VTOgbXV2yad22yiR0VAdqeg19Y3xb_O4kTV6JNRRh1hi5NB46Ql4s4FIoi8nSS_JF4x8essiG9uzXPaxokvWdamIf4AIQZZr7ubVgmOJZhG6gtq7sBfIPVz_IoF3sD8wIYFU10CFrLwNZB-HxWls2lvGX0uFasugDK6oxfJo--8ood2uA9akVnY4sx6j2TI6e5HLIWnwjC0EZW-ovpJN4ddij9eSOlZFcIwnhj-FknJwywCOvCgZQG4B7TE"
 
 # Candidates for Cafe ID
-IDS_TO_TEST = ["57051", "161284549657051"]
+# Added "" to test the double slash pattern seen in docs: cafe//endpoint
+IDS_TO_TEST = ["57051", "", "161284549657051"]
 
 # Endpoints derived from docs
 ENDPOINTS_TO_TEST = [
+    {"name": "License Info", "path": "/license/info", "method": "GET"},
     {"name": "PC List Detailed", "path": "/pcList", "method": "GET"},
     {"name": "Get PC list (action)", "path": "/pcs/action/getPcsList", "method": "GET", "query": {"pc_name": ""}},
     {"name": "Members List", "path": "/members", "method": "GET", "query": {"page": 1}},
