@@ -1,5 +1,5 @@
-import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Обзор" },
@@ -16,6 +16,10 @@ interface SidebarProps {
 
 const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: cfg } = useQuery({ queryKey: ["config"], queryFn: api.getConfig });
+
+  const clubName = cfg?.club_name || "iCafe";
+  const clubLogo = cfg?.club_logo_url;
 
   return (
     <>
@@ -40,9 +44,13 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         className={`fixed top-0 left-0 z-50 h-full w-60 border-r border-border bg-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
-        <div className="flex items-center gap-3 px-6 py-6">
-          <div className="h-8 w-8 rounded-full bg-primary" />
-          <span className="text-lg font-bold text-foreground">iCafe</span>
+        <div className="flex items-center gap-3 px-6 py-6 border-b border-border/50 mb-2">
+          {clubLogo ? (
+            <img src={clubLogo} alt="Logo" className="h-8 w-8 rounded-lg object-contain" />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-primary" />
+          )}
+          <span className="text-lg font-bold text-foreground truncate">{clubName}</span>
           <button
             onClick={() => setMobileOpen(false)}
             className="ml-auto lg:hidden text-muted-foreground"
