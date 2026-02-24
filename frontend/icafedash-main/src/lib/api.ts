@@ -55,12 +55,14 @@ export interface PaymentMethodsData {
 }
 
 export interface PC {
-    id: number;
+    id: number | string;
     name: string;
     status: "free" | "busy" | "offline";
     member: string;
     time_left: string;
     room: string;
+    top?: number;
+    left?: number;
 }
 
 export interface Member {

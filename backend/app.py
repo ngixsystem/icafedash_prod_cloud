@@ -343,8 +343,6 @@ def payment_methods_chart():
 
     return jsonify({"methods": methods})
 
-    return jsonify({"methods": methods})
-
 
 # ── PCs monitoring ────────────────────────────────────────────────────────────
 
@@ -353,22 +351,36 @@ def get_pcs():
     result = icafe_get("/pcList")
     pcs = []
     if result and result.get("code") == 200:
+        raw_pcs = []
         data_field = result.get("data", {})
-        raw_list = []
         if isinstance(data_field, list):
-            raw_list = data_field
+            raw_pcs = data_field
         elif isinstance(data_field, dict):
-            raw_list = data_field.get("pcs", [])
+            raw_pcs = data_field.get("pcs", [])
 
-        for pc in raw_list:
+        for pc in raw_pcs:
+            # Re-use status logic from overview
+            status = "free"
+            if pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account"):
+                status = "busy"
+            else:
+                s_str = str(pc.get("pc_status", "")).lower()
+                if s_str in ("busy", "locked", "ordered", "using"):
+                    status = "busy"
+                elif s_str in ("offline", "off"):
+                    status = "offline"
+
             pcs.append({
-                "id": pc.get("pc_id") or pc.get("id"),
-                "name": pc.get("pc_name") or pc.get("name", ""),
-                "status": str(pc.get("pc_status", "free")).lower(),
+                "id": pc.get("pc_icafe_id") or pc.get("pc_mac"),
+                "name": pc.get("pc_name", "Unknown"),
+                "status": status,
                 "member": pc.get("member_account", ""),
-                "time_left": str(pc.get("left_time", pc.get("pc_time_left", ""))),
-                "room": pc.get("room_name", ""),
+                "time_left": pc.get("status_connect_time_left", ""),
+                "room": pc.get("pc_area_name", "OpenSpace"),
+                "top": pc.get("pc_box_top", 0),
+                "left": pc.get("pc_box_left", 0),
             })
+
     return jsonify({"pcs": pcs, "total": len(pcs)})
 
 
