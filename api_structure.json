@@ -1,0 +1,341 @@
+{
+  "Reports - Report Data": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "report": {
+        "report_start": "2026-02-24 00:00:00",
+        "report_end": "2026-02-24 24:00:59",
+        "staff": "All",
+        "cash": 0,
+        "profit": 0
+      },
+      "sale": {
+        "product": {
+          "number": 0,
+          "cost": 0,
+          "tax": 0,
+          "total": 0,
+          "profit": 0
+        },
+        "offer": {
+          "tax": 0
+        },
+        "offer_guest": {
+          "number": 0,
+          "cost": 0,
+          "tax": 0,
+          "total": 0,
+          "profit": 0
+        },
+        "offer_member": {
+          "number": 0,
+          "cost": 0,
+          "tax": 0,
+          "total": 0,
+          "profit": 0
+        },
+        "total": 0,
+        "cash": {
+          "number": 0,
+          "cost": 0,
+          "tax": 0,
+          "total": 0,
+          "profit": 0
+        },
+        "credit_card": {
+          "number": 0,
+          "cost": 0,
+          "tax": 0,
+          "total": 0,
+          "profit": 0
+        },
+        "by_balance": {
+          "number": 0,
+          "cost": 0,
+          "tax": 0,
+          "total": 0,
+          "profit": 0
+        },
+        "coin": {
+          "number": 0,
+          "cost": 0,
+          "tax": 0,
+          "total": 0,
+          "profit": 0
+        },
+        "profit": 0
+      },
+      "top_five_members_topup": [],
+      "top_five_pc_spend": [],
+      "topup": {
+        "member": {
+          "number": 0,
+          "amount": 0
+        },
+        "guest": {
+          "number": 0,
+          "amount": 0
+        },
+        "prepaid": {
+          "number": 0,
+          "amount": 0
+        },
+        "postpaid": {
+          "number": 0,
+          "amount": 0
+        },
+        "pc": {
+          "number": 0,
+          "amount": 0
+        },
+        "console": {
+          "number": 0,
+          "amount": 0
+        },
+        "cash": {
+          "number": 0,
+          "amount": 0
+        },
+        "credit_card": {
+          "number": 0,
+          "amount": 0
+        },
+        "qr": {
+          "number": 0,
+          "amount": 0
+        },
+        "bonus": {
+          "number": 0,
+          "amount": 0
+        },
+        "number": 0,
+        "amount": 0
+      },
+      "refund": {
+        "topup": {
+          "member": {
+            "number": 0,
+            "amount": 0
+          },
+          "prepaid": {
+            "number": 0,
+            "amount": 0
+          },
+          "postpaid": {
+            "number": 0,
+            "amount": 0
+          },
+          "guest": {
+            "number": 0,
+            "amount": 0
+          },
+          "pc": {
+            "number": 0,
+            "amount": 0
+          },
+          "console": {
+            "number": 0,
+            "amount": 0
+          },
+          "credit_card": {
+            "number": 0,
+            "amount": 0
+          },
+          "cash": {
+            "number": 0,
+            "amount": 0
+          },
+          "bonus": {
+            "number": 0,
+            "amount": 0
+          },
+          "total": {
+            "number": 0,
+            "amount": 0
+          }
+        },
+        "sale": {
+          "product": {
+            "number": 0,
+            "amount": 0
+          },
+          "offer": {
+            "number": 0,
+            "amount": 0
+          },
+          "offer_guest": {
+            "number": 0,
+            "amount": 0
+          },
+          "offer_member": {
+            "number": 0,
+            "amount": 0
+          },
+          "card": {
+            "number": 0,
+            "amount": 0
+          },
+          "cash": {
+            "number": 0,
+            "amount": 0
+          },
+          "by_balance": {
+            "number": 0,
+            "amount": 0
+          },
+          "coin": {
+            "number": 0,
+            "amount": 0
+          },
+          "total": {
+            "number": 0,
+            "amount": 0
+          }
+        },
+        "total": {
+          "number": 0,
+          "amount": 0
+        }
+      },
+      "income": {
+        "expense": {
+          "amount": 0,
+          "items": []
+        },
+        "cash": 0,
+        "credit_card": 0,
+        "qr": 0,
+        "by_balance": 0,
+        "coin": 0,
+        "amount": 0,
+        "cost": 0,
+        "tax": 0,
+        "profit": 0,
+        "loan": 0
+      },
+      "game": [
+        {
+          "name": "Steam",
+          "local_times": 17,
+          "pool_times": 0
+        },
+        {
+          "name": "ICCup Launcher",
+          "local_times": 13,
+          "pool_times": 0
+        },
+        {
+          "name": "Chrome",
+          "local_times": 4,
+          "pool_times": 0
+        },
+        {
+          "name": "Counter-Strike Global Offensive",
+          "local_times": 2,
+          "pool_times": 0
+        },
+        {
+          "name": "Grand Theft Auto V",
+          "local_times": 1,
+          "pool_times": 0
+        }
+      ],
+      "game_license": [],
+      "product_sales_items": [],
+      "product_group_list": [
+        {
+          "product_group_id": -1,
+          "product_group_name": "Offers"
+        },
+        {
+          "product_group_id": 553415855,
+          "product_group_name": "Напитки"
+        },
+        {
+          "product_group_id": 553415935,
+          "product_group_name": "pepsi"
+        }
+      ],
+      "new_members_number": 0,
+      "pcs_list": [],
+      "user_surveys": []
+    }
+  },
+  "Reports - Report Chart": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "series": [
+        {
+          "name": "Cash",
+          "data": [
+            3678500,
+            1659086.8,
+            5041366.3,
+            6971500,
+            9994298.4,
+            9551778.5,
+            6290094,
+            1063500
+          ]
+        },
+        {
+          "name": "Credit card",
+          "data": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "categories": [
+        "2026-02-17",
+        "2026-02-18",
+        "2026-02-19",
+        "2026-02-20",
+        "2026-02-21",
+        "2026-02-22",
+        "2026-02-23",
+        "2026-02-24"
+      ],
+      "report": {
+        "staff": "All",
+        "report_start": "2026-02-17 00:00:00",
+        "report_end": "2026-02-24 23:59:00"
+      }
+    }
+  },
+  "Billing Logs Mapping": {
+    "code": 200,
+    "message": "success",
+    "data": {
+      "log_list": [],
+      "paging_info": {
+        "total_records": 0,
+        "pages": 0,
+        "page": 1,
+        "page_prev": 1,
+        "page_next": 0,
+        "page_start": 1,
+        "page_end": 0,
+        "start_from": "0",
+        "end_from": "30"
+      },
+      "total": {
+        "log_bonus": null,
+        "log_money": null,
+        "log_coin": null,
+        "log_spend": null,
+        "log_card": null,
+        "log_used_secs": "00:00:00"
+      },
+      "event_list": []
+    }
+  }
+}

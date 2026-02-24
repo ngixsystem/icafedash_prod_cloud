@@ -139,25 +139,31 @@ def overview():
     # Member count
     member_data = icafe_get("/members", {"page": 1})
 
-    # --- Parse ---
     today_revenue = 0
     week_revenue = 0
     payment_methods = []
 
     if today_data and today_data.get("code") == 200:
         d = today_data.get("data", {})
-        today_revenue = float(d.get("total_amount", d.get("amount", 0)) or 0)
-        # Payment method breakdown
-        pay_types = d.get("pay_type_list") or d.get("payment_type_list", [])
-        payment_methods = [
-            {"name": pt.get("name", pt.get("type", "Unknown")),
-             "amount": float(pt.get("amount", 0))}
-            for pt in pay_types
-        ]
+        income = d.get("income", {})
+        today_revenue = float(income.get("amount", 0) or 0)
+        
+        # Build payment methods list from income dict
+        method_map = {
+            "cash": "Наличные",
+            "credit_card": "Карта",
+            "qr": "QR-код",
+            "by_balance": "С баланса",
+            "coin": "Монеты"
+        }
+        for key, label in method_map.items():
+            amt = float(income.get(key, 0) or 0)
+            if amt > 0:
+                payment_methods.append({"name": label, "amount": amt})
 
     if week_data and week_data.get("code") == 200:
         d = week_data.get("data", {})
-        week_revenue = float(d.get("total_amount", d.get("amount", 0)) or 0)
+        week_revenue = float(d.get("income", {}).get("amount", 0) or 0)
 
     # Active vs total PCs
     active_pcs = 0

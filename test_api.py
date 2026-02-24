@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-from datetime import date
+from datetime import date, timedelta
 
 # --- Configuration ---
 # Your new API Key and License ID
@@ -26,11 +26,12 @@ def test_api():
     # GET https://api.icafecloud.com/api/v2/cafe/{cafeId}/pcList
     
     endpoints = [
-        {"name": "PC List Detailed", "path": "/pcList", "method": "GET"},
-        {"name": "License Info", "path": "/license/info", "method": "GET"},
-        {"name": "Members List", "path": "/members", "method": "GET"},
+        {"name": "Reports - Report Data", "path": "/reports/reportData", "params": {"date_start": date.today().isoformat(), "date_end": date.today().isoformat(), "time_start": "00:00", "time_end": "24:00", "data_source": "recent"}, "method": "GET"},
+        {"name": "Reports - Report Chart", "path": "/reports/reportChart", "params": {"date_start": (date.today() - timedelta(days=7)).isoformat(), "date_end": date.today().isoformat(), "time_start": "00:00", "time_end": "24:00", "data_source": "recent"}, "method": "GET"},
+        {"name": "Billing Logs Mapping", "path": "/billingLogs", "params": {"date_start": date.today().isoformat(), "date_end": date.today().isoformat(), "page": 1}, "method": "GET"},
     ]
 
+    all_results = {}
     for ep in endpoints:
         print(f"--- Testing {ep['name']} ---")
         url = f"{ICAFE_BASE}/cafe/{CAFE_ID}{ep['path']}"
@@ -41,25 +42,19 @@ def test_api():
         }
         
         try:
-            resp = requests.get(url, headers=headers, timeout=10)
-            print(f"HTTP Status: {resp.status_code}")
-            
-            try:
-                data = resp.json()
-                print("Response JSON:", json.dumps(data, indent=2, ensure_ascii=False))
-                
-                if data.get("code") == 200:
-                    print(f"✅ Success!")
-                    if "data" in data and isinstance(data["data"], list):
-                         print(f"Found {len(data['data'])} items.")
-                else:
-                    print(f"❌ API Error: {data.get('message')}")
-            except:
-                print("Response is not JSON. Raw body snippet:")
-                print(resp.text[:300])
+            resp = requests.get(url, headers=headers, params=ep.get("params"), timeout=10)
+            data = resp.json()
+            all_results[ep['name']] = data
+            if data.get("code") == 200:
+                print(f"✅ {ep['name']} Success!")
+            else:
+                print(f"❌ {ep['name']} Error: {data.get('message')}")
         except Exception as e:
-            print(f"❌ Connection Error: {e}")
-        print("-" * 30)
+            print(f"❌ {ep['name']} Error: {e}")
+            
+    with open("api_structure.json", "w", encoding="utf-8") as f:
+        json.dump(all_results, f, indent=2, ensure_ascii=False)
+    print("Full structure saved to api_structure.json")
 
 if __name__ == "__main__":
     test_api()
