@@ -121,23 +121,16 @@ def overview():
     today = date.today()
     week_ago = today - timedelta(days=6)
 
-    # Today's report
-    today_data = icafe_get("/reports/reportData", {
-        "date_start": today.isoformat(),
-        "date_end": today.isoformat(),
-        "time_start": "00:00",
-        "time_end": "24:00",
-        "data_source": "recent",
-    })
-
-    # Weekly report
-    week_data = icafe_get("/reports/reportData", {
+    # Combined report for revenue calculation
+    chart_data = icafe_get("/reports/reportChart", {
         "date_start": week_ago.isoformat(),
         "date_end": today.isoformat(),
-        "time_start": "00:00",
-        "time_end": "24:00",
-        "data_source": "recent",
+        "data_source": "recent"
     })
+
+    today_revenue = 0
+    week_revenue = 0
+    payment_methods = []
 
     # PC list for active count
     pc_data = icafe_get("/pcList")
@@ -145,31 +138,27 @@ def overview():
     # Member count
     member_data = icafe_get("/members", {"page": 1})
 
-    today_revenue = 0
-    week_revenue = 0
-    payment_methods = []
-
-    if today_data and today_data.get("code") == 200:
-        d = today_data.get("data", {})
-        income = d.get("income", {})
-        today_revenue = float(income.get("amount", 0) or 0)
+    if chart_data and chart_data.get("code") == 200:
+        data = chart_data.get("data", {})
+        series = data.get("series", [])
+        categories = data.get("categories", [])
         
-        # Build payment methods list from income dict
-        method_map = {
-            "cash": "Наличные",
-            "credit_card": "Карта",
-            "qr": "QR-код",
-            "by_balance": "С баланса",
-            "coin": "Монеты"
-        }
-        for key, label in method_map.items():
-            amt = float(income.get(key, 0) or 0)
-            if amt > 0:
-                payment_methods.append({"name": label, "amount": amt})
-
-    if week_data and week_data.get("code") == 200:
-        d = week_data.get("data", {})
-        week_revenue = float(d.get("income", {}).get("amount", 0) or 0)
+        # Today is the last category
+        if categories:
+            today_idx = len(categories) - 1
+            for s in series:
+                s_vals = s.get("data", [])
+                if today_idx < len(s_vals):
+                    today_revenue += float(s_vals[today_idx] or 0)
+                
+                # Week total
+                week_revenue += sum(float(v or 0) for v in s_vals)
+                
+                # Build mock payment method list for UI breakdown
+                m_name = s.get("name", "Unknown")
+                m_total = sum(float(v or 0) for v in s_vals)
+                if m_total > 0:
+                    payment_methods.append({"name": m_name, "amount": m_total})
 
     # Active vs total PCs
     active_pcs = 0
