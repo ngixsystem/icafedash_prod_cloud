@@ -83,6 +83,8 @@ export interface ConfigData {
     cafe_id: string;
     api_key_masked: string;
     configured: boolean;
+    club_name: string;
+    club_logo_url: string;
 }
 
 // ── API calls ──────────────────────────────────────────────────────────────
@@ -106,8 +108,8 @@ export const api = {
 
     getConfig: () => get<ConfigData>("/config"),
 
-    saveConfig: (api_key: string, cafe_id: string) =>
-        post<{ ok: boolean }>("/config", { api_key, cafe_id }),
+    saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string }) =>
+        post<{ ok: boolean }>("/config", data),
 
     health: () => get<{ status: string; configured: boolean; timestamp: string }>("/health"),
 };

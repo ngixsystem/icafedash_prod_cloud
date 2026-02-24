@@ -26,8 +26,10 @@ ICAFE_BASE = "https://api.icafecloud.com/api/v2"
 
 def load_config() -> dict:
     defaults = {
-        "api_key": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2YwNTc4NjY2ZTVmNGQ2MDg4MjFmZTdjNTkzYjNkZmY3YmVjZDU5MTczOTkyZGE4NWY2ZDIzOGMwMWQzZDgyMzM2NTE1MzVkODdlYTRjMGQiLCJpYXQiOjE3NzE5MTc5MDIuMzQ3MzU5LCJuYmYiOjE3NzE5MTc5MDIuMzQ3MzYxLCJleHAiOjQ5Mjc1OTE1MDIuMzQzMzI3LCJzdWIiOiIxNjEyODQ1NDk2NTcwNTEiLCJzY29wZXMiOltdfQ.KNBpx4x2QfwtVKXEWGWLAh-Jpm0TdLHU-6QjB3wF2wtsJ0AwnT056twDOvc50c9rgspazTqNbR7IQSZ-rJC2A-WDJxRHnCyEppyDGCDHqhFRBsg7Ab-WhRefkqyz4oL5vDWwIC6O2l7-FI0KKaeOK5zPQ3jGtnTzn1sXd7AwLYvmWBD5ba2iBrgNBu_V6u6GRs5i7lFK_qG-8MC3F38MzfBegLjGXtNv6ut3N1IyCaA_gqpIFoTOaQ-nD9wIP4_J1HWQTdP2CG6WtgOmTy7QRmPWpN9yL_Ezl377vNjyLis9WaXWLmH-611jCNtylRe3bSfBpBrhcSh6FMTS8rf1UKKlPnexrJZaPSwje3Ri3L3WTb3H6FpLe1OlDxb-gfjCaedSmiFX8Sx1Gb3ME-xup6V5QHYz3ifZJkkwAgbDgxnwmj0yHoeD2kYNJDgeWgBNn5fAHitQmEag0zPD3d81htlo2bBSbhOs--d6UxH7gRn3Vhj_TMwTP-dmm6VdNqxqlQvQjdCr5OCMEvvcsxJq1iyTbTZAG2UCd4Pkf_emzFBwspReUXiYFdobxEfOGe5XkvCM79jvJ5xp6iMghtx1M2zZ5xREVoGQ3dYqn6SM0xn10XZsfi5gyiqe2EL2crXphKY47QuZJmuANNRvi1W_zd2o_fPne0FZpzzAx3ryz1E",
-        "cafe_id": "57051"
+        "api_key": "eyJ...省略...",
+        "cafe_id": "57051",
+        "club_name": "iCafe",
+        "club_logo_url": ""
     }
     if os.path.exists(CONFIG_FILE):
         try:
@@ -99,6 +101,8 @@ def get_config():
         "cafe_id": cfg.get("cafe_id", ""),
         "api_key_masked": masked,
         "configured": bool(key and cfg.get("cafe_id")),
+        "club_name": cfg.get("club_name", "iCafe"),
+        "club_logo_url": cfg.get("club_logo_url", "")
     })
 
 
@@ -110,6 +114,10 @@ def set_config():
         cfg["api_key"] = body["api_key"].strip()
     if "cafe_id" in body:
         cfg["cafe_id"] = str(body["cafe_id"]).strip()
+    if "club_name" in body:
+        cfg["club_name"] = body["club_name"].strip()
+    if "club_logo_url" in body:
+        cfg["club_logo_url"] = body["club_logo_url"].strip()
     save_config(cfg)
     return jsonify({"ok": True})
 

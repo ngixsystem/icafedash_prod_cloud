@@ -8,10 +8,26 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
   const { data: cfg } = useQuery({ queryKey: ["config"], queryFn: api.getConfig });
 
   const [apiKey, setApiKey] = useState("");
-  const [cafeId, setCafeId] = useState(cfg?.cafe_id ?? "");
+  const [cafeId, setCafeId] = useState("");
+  const [clubName, setClubName] = useState("");
+  const [clubLogo, setClubLogo] = useState("");
+
+  // Initialize form when data loads
+  useState(() => {
+    if (cfg) {
+      setCafeId(cfg.cafe_id);
+      setClubName(cfg.club_name);
+      setClubLogo(cfg.club_logo_url);
+    }
+  });
 
   const save = useMutation({
-    mutationFn: () => api.saveConfig(apiKey, cafeId),
+    mutationFn: () => api.saveConfig({
+      api_key: apiKey || undefined,
+      cafe_id: cafeId || undefined,
+      club_name: clubName,
+      club_logo_url: clubLogo
+    }),
     onSuccess: () => {
       qc.invalidateQueries();
       onClose();
@@ -22,46 +38,76 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl mx-4">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-foreground">Настройки API</h2>
+          <h2 className="text-lg font-bold text-foreground">Настройки брендинга</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="space-y-4">
-          <div className="rounded-lg bg-secondary p-4 border border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-2">Текущая конфигурация</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Cafe ID:</span>
-                <span className="font-mono text-foreground">{cfg?.cafe_id || "—"}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">API Key:</span>
-                <span className="font-mono text-primary">{cfg?.api_key_masked || "—"}</span>
-              </div>
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Название клуба</label>
+              <input
+                value={clubName}
+                onChange={(e) => setClubName(e.target.value)}
+                placeholder="Напр. Cyber Universe"
+                className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Ссылка на логотип (URL)</label>
+              <input
+                value={clubLogo}
+                onChange={(e) => setClubLogo(e.target.value)}
+                placeholder="https://..."
+                className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Cafe ID</label>
+              <input
+                value={cafeId}
+                onChange={(e) => setCafeId(e.target.value)}
+                className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Новый API Key (оставьте пустым для сокрытия)</label>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
+              />
             </div>
           </div>
 
           <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-            <p className="text-xs text-foreground leading-relaxed">
-              Управление ключами API теперь происходит на стороне сервера в файле <code>config.json</code>.
-              Это сделано для безопасности.
+            <p className="text-[10px] text-foreground leading-tight italic">
+              * Если логотип не указан, будет отображаться стандартный круг.
             </p>
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 flex gap-3">
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+            className="flex-1 rounded-lg bg-secondary py-2.5 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors"
           >
-            Закрыть
+            Отмена
+          </button>
+          <button
+            onClick={() => save.mutate()}
+            disabled={save.isPending}
+            className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {save.isPending ? "Сохранение..." : "Сохранить"}
           </button>
         </div>
 
         {cfg?.configured && (
-          <p className="text-center text-xs text-success mt-3">✓ API подключено</p>
+          <p className="text-center text-xs text-success mt-3">✓ Конфигурация активна</p>
         )}
       </div>
     </div>
