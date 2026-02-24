@@ -77,15 +77,15 @@ const StatusPanel = () => {
           </div>
           <div className="flex items-start gap-2">
             <span
-              className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${isConnected ? "bg-success" : "bg-yellow-500"
+              className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${isConnected ? "bg-success" : "bg-destructive"
                 }`}
             />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {isConnected ? "API подключено" : "API не настроено"}
+                {isConnected ? "API: Подключено" : "API: Нет соединения"}
               </p>
               <p className="text-xs text-muted-foreground">
-                {isConnected ? "Данные в реальном времени" : "Настройте ключ API"}
+                {isConnected ? "Данные из iCafeCloud (Live)" : "Проверьте ключ и вайтлист IP"}
               </p>
             </div>
           </div>

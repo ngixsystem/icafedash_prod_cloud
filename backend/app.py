@@ -170,9 +170,20 @@ def overview():
     active_pcs = 0
     total_pcs = 0
     if pc_data and pc_data.get("code") == 200:
-        pcs = pc_data.get("data", {}).get("pcs", [])
+        data_field = pc_data.get("data", {})
+        # Documentation shows /pcList can return a list or an object with a 'pcs' key
+        pcs = []
+        if isinstance(data_field, list):
+            pcs = data_field
+        elif isinstance(data_field, dict):
+            pcs = data_field.get("pcs", [])
+        
         total_pcs = len(pcs)
-        active_pcs = sum(1 for pc in pcs if pc.get("pc_status") not in ("free", "offline", None))
+        for pc in pcs:
+            status = pc.get("pc_status", "").lower()
+            # busy and locked usually mean someone is logged in
+            if status not in ("free", "offline", "off", ""):
+                active_pcs += 1
 
     # Member count
     total_members = 0
@@ -187,7 +198,8 @@ def overview():
         "total_pcs": total_pcs,
         "pc_load_percent": round(active_pcs / total_pcs * 100) if total_pcs else 0,
         "payment_methods": payment_methods,
-        "api_connected": bool(load_config().get("api_key")),
+        # Check if we actually got ANY data back from iCafeCloud recently
+        "api_connected": any([today_data, pc_data, member_data]),
     })
 
 
@@ -295,14 +307,20 @@ def get_pcs():
     result = icafe_get("/pcList")
     pcs = []
     if result and result.get("code") == 200:
-        raw = result.get("data", {}).get("pcs", [])
-        for pc in raw:
+        data_field = result.get("data", {})
+        raw_list = []
+        if isinstance(data_field, list):
+            raw_list = data_field
+        elif isinstance(data_field, dict):
+            raw_list = data_field.get("pcs", [])
+
+        for pc in raw_list:
             pcs.append({
-                "id": pc.get("pc_id"),
-                "name": pc.get("pc_name", ""),
-                "status": pc.get("pc_status", "free"),   # free | busy | offline
+                "id": pc.get("pc_id") or pc.get("id"),
+                "name": pc.get("pc_name") or pc.get("name", ""),
+                "status": str(pc.get("pc_status", "free")).lower(),
                 "member": pc.get("member_account", ""),
-                "time_left": pc.get("left_time", ""),
+                "time_left": str(pc.get("left_time", pc.get("pc_time_left", ""))),
                 "room": pc.get("room_name", ""),
             })
     return jsonify({"pcs": pcs, "total": len(pcs)})

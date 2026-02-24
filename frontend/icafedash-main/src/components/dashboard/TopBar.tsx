@@ -29,51 +29,34 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1.5">
-              Cafe ID
-            </label>
-            <input
-              value={cafeId}
-              onChange={(e) => setCafeId(e.target.value)}
-              placeholder={cfg?.cafe_id || "Введите Cafe ID"}
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground outline-none focus:border-primary transition-colors"
-            />
+          <div className="rounded-lg bg-secondary p-4 border border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-2">Текущая конфигурация</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Cafe ID:</span>
+                <span className="font-mono text-foreground">{cfg?.cafe_id || "—"}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">API Key:</span>
+                <span className="font-mono text-primary">{cfg?.api_key_masked || "—"}</span>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1.5">
-              API Key
-              {cfg?.api_key_masked && (
-                <span className="ml-2 text-xs text-primary">Текущий: {cfg.api_key_masked}</span>
-              )}
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Введите новый API ключ"
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground outline-none focus:border-primary transition-colors"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Settings → API Settings → Create в панели iCafeCloud
+          <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+            <p className="text-xs text-foreground leading-relaxed">
+              Управление ключами API теперь происходит на стороне сервера в файле <code>config.json</code>.
+              Это сделано для безопасности.
             </p>
           </div>
         </div>
 
-        <div className="flex gap-3 mt-6">
+        <div className="mt-6">
           <button
             onClick={onClose}
-            className="flex-1 rounded-lg border border-border bg-secondary py-2 text-sm text-foreground hover:bg-card transition-colors"
+            className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
           >
-            Отмена
-          </button>
-          <button
-            onClick={() => save.mutate()}
-            disabled={save.isPending || (!apiKey && !cafeId)}
-            className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {save.isPending ? "Сохранение..." : "Сохранить"}
+            Закрыть
           </button>
         </div>
 
