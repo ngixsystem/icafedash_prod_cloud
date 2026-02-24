@@ -17,42 +17,47 @@ def get_public_ip():
 
 def test_api():
     ip = get_public_ip()
-    print(f"=== iCafeCloud API Tester ===")
+    print(f"=== iCafeCloud API Diagnostic ===")
     print(f"Server Public IP: {ip}")
     print(f"Testing for Cafe ID: {CAFE_ID}")
+    print(f"Key Length: {len(API_KEY.strip())} characters")
+    print(f"Key Starts With: {API_KEY.strip()[:20]}...")
     print(f"{'='*30}\n")
 
-    # According to docs, PC list can be retrieved via:
-    # GET https://api.icafecloud.com/api/v2/cafe/{cafeId}/pcList
+    url = f"{ICAFE_BASE}/cafe/{CAFE_ID}/pcList"
     
-    endpoints = [
-        {"name": "PC List Detailed", "path": "/pcList", "method": "GET"},
+    # Try different Authorization formats
+    auth_formats = [
+        f"Bearer {API_KEY.strip()}",
+        API_KEY.strip() # Some APIs don't want the prefix if it's already in the key
     ]
 
-    all_results = {}
-    for ep in endpoints:
-        print(f"--- Testing {ep['name']} ---")
-        url = f"{ICAFE_BASE}/cafe/{CAFE_ID}{ep['path']}"
+    for i, auth in enumerate(auth_formats):
+        print(f"--- Attempt {i+1} (Auth: {'Bearer' if auth.startswith('Bearer') else 'Raw'}) ---")
         headers = {
-            "Authorization": f"Bearer {API_KEY.strip()}",
+            "Authorization": auth,
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
         
         try:
-            resp = requests.get(url, headers=headers, params=ep.get("params"), timeout=10)
-            data = resp.json()
-            all_results[ep['name']] = data
-            if data.get("code") == 200:
-                print(f"✅ {ep['name']} Success!")
-            else:
-                print(f"❌ {ep['name']} Error: {data.get('message')}")
-        except Exception as e:
-            print(f"❌ {ep['name']} Error: {e}")
+            resp = requests.get(url, headers=headers, timeout=10)
+            print(f"HTTP Status: {resp.status_code}")
+            print(f"Response Headers: {json.dumps(dict(resp.headers), indent=2)}")
             
-    with open("api_structure.json", "w", encoding="utf-8") as f:
-        json.dump(all_results, f, indent=2, ensure_ascii=False)
-    print("Full structure saved to api_structure.json")
+            try:
+                data = resp.json()
+                print(f"Response JSON: {json.dumps(data, indent=2, ensure_ascii=False)}")
+                if data.get("code") == 200:
+                    print(f"✅ SUCCESS on Attempt {i+1}!")
+                    break
+                else:
+                    print(f"❌ API Error: {data.get('message')}")
+            except:
+                print(f"Raw Response Content: {resp.text[:500]}")
+        except Exception as e:
+            print(f"❌ Request Error: {e}")
+        print("-" * 30)
 
 if __name__ == "__main__":
     test_api()
