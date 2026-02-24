@@ -44,7 +44,9 @@ const Index = () => {
           ) : activeTab === "Мониторинг" ? (
             <Monitoring />
           ) : activeTab === "Участники" ? (
-            <MembersList />
+            <div className="flex items-center justify-center min-h-[400px]">
+              <p className="text-muted-foreground">Вкладка "Участники" находится в разработке</p>
+            </div>
           ) : activeTab === "Админка" ? (
             <AdminDashboard />
           ) : (

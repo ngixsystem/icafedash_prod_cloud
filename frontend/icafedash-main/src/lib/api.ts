@@ -26,6 +26,7 @@ async function get<T>(path: string, params?: Record<string, string | number>): P
     });
     if (res.status === 401) {
         localStorage.removeItem("icafe_token");
+        localStorage.removeItem("icafe_user");
         window.location.href = "/login";
     }
     if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -44,6 +45,7 @@ async function post<T>(path: string, body: object): Promise<T> {
     });
     if (res.status === 401) {
         localStorage.removeItem("icafe_token");
+        localStorage.removeItem("icafe_user");
         window.location.href = "/login";
     }
     if (!res.ok) throw new Error(`API error ${res.status}`);
