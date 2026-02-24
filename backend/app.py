@@ -122,15 +122,21 @@ def overview():
     week_ago = today - timedelta(days=6)
 
     # Today's report
-    today_data = icafe_get("/financialReport", {
+    today_data = icafe_get("/reports/reportData", {
         "date_start": today.isoformat(),
         "date_end": today.isoformat(),
+        "time_start": "00:00",
+        "time_end": "24:00",
+        "data_source": "recent",
     })
 
     # Weekly report
-    week_data = icafe_get("/financialReport", {
+    week_data = icafe_get("/reports/reportData", {
         "date_start": week_ago.isoformat(),
         "date_end": today.isoformat(),
+        "time_start": "00:00",
+        "time_end": "24:00",
+        "data_source": "recent",
     })
 
     # PC list for active count
@@ -179,10 +185,15 @@ def overview():
         
         total_pcs = len(pcs)
         for pc in pcs:
-            status = pc.get("pc_status", "").lower()
-            # busy and locked usually mean someone is logged in
-            if status not in ("free", "offline", "off", ""):
+            status = str(pc.get("pc_status", "")).lower()
+            # In iCafeCloud, 'busy', 'locked', 'ordered' usually mean active sessions
+            # 'free', 'offline', 'off' mean inactive
+            if status in ("busy", "locked", "ordered"):
                 active_pcs += 1
+            elif status not in ("free", "offline", "off", ""):
+                # Fallback: if we have left_time or member_account, it's active
+                if pc.get("left_time") or pc.get("member_account") or pc.get("pc_time_left"):
+                    active_pcs += 1
 
     # Member count
     total_members = 0
