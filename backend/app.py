@@ -43,10 +43,20 @@ def load_config() -> dict:
                 for k, v in defaults.items():
                     if k not in cfg or not cfg[k]:
                         cfg[k] = v
-                return cfg
         except Exception:
-            pass
-    return defaults
+            cfg = defaults.copy()
+    else:
+        cfg = defaults.copy()
+
+    # Environment overrides (useful for Docker)
+    env_api_key = os.environ.get("ICAFE_API_KEY")
+    env_cafe_id = os.environ.get("ICAFE_CAFE_ID")
+    if env_api_key:
+        cfg["api_key"] = env_api_key
+    if env_cafe_id:
+        cfg["cafe_id"] = env_cafe_id
+
+    return cfg
 
 
 def save_config(data: dict):

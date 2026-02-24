@@ -10,6 +10,8 @@ services:
     environment:
       - FLASK_ENV=production
       - CONFIG_DIR=/app/data
+      - ICAFE_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU3MDUxIiwiaHR0cCI6Imh0dHBzOi8vYXBpLmljYWZlY2xvdWQuY29tLyIsImV4cCI6MTgwNzA1MzM5Mn0.O-8G_4Y-W9H-8G_4Y-W9H-8G_4Y-W9H-8G_4Y-W9H-8
+      - ICAFE_CAFE_ID=57051
     ports:
       - "5000:5000"
     networks:

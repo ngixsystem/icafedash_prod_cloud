@@ -11,6 +11,8 @@ COPY . .
 
 # Config persists inside a named volume mounted at /app/data
 ENV CONFIG_DIR=/app/data
+ENV ICAFE_API_KEY=""
+ENV ICAFE_CAFE_ID=""
 RUN mkdir -p /app/data
 
 EXPOSE 5000
