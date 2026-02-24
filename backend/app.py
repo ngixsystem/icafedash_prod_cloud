@@ -19,15 +19,14 @@ app = Flask(__name__,
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # ── Config file (persisted to disk so settings survive restarts) ──────────────
-_config_dir = os.environ.get("CONFIG_DIR", os.path.dirname(__file__))
-CONFIG_FILE = os.path.join(_config_dir, "config.json")
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
 
 ICAFE_BASE = "https://api.icafecloud.com/api/v2"
 
 
 def load_config() -> dict:
     defaults = {
-        "api_key": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMTZkOGUzZGU1NWFmZTE5ZTFmNzBjZTU0ZTg4MTExZDlkNGZlZmRkMWExY2M5NmJiMmExNmI1Y2Q0OGRkNjc4YzNkODE3NTQ4NDczNGU2NmQiLCJpYXQiOjE3NzE5MTcwNjUuOTUxOTQ5LCJuYmYiOjE3NzE5MTcwNjUuOTUxOTUyLCJleHAiOjQ5Mjc1OTA2NjUuOTQ4NjYyLCJzdWIiOiIxNjEyODQ1NDk2NTcwNTEiLCJzY29wZXMiOltdfQ.F4JKosunVhZJYIWXTe-HH0Z415vmk5N7-CO1TP76QyQ7gHymgM-KI6c3hlFnvKgiJ86KJB6k2iZt46PmzMiHwpeVyn7gC5JDlq3xgA5B6Ez2bOitONs93C7EvVeLf4YKS_EPbi7eIBWYJF3ydU9jf9wFyeYMr3x4yk0pIQJcY3UmoYHacdD4_oFTrlmXEXqfAgpADrUI_lJvhA2QdmcanVRMJx6dprlsUKp5Z2V-5_08Bo_0GBGyiE1EffO_rhIVbmLhElcDLkGPxO1E3E5_ZMHkVzXlLSMK0d4-zvKE3BjDTQrZxQ_JwYj3jVzMJbI4gdsIAqbJj9ajTH_HVL1UMXPJcumFuJQo2sOt8ncH-86dUbS6cY6SBIt6yUt37LY4ObKj9DfLyX2jQbT7nqkEzdJiHeBf_m2eytPTsMIq5oFrsPW1t3gDSxGtFi0bQjY2w5vS7QSVL6Vs0qAn_lExqlBC9GaWhk4AZuqU-1O1yZHivcjVYxZowFUa32-FzGdHgzIzIU4n110GZ-FAom-92-PEvP-HYZGXj02Fz9wP3xJsaZl3Dnl5k6Qs7oT1y0WCV_c_hPCDuIrMgIn2_QfvOl0tx97qkuoekyNlOduzfWZgj0ei_UZOQvnQpOS1OhKZzKqgKn8x2gzpuEVEoCjSo3KsiUTzRrtk_jFkQCztDNU",
+        "api_key": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2YwNTc4NjY2ZTVmNGQ2MDg4MjFmZTdjNTkzYjNkZmY3YmVjZDU5MTczOTkyZGE4NWY2ZDIzOGMwMWQzZDgyMzM2NTE1MzVkODdlYTRjMGQiLCJpYXQiOjE3NzE5MTc5MDIuMzQ3MzU5LCJuYmYiOjE3NzE5MTc5MDIuMzQ3MzYxLCJleHAiOjQ5Mjc1OTE1MDIuMzQzMzI3LCJzdWIiOiIxNjEyODQ1NDk2NTcwNTEiLCJzY29wZXMiOltdfQ.KNBpx4x2QfwtVKXEWGWLAh-Jpm0TdLHU-6QjB3wF2wtsJ0AwnT056twDOvc50c9rgspazTqNbR7IQSZ-rJC2A-WDJxRHnCyEppyDGCDHqhFRBsg7Ab-WhRefkqyz4oL5vDWwIC6O2l7-FI0KKaeOK5zPQ3jGtnTzn1sXd7AwLYvmWBD5ba2iBrgNBu_V6u6GRs5i7lFK_qG-8MC3F38MzfBegLjGXtNv6ut3N1IyCaA_gqpIFoTOaQ-nD9wIP4_J1HWQTdP2CG6WtgOmTy7QRmPWpN9yL_Ezl377vNjyLis9WaXWLmH-611jCNtylRe3bSfBpBrhcSh6FMTS8rf1UKKlPnexrJZaPSwje3Ri3L3WTb3H6FpLe1OlDxb-gfjCaedSmiFX8Sx1Gb3ME-xup6V5QHYz3ifZJkkwAgbDgxnwmj0yHoeD2kYNJDgeWgBNn5fAHitQmEag0zPD3d81htlo2bBSbhOs--d6UxH7gRn3Vhj_TMwTP-dmm6VdNqxqlQvQjdCr5OCMEvvcsxJq1iyTbTZAG2UCd4Pkf_emzFBwspReUXiYFdobxEfOGe5XkvCM79jvJ5xp6iMghtx1M2zZ5xREVoGQ3dYqn6SM0xn10XZsfi5gyiqe2EL2crXphKY47QuZJmuANNRvi1W_zd2o_fPne0FZpzzAx3ryz1E",
         "cafe_id": "57051"
     }
     if os.path.exists(CONFIG_FILE):
