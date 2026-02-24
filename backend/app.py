@@ -9,10 +9,13 @@ from datetime import date, timedelta, datetime
 from functools import wraps
 
 import requests
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
-app = Flask(__name__)
+# Initialize Flask with static folder pointing to frontend build
+app = Flask(__name__, 
+            static_folder=os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "icafedash-main", "dist"),
+            static_url_path="/")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # ── Config file (persisted to disk so settings survive restarts) ──────────────
@@ -388,6 +391,17 @@ def health():
     })
 
 
+# ── Serve Frontend (Non-Docker mode) ──────────────────────────────────────────
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, "index.html")
+
+
 if __name__ == "__main__":
-    print("🚀 iCafe Dashboard backend running at http://localhost:5000")
+    print("🚀 iCafe Dashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)
