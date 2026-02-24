@@ -24,6 +24,10 @@ const AdminDashboard = () => {
             qc.invalidateQueries({ queryKey: ["admin", "clubs"] });
             setNewClub({ name: "", api_key: "", cafe_id: "" });
             toast.success("Клуб успешно добавлен");
+        },
+        onError: (err: any) => {
+            console.error("Add club error:", err);
+            toast.error("Ошибка при добавлении клуба: " + (err.message || "Неизвестная ошибка"));
         }
     });
 
@@ -32,6 +36,10 @@ const AdminDashboard = () => {
         onSuccess: () => {
             setNewUser({ username: "", password: "", club_id: "" });
             toast.success("Пользователь привязан");
+        },
+        onError: (err: any) => {
+            console.error("Assign user error:", err);
+            toast.error("Ошибка при привязке пользователя: " + (err.message || "Неизвестная ошибка"));
         }
     });
 
@@ -143,8 +151,16 @@ const AdminDashboard = () => {
 
             {/* Clubs List */}
             <Card className="border-border/40">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <CardTitle>Активные клубы</CardTitle>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => qc.invalidateQueries({ queryKey: ["admin", "clubs"] })}
+                        disabled={isLoading}
+                    >
+                        Обновить
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     <div className="relative overflow-x-auto rounded-lg border border-border">
