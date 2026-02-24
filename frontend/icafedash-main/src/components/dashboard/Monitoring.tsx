@@ -42,7 +42,7 @@ const Monitoring = () => {
                                 key={pc.id}
                                 className={`absolute w-16 h-16 rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-all hover:scale-110 cursor-pointer shadow-lg
                   ${pc.status === "busy"
-                                        ? "border-primary/50 bg-primary/10 text-primary"
+                                        ? "border-orange-500/50 bg-orange-500/10 text-orange-500"
                                         : pc.status === "offline"
                                             ? "border-muted-foreground/30 bg-muted/20 text-muted-foreground"
                                             : "border-success/50 bg-success/10 text-success"
@@ -72,7 +72,7 @@ const Monitoring = () => {
                     <span className="text-xs text-muted-foreground">Свободен</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded bg-primary/20 border border-primary/50" />
+                    <div className="h-3 w-3 rounded bg-orange-500/20 border border-orange-500/50" />
                     <span className="text-xs text-muted-foreground">Занят</span>
                 </div>
                 <div className="flex items-center gap-2">
