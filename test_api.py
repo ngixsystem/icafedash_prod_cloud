@@ -26,9 +26,7 @@ def test_api():
     # GET https://api.icafecloud.com/api/v2/cafe/{cafeId}/pcList
     
     endpoints = [
-        {"name": "Reports - Report Data", "path": "/reports/reportData", "params": {"date_start": date.today().isoformat(), "date_end": date.today().isoformat(), "time_start": "00:00", "time_end": "24:00", "data_source": "recent"}, "method": "GET"},
-        {"name": "Reports - Report Chart", "path": "/reports/reportChart", "params": {"date_start": (date.today() - timedelta(days=7)).isoformat(), "date_end": date.today().isoformat(), "time_start": "00:00", "time_end": "24:00", "data_source": "recent"}, "method": "GET"},
-        {"name": "Billing Logs Mapping", "path": "/billingLogs", "params": {"date_start": date.today().isoformat(), "date_end": date.today().isoformat(), "page": 1}, "method": "GET"},
+        {"name": "PC List Detailed", "path": "/pcList", "method": "GET"},
     ]
 
     all_results = {}

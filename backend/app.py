@@ -174,14 +174,14 @@ def overview():
         
         total_pcs = len(pcs)
         for pc in pcs:
-            status = str(pc.get("pc_status", "")).lower()
-            # In iCafeCloud, 'busy', 'locked', 'ordered' usually mean active sessions
-            # 'free', 'offline', 'off' mean inactive
-            if status in ("busy", "locked", "ordered"):
+            # Inspection of API shows pc_status might be missing.
+            # Active PCs have member_id, status_connect_time_local or member_account
+            if pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account"):
                 active_pcs += 1
-            elif status not in ("free", "offline", "off", ""):
-                # Fallback: if we have left_time or member_account, it's active
-                if pc.get("left_time") or pc.get("member_account") or pc.get("pc_time_left"):
+            else:
+                # One more check: if pc_status exists and is active
+                status = str(pc.get("pc_status", "")).lower()
+                if status in ("busy", "locked", "ordered", "using"):
                     active_pcs += 1
 
     # Member count
@@ -189,6 +189,7 @@ def overview():
     if member_data and member_data.get("code") == 200:
         total_members = member_data.get("data", {}).get("paging_info", {}).get("total_records", 0)
 
+    print(f"DEBUG: Active={active_pcs}, Total={total_pcs}, Today={today_revenue}")
     return jsonify({
         "today_revenue": today_revenue,
         "week_revenue": week_revenue,
@@ -198,7 +199,7 @@ def overview():
         "pc_load_percent": round(active_pcs / total_pcs * 100) if total_pcs else 0,
         "payment_methods": payment_methods,
         # Check if we actually got ANY data back from iCafeCloud recently
-        "api_connected": any([today_data, pc_data, member_data]),
+        "api_connected": any([chart_data, pc_data, member_data]),
     })
 
 
@@ -298,7 +299,7 @@ def monthly_chart():
 @app.get("/api/charts/payments")
 def payment_methods_chart():
     today = date.today()
-    result = icafe_get("/reports/reportData", {
+    result = icafe_get("/reports/reportChart", {
         "date_start": (today - timedelta(days=6)).isoformat(),
         "date_end": today.isoformat(),
         "data_source": "recent"
@@ -306,26 +307,41 @@ def payment_methods_chart():
 
     methods = []
     if result and result.get("code") == 200:
-        data = result.get("data", {}).get("income", {})
+        data = result.get("data", {})
+        series = data.get("series", [])
         
-        mapping = {
-            "cash": "Наличные",
-            "credit_card": "Карта",
-            "qr": "QR-код",
-            "by_balance": "С баланса",
-            "coin": "Монеты"
-        }
+        # Aggregate totals for each series
+        totals = {}
+        grand_total = 0
         
-        raw_vals = {label: float(data.get(key, 0) or 0) for key, label in mapping.items()}
-        total = sum(raw_vals.values()) or 1
+        for s in series:
+            s_name = s.get("name", "Unknown")
+            # Translate common names to RU for better UI
+            label = s_name
+            if s_name.lower() == "cash": label = "Наличные"
+            elif "balance" in s_name.lower(): label = "Баланс"
+            elif "card" in s_name.lower(): label = "Карта"
+            elif "qr" in s_name.lower(): label = "QR-код"
+            elif "coin" in s_name.lower(): label = "Монеты"
+            
+            s_sum = sum(float(v or 0) for v in s.get("data", []))
+            if s_sum > 0:
+                totals[label] = totals.get(label, 0) + s_sum
+                grand_total += s_sum
         
-        for label, val in raw_vals.items():
-            if val > 0:
+        # Calculate percentages
+        if grand_total > 0:
+            for label, amount in totals.items():
                 methods.append({
                     "name": label,
-                    "amount": val,
-                    "percent": round(val / total * 100),
+                    "amount": amount,
+                    "percent": round((amount / grand_total) * 100)
                 })
+        
+        # Sort by amount descending
+        methods.sort(key=lambda x: x["amount"], reverse=True)
+
+    return jsonify({"methods": methods})
 
     return jsonify({"methods": methods})
 
