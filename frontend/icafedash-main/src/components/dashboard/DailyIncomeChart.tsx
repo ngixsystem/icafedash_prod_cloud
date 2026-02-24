@@ -51,6 +51,7 @@ const DailyIncomeChart = () => {
                 color: "hsl(210,20%,92%)",
                 fontSize: 12,
               }}
+              cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
               formatter={(v: number) => [`${formatMoney(v)} сум`, "Доход"]}
             />
             <Bar dataKey="value" fill="hsl(172,66%,50%)" radius={[4, 4, 0, 0]} />

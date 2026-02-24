@@ -376,6 +376,57 @@ def payment_methods_chart():
     return jsonify({"methods": methods})
 
 
+# ── Monthly aggregated income (last 7 months) ─────────────────────────────────
+
+@app.get("/api/charts/income-monthly")
+def income_monthly_chart():
+    today = date.today()
+    # Go back roughly 7 months (approx 210 days to be safe and cover full months)
+    start_date = (today - timedelta(days=210))
+    result = icafe_get("/reports/reportChart", {
+        "date_start": start_date.isoformat(),
+        "date_end": today.isoformat(),
+        "data_source": "recent"
+    })
+
+    months_data = {}
+    ru_months = {
+        1: "Янв", 2: "Фев", 3: "Мар", 4: "Апр", 5: "Май", 6: "Июн",
+        7: "Июл", 8: "Авг", 9: "Сен", 10: "Окт", 11: "Ноя", 12: "Дек"
+    }
+
+    if result and result.get("code") == 200:
+        data = result.get("data", {})
+        categories = data.get("categories", [])
+        series = data.get("series", [])
+        
+        # Aggregate daily data into monthly buckets
+        for s in series:
+            s_data = s.get("data", [])
+            for i, val in enumerate(s_data):
+                if i >= len(categories): break
+                try:
+                    dt = datetime.fromisoformat(categories[i])
+                    month_key = dt.strftime("%Y-%m")
+                    months_data[month_key] = months_data.get(month_key, 0) + float(val or 0)
+                except:
+                    continue
+
+    # Convert to sorted list and format for UI
+    sorted_keys = sorted(months_data.keys(), reverse=True)[:7] # Take last 7 months
+    sorted_keys.reverse() # Show in chronological order
+
+    output = []
+    for key in sorted_keys:
+        y, m = map(int, key.split("-"))
+        output.append({
+            "month": f"{ru_months[m]} {y}",
+            "amount": round(months_data[key], 2)
+        })
+
+    return jsonify({"data": output})
+
+
 # ── PCs monitoring ────────────────────────────────────────────────────────────
 
 @app.get("/api/pcs")

@@ -4,7 +4,7 @@ import TopBar from "@/components/dashboard/TopBar";
 import StatCards from "@/components/dashboard/StatCards";
 import DailyIncomeChart from "@/components/dashboard/DailyIncomeChart";
 import TotalIncomeChart from "@/components/dashboard/TotalIncomeChart";
-import PaymentMethods from "@/components/dashboard/PaymentMethods";
+import MonthlyIncomeChart from "@/components/dashboard/MonthlyIncomeChart";
 import StatusPanel from "@/components/dashboard/StatusPanel";
 import Monitoring from "@/components/dashboard/Monitoring";
 
@@ -28,7 +28,7 @@ const Index = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <DailyIncomeChart />
                   <TotalIncomeChart />
-                  <PaymentMethods />
+                  <MonthlyIncomeChart />
                 </div>
               </div>
 

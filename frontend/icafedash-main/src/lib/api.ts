@@ -122,6 +122,8 @@ export const api = {
         return res.json();
     },
 
+    getMonthlyAggregatedIncome: () => get<{ data: { month: string; amount: number }[] }>("/charts/income-monthly"),
+
     health: () => get<{ status: string; configured: boolean; timestamp: string }>("/health"),
 };
 
