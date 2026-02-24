@@ -14,14 +14,16 @@ app = Flask(__name__,
             static_url_path="/")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
+# Handle persistent data paths for Docker
+CONFIG_DIR = os.environ.get("CONFIG_DIR", os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(CONFIG_DIR, "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # ── Config file (persisted to disk so settings survive restarts) ──────────────
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 ICAFE_BASE = "https://api.icafecloud.com/api/v2"
 

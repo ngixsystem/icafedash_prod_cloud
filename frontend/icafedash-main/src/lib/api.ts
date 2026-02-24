@@ -124,6 +124,9 @@ export const api = {
 
     getMonthlyAggregatedIncome: () => get<{ data: { month: string; amount: number }[] }>("/charts/income-monthly"),
 
+    getMembers: (params: { page?: number; search?: string; sort_field?: string; sort_dir?: string }) =>
+        get<{ members: any[]; paging: any }>("/members", params),
+
     health: () => get<{ status: string; configured: boolean; timestamp: string }>("/health"),
 };
 

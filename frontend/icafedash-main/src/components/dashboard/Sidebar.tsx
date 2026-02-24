@@ -70,11 +70,11 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 setMobileOpen(false);
               }}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === item.label
-                ? "bg-card text-foreground"
+                ? "bg-primary/20 text-primary"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 }`}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-5 w-5" />
               {item.label}
             </button>
           ))}

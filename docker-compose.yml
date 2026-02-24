@@ -6,12 +6,12 @@ services:
     container_name: icafe_backend
     restart: unless-stopped
     volumes:
-      - backend_data:/app/data # persists config.json across restarts
+      - icafe_data:/app/data # persists config.json and uploads/ across restarts
     environment:
       - FLASK_ENV=production
       - CONFIG_DIR=/app/data
     ports:
-      - "5000:5000" # exposed for direct debugging (optional)
+      - "5000:5000"
     networks:
       - icafe_net
 
@@ -29,7 +29,7 @@ services:
       - icafe_net
 
 volumes:
-  backend_data:
+  icafe_data:
 
 
 networks:

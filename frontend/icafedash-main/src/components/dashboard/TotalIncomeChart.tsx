@@ -53,6 +53,7 @@ const TotalIncomeChart = () => {
                 color: "hsl(210,20%,92%)",
                 fontSize: 12,
               }}
+              cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 1 }}
               formatter={(v: number, name: string) => [`${formatMoney(v)} сум`, name]}
             />
             <Line type="monotone" dataKey="cash" stroke="hsl(172,66%,50%)" strokeWidth={2} dot={false} />
