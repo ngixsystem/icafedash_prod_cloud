@@ -1,3 +1,5 @@
+import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X } from "lucide-react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 

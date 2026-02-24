@@ -111,6 +111,17 @@ export const api = {
     saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string }) =>
         post<{ ok: boolean }>("/config", data),
 
+    uploadLogo: async (file: File): Promise<{ url: string }> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch(`${BASE}/upload-logo`, {
+            method: "POST",
+            body: formData,
+        });
+        if (!res.ok) throw new Error("Upload failed");
+        return res.json();
+    },
+
     health: () => get<{ status: string; configured: boolean; timestamp: string }>("/health"),
 };
 

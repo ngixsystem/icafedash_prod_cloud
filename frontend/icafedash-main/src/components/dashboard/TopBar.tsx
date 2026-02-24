@@ -7,15 +7,13 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
   const qc = useQueryClient();
   const { data: cfg } = useQuery({ queryKey: ["config"], queryFn: api.getConfig });
 
-  const [apiKey, setApiKey] = useState("");
-  const [cafeId, setCafeId] = useState("");
   const [clubName, setClubName] = useState("");
   const [clubLogo, setClubLogo] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   // Initialize form when data loads
   useState(() => {
     if (cfg) {
-      setCafeId(cfg.cafe_id);
       setClubName(cfg.club_name);
       setClubLogo(cfg.club_logo_url);
     }
@@ -23,8 +21,6 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
 
   const save = useMutation({
     mutationFn: () => api.saveConfig({
-      api_key: apiKey || undefined,
-      cafe_id: cafeId || undefined,
       club_name: clubName,
       club_logo_url: clubLogo
     }),
@@ -33,6 +29,21 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
       onClose();
     },
   });
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const { url } = await api.uploadLogo(file);
+      setClubLogo(url);
+    } catch (err) {
+      alert("Ошибка при загрузке логотипа");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -45,48 +56,60 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
         </div>
 
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+          {/* Read-only API Info */}
+          <div className="p-3 bg-secondary/50 rounded-lg border border-border space-y-2">
+            <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span>Параметры API (Только чтение)</span>
+              <Settings className="h-3 w-3" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Cafe ID:</span>
+                <span className="font-mono text-foreground">{cfg?.cafe_id || "—"}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">API Key:</span>
+                <span className="font-mono text-primary">{cfg?.api_key_masked || "—"}</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground/60 italic leading-tight">
+              * Измените <code>config.json</code> на сервере для обновления ключей.
+            </p>
+          </div>
+
           <div className="space-y-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Название клуба</label>
               <input
                 value={clubName}
                 onChange={(e) => setClubName(e.target.value)}
-                placeholder="Напр. Cyber Universe"
+                placeholder="Напр. TeamPro"
                 className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Ссылка на логотип (URL)</label>
-              <input
-                value={clubLogo}
-                onChange={(e) => setClubLogo(e.target.value)}
-                placeholder="https://..."
-                className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
-              />
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Логотип клуба (512x512)</label>
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-xl border border-border bg-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {clubLogo ? (
+                    <img src={clubLogo} alt="Preview" className="h-full w-full object-contain" />
+                  ) : (
+                    <div className="h-full w-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                      {clubName.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="cursor-pointer inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-secondary border border-border text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors">
+                    {isUploading ? "Загрузка..." : "Выбрать файл"}
+                    <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                  </label>
+                  <p className="text-[10px] text-muted-foreground mt-1.5 px-1">
+                    PNG, JPG или WebP. Рекомендуем 512x512.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Cafe ID</label>
-              <input
-                value={cafeId}
-                onChange={(e) => setCafeId(e.target.value)}
-                className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Новый API Key (оставьте пустым для сокрытия)</label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="w-full rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50 transition-colors"
-              />
-            </div>
-          </div>
-
-          <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-            <p className="text-[10px] text-foreground leading-tight italic">
-              * Если логотип не указан, будет отображаться стандартный круг.
-            </p>
           </div>
         </div>
 
@@ -99,16 +122,12 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
           </button>
           <button
             onClick={() => save.mutate()}
-            disabled={save.isPending}
+            disabled={save.isPending || isUploading}
             className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {save.isPending ? "Сохранение..." : "Сохранить"}
           </button>
         </div>
-
-        {cfg?.configured && (
-          <p className="text-center text-xs text-success mt-3">✓ Конфигурация активна</p>
-        )}
       </div>
     </div>
   );

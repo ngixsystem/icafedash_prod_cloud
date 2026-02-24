@@ -1,8 +1,3 @@
-"""
-iCafeCloud Dashboard — Flask Backend
-Proxies iCafeCloud REST API and exposes aggregated endpoints for the React frontend.
-"""
-
 import os
 import json
 from datetime import date, timedelta, datetime
@@ -11,12 +6,19 @@ from functools import wraps
 import requests
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 
 # Initialize Flask with static folder pointing to frontend build
 app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "icafedash-main", "dist"),
             static_url_path="/")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # ── Config file (persisted to disk so settings survive restarts) ──────────────
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
@@ -110,16 +112,38 @@ def get_config():
 def set_config():
     body = request.get_json(force=True) or {}
     cfg = load_config()
-    if "api_key" in body:
-        cfg["api_key"] = body["api_key"].strip()
-    if "cafe_id" in body:
-        cfg["cafe_id"] = str(body["cafe_id"]).strip()
+    # API Key and Cafe ID are now READ-ONLY from the dashboard
     if "club_name" in body:
         cfg["club_name"] = body["club_name"].strip()
     if "club_logo_url" in body:
         cfg["club_logo_url"] = body["club_logo_url"].strip()
     save_config(cfg)
     return jsonify({"ok": True})
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.post("/api/upload-logo")
+def upload_logo():
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+    if file and allowed_file(file.filename):
+        filename = "logo_" + secure_filename(file.filename)
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(filepath)
+        # Return the URL to access this file
+        return jsonify({"url": f"/api/uploads/{filename}"})
+    return jsonify({"error": "File type not allowed"}), 400
+
+
+@app.get("/api/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
 # ── Overview / Stats ──────────────────────────────────────────────────────────
