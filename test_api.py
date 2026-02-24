@@ -6,8 +6,8 @@ from datetime import date
 # --- Configuration ---
 # Getting credentials from same logic as backend
 ICAFE_BASE = "https://api.icafecloud.com/api/v2"
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiNmY1YzI0OTU0NDkzNmVlNDlkODM5Y2M4NWRkYzZmMTg0ODA4MzJmMjRhNDZkNTQxM2UwZjFmOTY4ODhhYjYyYzhhNWM1NmU5ZDYwODBlNWMiLCJpYXQiOjE3NzE5MTMxNTAuNDgxODUxLCJuYmYiOjE3NzE5MTMxNTAuNDgxODUzLCJleHAiOjQ5Mjc1ODY3NTAuNDc4OTk0LCJzdWIiOiIxNjEyODQ1NDk2NTcwNTEiLCJzY29wZXMiOltdfQ.KipEZgAy6MzkQh3bv59y_cr4PVXlmBE35C8dLFzaadCeRr7anQN9XZ4qkftbOsEa5J7vIw8lhb74I6Y-3V04CJMDu5-v1NQCXs-dgPiZ59i1z19h3QVgOA-2iGgBMA0vNi852RstBGOVuSMqTDYoRRztAIRVQ5FpMYhvwTNJzbYoj-yTtQs7z8Bp1cx5yZ4A6ImijYm4IN8IBCh9svKeYkfvh0Rsklw4v8UW5KVzCFlgW5JKOjgbLXPLViRMzUtHrIaBo5vvI9eW9x6iaXeUNTo2rrxgwfEemKGJt3q3XE4H3t5KwdCcHM1L66qQh1RL0XtEj8L4duQLx0i5-7olVeVP2fKXI8kK9TZkG6fRMJL0EnxlPpOtqpokDupAi41J2sDBkuFY8bPTFqtd0HEA1-uwblFYGJc9v5i9IW8m5VNbs0rzJrb50Wqpy28E8xrkkyikM01pBmgLmEx9_QRknG5l5erO6Xq0ihl_xJRw7MvNualLb768NFdsS4mqYzYt_pNWIVayd9oML4JThWzGZA1LySCVmsDJd8FQti2MUdiV3H55STSezG2RW3XFlDs_EOppdSNpaToPnn9_b_LHNgaVl1jWcaY4DifweBgGscVGHdNROXA7EsekYO19-rDUI4JJe6Ag4yEaM2I8AqOlDvr-TKqoW3E0gC44GApp2ac"
-CAFE_ID = "099818821572"
+API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiM2M5ZTk2OTJkZTNmZWViN2Q3MTY1ZTk5Mzc0N2E1NDdmNWNhNzZmNmU4ZWJkZTE4ZjdjMmFhZTMwMTZkMThjMGNjNjllZTA2ZDU4NjMwNWUiLCJpYXQiOjE3NzE5MTM2MjguNjI4MTQxLCJuYmYiOjE3NzE5MTM2MjguNjI4MTQzLCJleHAiOjQ5Mjc1ODcyMjguNjI1MTk2LCJzdWIiOiIxNjEyODQ1NDk2NTcwNTEiLCJzY29wZXMiOltdfQ.ImURcwolD5SJTYMTbdIUqYhjVhB1JpjjBaNcx_a_NovNHC-IFuFR89gIqpPbKKiBL85kcZypf_GSaBIiV9HV9NbeZpvzxKf7GLST2Qd7k_SEjSBpC8Wzpn5uzbSvy0aA9mqcHDpH52-ozQS0OqEAd1zc0YFmgczqTZOlLNEQGpKZNYoLcOzUDZxRexEN1JVNiEA8dcg73hLs6BUWlzBWhrHezYCiF3SEGy0oi09uFw5o5x5tWfwmIOYUxhkB4MCVqU3R2ZtgTodx25-mLKmeED3dC7L_1clHQ03bI0y00RejNgU9J1IVf2FPayrWUVPDt_Amc7W2bCMi5nsT-31w79wMtI1-nx19ylFU1Xbctm9ZdYj3E8bjVe8SvfQEm14AEt-iGrZ_ydv6iNFRa-bKvLjizqTxrCDVntSviuaSS4iQqwYBIymoeIGM_CCm7drpobbJAdUdtwlxMkvH2a6hTE3geAErAtMjfJrYP3mRi4MXr7g-AmoNMa1g2KNerrVam508x8AwW8zWMLtinm59XClf4nuBaEsekLZyfyoHg0yyrcAH33twht8PVkFQH7Zv1wbRJFPIF_sC0IYjvJY6iT_itXa17eX6Mw_24pz3wD5WR_OuCnWAHmDxzrXNYEed_5r_ZWXrR-PhOzwnqKZvJ2k3ZbzsRzKJAQgbMrr4DR8"
+CAFE_ID = "57051"
 
 def test_endpoint(name, path, method="GET", params=None):
     print(f"\n{'='*20} Testing {name} ({method}) {'='*20}")
@@ -41,7 +41,7 @@ def test_endpoint(name, path, method="GET", params=None):
 if __name__ == "__main__":
     print(f"iCafeCloud API Tester")
     
-    ids_to_test = ["099818821572"]
+    ids_to_test = ["57051", "161284549657051"]
     
     for test_id in ids_to_test:
         print(f"\n\n{'#'*30} TESTING WITH CAFE_ID: {test_id} {'#'*30}")
