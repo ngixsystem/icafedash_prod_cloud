@@ -8,6 +8,11 @@ import { Mail, Phone, User, Lock, ArrowRight, ShieldCheck, RotateCw, CheckCircle
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
+const getDashboardUrl = (path: string) => {
+    const host = window.location.hostname;
+    return `http://${host}:8080${path}`;
+};
+
 const Register = () => {
     const [step, setStep] = useState<"form" | "verify" | "success">("form");
     const [loading, setLoading] = useState(false);
@@ -219,7 +224,7 @@ const Register = () => {
 
                             <p className="text-center text-sm text-muted-foreground mt-8">
                                 Уже есть аккаунт?{" "}
-                                <a href="/login" className="text-primary hover:underline hover:text-primary-foreground transition-colors">
+                                <a href={getDashboardUrl("/login")} className="text-primary hover:underline hover:text-primary-foreground transition-colors">
                                     Войти
                                 </a>
                             </p>
@@ -339,7 +344,7 @@ const Register = () => {
                             </p>
 
                             <a
-                                href="/login"
+                                href={getDashboardUrl("/login")}
                                 className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 shadow-[0_0_15px_hsl(170_80%_50%_/_0.3)] hover:shadow-[0_0_25px_hsl(170_80%_50%_/_0.5)] transition-all"
                             >
                                 Войти в панель
