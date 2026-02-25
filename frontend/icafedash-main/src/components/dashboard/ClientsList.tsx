@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, RegisteredUser } from "@/lib/api";
 import { Users, Shield, ShieldCheck, Trash2, CheckCircle, XCircle, UserCog, Search, RefreshCw } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const ClientsList = () => {
+    const { user: currentUser } = useAuth();
     const queryClient = useQueryClient();
     const [search, setSearch] = useState("");
 
@@ -182,7 +184,7 @@ const ClientsList = () => {
                                                 value={user.role}
                                                 onChange={(e) => handleChangeRole(user, e.target.value)}
                                                 className="bg-background border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                                                disabled={user.role === "admin"}
+                                                disabled={user.id === currentUser?.id}
                                             >
                                                 <option value="manager">Менеджер</option>
                                                 <option value="admin">Админ</option>
@@ -211,8 +213,8 @@ const ClientsList = () => {
                                                     onClick={() => handleToggleVerified(user)}
                                                     title={user.is_verified ? "Деактивировать" : "Активировать"}
                                                     className={`p-1.5 rounded-md transition-colors ${user.is_verified
-                                                            ? "text-emerald-400 hover:bg-emerald-500/10"
-                                                            : "text-amber-400 hover:bg-amber-500/10"
+                                                        ? "text-emerald-400 hover:bg-emerald-500/10"
+                                                        : "text-amber-400 hover:bg-amber-500/10"
                                                         }`}
                                                 >
                                                     <ShieldCheck className="h-4 w-4" />
