@@ -56,9 +56,11 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           {clubLogo ? (
             <img src={clubLogo} alt="Logo" className="h-8 w-8 rounded-lg object-contain" />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-primary" />
+            <img src="/logo.png" alt="iCafeDash" className="h-8 object-contain drop-shadow-[0_0_10px_rgba(45,212,191,0.5)]" />
           )}
-          <span className="text-lg font-bold text-foreground truncate">{clubName}</span>
+          {(!clubLogo && isAdmin) ? null : (
+            <span className="text-lg font-bold text-foreground truncate">{clubLogo ? clubName : "iCafeDash"}</span>
+          )}
           <button
             onClick={() => setMobileOpen(false)}
             className="ml-auto lg:hidden text-muted-foreground"
