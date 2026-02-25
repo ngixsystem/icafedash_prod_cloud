@@ -159,14 +159,41 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # Create tables if they don't exist
 with app.app_context():
     db.create_all()
-    # Create default admin if none exists
-    if not User.query.filter_by(username='admin').first():
+    
+    # Migration: add new columns to existing tables if they don't exist
+    from sqlalchemy import inspect, text
+    inspector = inspect(db.engine)
+    existing_columns = [col['name'] for col in inspector.get_columns('users')]
+    
+    with db.engine.connect() as conn:
+        if 'email' not in existing_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR(120) UNIQUE"))
+            conn.commit()
+            print("✅ Added 'email' column to users table")
+        if 'phone' not in existing_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(20)"))
+            conn.commit()
+            print("✅ Added 'phone' column to users table")
+        if 'is_verified' not in existing_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
+            conn.commit()
+            print("✅ Added 'is_verified' column to users table")
+    
+    # Create or update default admin user
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
         print("🌱 Creating default admin user...")
         admin = User(username='admin', role='admin', is_verified=True)
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
         print("✅ Default admin user created successfully.")
+    else:
+        # Ensure admin is always verified
+        if not admin.is_verified:
+            admin.is_verified = True
+            db.session.commit()
+            print("✅ Admin user marked as verified.")
 
 # ── Config file (legacy/compatibility) ────────────────────────────────────────
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
