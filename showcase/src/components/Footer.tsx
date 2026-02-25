@@ -18,7 +18,7 @@ const Footer = () => {
             Регистрация
           </Link>
           <a
-            href="http://213.230.110.108:8081/login"
+            href="/login"
             className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             Войти

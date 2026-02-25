@@ -18,7 +18,7 @@ const Navbar = () => {
 
                 <div className="flex items-center gap-4">
                     <a
-                        href="http://213.230.110.108:8081/login"
+                        href="/login"
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary transition-colors hover:bg-primary/10 rounded-lg"
                     >
                         <LogIn className="w-4 h-4" />

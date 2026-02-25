@@ -30,7 +30,7 @@ const CTA = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </Link>
             <a
-              href="http://213.230.110.108:8081/login"
+              href="/login"
               className="px-8 py-3.5 rounded-lg border border-primary/30 text-foreground font-display text-sm font-semibold tracking-wider uppercase hover:bg-primary/10 hover:border-primary/50 transition-all duration-300 flex items-center justify-center"
             >
               Войти в панель
