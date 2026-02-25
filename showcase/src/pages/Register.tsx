@@ -10,7 +10,11 @@ const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 const getDashboardUrl = (path: string) => {
     const host = window.location.hostname;
-    return `http://${host}:8080${path}`;
+    if (host === 'localhost' || host === '127.0.0.1') {
+        return `http://${host}:8080${path}`;
+    }
+    const cleanHost = host.replace(/^www\./, '');
+    return `https://cp.${cleanHost}${path}`;
 };
 
 const Register = () => {

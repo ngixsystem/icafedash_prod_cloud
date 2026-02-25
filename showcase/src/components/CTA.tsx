@@ -4,7 +4,11 @@ import { Link } from "react-router-dom";
 
 const getDashboardUrl = (path: string) => {
   const host = window.location.hostname;
-  return `http://${host}:8080${path}`;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return `http://${host}:8080${path}`;
+  }
+  const cleanHost = host.replace(/^www\./, '');
+  return `https://cp.${cleanHost}${path}`;
 };
 const CTA = () => {
   return (

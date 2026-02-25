@@ -1,0 +1,7 @@
+icafedash.com, www.icafedash.com {
+    reverse_proxy showcase:80
+}
+
+cp.icafedash.com, cloud.icafedash.com {
+    reverse_proxy frontend:80
+}
