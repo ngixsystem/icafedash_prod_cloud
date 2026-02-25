@@ -10,6 +10,7 @@ import StatusPanel from "@/components/dashboard/StatusPanel";
 import Monitoring from "@/components/dashboard/Monitoring";
 import MembersList from "@/components/dashboard/MembersList";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
+import ClientsList from "@/components/dashboard/ClientsList";
 
 const Index = () => {
   const { isAdmin } = useAuth();
@@ -49,6 +50,8 @@ const Index = () => {
             </div>
           ) : activeTab === "Админка" ? (
             <AdminDashboard />
+          ) : activeTab === "Клиенты" ? (
+            <ClientsList />
           ) : (
             <div className="flex items-center justify-center min-h-[400px]">
               <p className="text-muted-foreground">Вкладка "{activeTab}" находится в разработке</p>

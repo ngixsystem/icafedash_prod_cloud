@@ -515,6 +515,41 @@ def assign_user():
     db.session.commit()
     return jsonify({"message": "User assigned/updated successfully"})
 
+@app.put("/api/admin/users/<int:user_id>")
+@admin_required
+def update_user(user_id):
+    """Update user role, club assignment, or verification status."""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "Пользователь не найден"}), 404
+    
+    data = request.json or {}
+    if "role" in data:
+        user.role = data["role"]
+    if "club_id" in data:
+        user.club_id = data["club_id"] if data["club_id"] else None
+    if "is_verified" in data:
+        user.is_verified = data["is_verified"]
+    
+    db.session.commit()
+    return jsonify({"message": "Пользователь обновлён"})
+
+@app.delete("/api/admin/users/<int:user_id>")
+@admin_required
+def delete_user(user_id):
+    """Delete a user (cannot delete yourself)."""
+    current_user_id = int(get_jwt_identity())
+    if current_user_id == user_id:
+        return jsonify({"message": "Нельзя удалить самого себя"}), 400
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "Пользователь не найден"}), 404
+    
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"message": "Пользователь удалён"})
+
 # ── Config endpoints ──────────────────────────────────────────────────────────
 
 @app.get("/api/config")

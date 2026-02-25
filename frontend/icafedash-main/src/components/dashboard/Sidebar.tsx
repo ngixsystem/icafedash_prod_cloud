@@ -1,4 +1,4 @@
-import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X, Shield } from "lucide-react";
+import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X, Shield, UserCheck } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -26,7 +26,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const clubLogo = cfg?.club_logo_url;
 
   const displayNavItems = isAdmin
-    ? [{ icon: Shield, label: "Админка" }]
+    ? [{ icon: Shield, label: "Админка" }, { icon: UserCheck, label: "Клиенты" }]
     : [...navItems];
 
   return (

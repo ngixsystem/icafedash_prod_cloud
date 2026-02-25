@@ -52,6 +52,39 @@ async function post<T>(path: string, body: object): Promise<T> {
     return res.json();
 }
 
+async function put<T>(path: string, body: object): Promise<T> {
+    const url = new URL(`${BASE}${path}`, window.location.origin);
+    const headers = getHeaders();
+    headers["Content-Type"] = "application/json";
+    const res = await fetch(url.toString(), {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(body),
+    });
+    if (res.status === 401) {
+        localStorage.removeItem("icafe_token");
+        localStorage.removeItem("icafe_user");
+        window.location.href = "/login";
+    }
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+}
+
+async function del<T>(path: string): Promise<T> {
+    const url = new URL(`${BASE}${path}`, window.location.origin);
+    const res = await fetch(url.toString(), {
+        method: "DELETE",
+        headers: getHeaders(),
+    });
+    if (res.status === 401) {
+        localStorage.removeItem("icafe_token");
+        localStorage.removeItem("icafe_user");
+        window.location.href = "/login";
+    }
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface OverviewData {
@@ -113,6 +146,18 @@ export interface ConfigData {
     club_logo_url: string;
 }
 
+export interface RegisteredUser {
+    id: number;
+    username: string;
+    email: string;
+    phone: string;
+    role: string;
+    is_verified: boolean;
+    club_id: number | null;
+    club_name: string | null;
+    created_at: string | null;
+}
+
 // ── API calls ──────────────────────────────────────────────────────────────
 
 export const api = {
@@ -158,9 +203,13 @@ export const api = {
     health: () => get<{ status: string; configured: boolean; timestamp: string }>("/health"),
 
     // Admin routes
-    adminClubs: () => get<{ id: number, name: string, cafe_id: string }[]>("/admin/clubs"),
-    addClub: (data: { name: string, api_key: string, cafe_id: string }) => post<{ ok: boolean }>("/admin/clubs", data),
-    assignUser: (data: { username: string, password: string, club_id: string }) => post<{ ok: boolean }>("/admin/assign-user", data),
+    adminClubs: () => get<{ id: number; name: string; cafe_id: string }[]>("/admin/clubs"),
+    addClub: (data: { name: string; api_key: string; cafe_id: string }) => post<{ ok: boolean }>("/admin/clubs", data),
+    assignUser: (data: { username: string; password: string; club_id: string }) => post<{ ok: boolean }>("/admin/assign-user", data),
+    adminUsers: () => get<RegisteredUser[]>("/admin/users"),
+    updateUser: (userId: number, data: { role?: string; club_id?: number | null; is_verified?: boolean }) =>
+        put<{ message: string }>(`/admin/users/${userId}`, data),
+    deleteUser: (userId: number) => del<{ message: string }>(`/admin/users/${userId}`),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),
