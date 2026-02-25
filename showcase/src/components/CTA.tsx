@@ -2,6 +2,10 @@ import { motion } from "framer-motion";
 import { UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const getDashboardUrl = (path: string) => {
+  const host = window.location.hostname;
+  return `http://${host}:8080${path}`;
+};
 const CTA = () => {
   return (
     <section className="py-24 md:py-32 relative">
@@ -30,7 +34,7 @@ const CTA = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </Link>
             <a
-              href="/login"
+              href={getDashboardUrl("/login")}
               className="px-8 py-3.5 rounded-lg border border-primary/30 text-foreground font-display text-sm font-semibold tracking-wider uppercase hover:bg-primary/10 hover:border-primary/50 transition-all duration-300 flex items-center justify-center"
             >
               Войти в панель

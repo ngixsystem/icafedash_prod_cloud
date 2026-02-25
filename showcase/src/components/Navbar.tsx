@@ -4,6 +4,11 @@ import DynamicBackground from "@/components/DynamicBackground";
 import logo from "@/assets/logo.png";
 import { LogIn, UserPlus } from "lucide-react";
 
+const getDashboardUrl = (path: string) => {
+    const host = window.location.hostname;
+    return `http://${host}:8080${path}`;
+};
+
 const Navbar = () => {
     return (
         <motion.nav
@@ -18,7 +23,7 @@ const Navbar = () => {
 
                 <div className="flex items-center gap-4">
                     <a
-                        href="/login"
+                        href={getDashboardUrl("/login")}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary transition-colors hover:bg-primary/10 rounded-lg"
                     >
                         <LogIn className="w-4 h-4" />

@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
 
+const getDashboardUrl = (path: string) => {
+  const host = window.location.hostname;
+  return `http://${host}:8080${path}`;
+};
+
 const Footer = () => {
   return (
     <footer className="relative bg-[hsl(220,25%,3%)] z-50">
@@ -18,7 +23,7 @@ const Footer = () => {
             Регистрация
           </Link>
           <a
-            href="/login"
+            href={getDashboardUrl("/login")}
             className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             Войти
