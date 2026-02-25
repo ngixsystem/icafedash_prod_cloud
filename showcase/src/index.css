@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 6%;
+    --foreground: 180 10% 92%;
+
+    --card: 220 18% 10%;
+    --card-foreground: 180 10% 92%;
+
+    --popover: 220 18% 10%;
+    --popover-foreground: 180 10% 92%;
+
+    --primary: 170 80% 50%;
+    --primary-foreground: 220 20% 6%;
+
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 180 10% 85%;
+
+    --muted: 220 15% 13%;
+    --muted-foreground: 215 12% 55%;
+
+    --accent: 170 80% 50%;
+    --accent-foreground: 220 20% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 170 80% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 220 18% 8%;
+    --sidebar-foreground: 180 10% 85%;
+    --sidebar-primary: 170 80% 50%;
+    --sidebar-primary-foreground: 220 20% 6%;
+    --sidebar-accent: 220 15% 15%;
+    --sidebar-accent-foreground: 180 10% 85%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 170 80% 50%;
+
+    /* Custom tokens */
+    --glow: 170 80% 50%;
+    --glow-muted: 170 60% 30%;
+    --surface: 220 18% 12%;
+    --surface-hover: 220 18% 16%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .glow-text {
+    text-shadow: 0 0 20px hsl(170 80% 50% / 0.6), 0 0 40px hsl(170 80% 50% / 0.3), 0 0 80px hsl(170 80% 50% / 0.1);
+  }
+
+  .glow-box {
+    box-shadow: 0 0 20px hsl(170 80% 50% / 0.2), 0 0 60px hsl(170 80% 50% / 0.08), 0 0 100px hsl(170 80% 50% / 0.03);
+  }
+
+  .glow-border {
+    border-color: hsl(170 80% 50% / 0.3);
+    box-shadow: inset 0 0 30px hsl(170 80% 50% / 0.06), 0 0 30px hsl(170 80% 50% / 0.12);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(170 80% 60%), hsl(200 90% 65%), hsl(170 80% 50%));
+    background-size: 200% auto;
+    animation: gradient-shift 4s ease-in-out infinite;
+  }
+
+  .cyber-grid {
+    background-image: 
+      linear-gradient(hsl(170 80% 50% / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(170 80% 50% / 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .neon-border {
+    position: relative;
+  }
+  .neon-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(170 80% 50% / 0.5), transparent 40%, transparent 60%, hsl(200 80% 60% / 0.5));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .gaming-card {
+    background: linear-gradient(135deg, hsl(220 18% 10%) 0%, hsl(220 18% 8%) 100%);
+    border: 1px solid hsl(170 80% 50% / 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gaming-card:hover {
+    border-color: hsl(170 80% 50% / 0.3);
+    box-shadow: 0 0 30px hsl(170 80% 50% / 0.1), inset 0 0 30px hsl(170 80% 50% / 0.03);
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 200% center; }
+}

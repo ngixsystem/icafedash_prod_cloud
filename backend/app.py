@@ -1,5 +1,10 @@
 import os
 import json
+import random
+import string
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import date, timedelta, datetime
 from functools import wraps
 
@@ -15,13 +20,20 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__, 
             static_folder=os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "icafedash-main", "dist"),
             static_url_path="/")
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # Database & Auth Config
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///icafe.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dev-secret-key")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=2)
+
+# SMTP Config for email verification
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
@@ -64,8 +76,11 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="manager") # admin or manager
+    is_verified = db.Column(db.Boolean, default=False)
     club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -74,6 +89,64 @@ class User(db.Model):
 
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
+
+
+class EmailVerification(db.Model):
+    __tablename__ = 'email_verifications'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    code = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+
+
+def generate_verification_code():
+    return ''.join(random.choices(string.digits, k=6))
+
+
+def send_verification_email(to_email, code):
+    """Send a verification code via SMTP email."""
+    if not SMTP_USER or not SMTP_PASSWORD:
+        print(f"⚠️  SMTP not configured. Verification code for {to_email}: {code}")
+        return True  # Return True so registration still works (code shown in logs)
+    
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = 'iCafe Dashboard — Код подтверждения'
+        msg['From'] = SMTP_FROM
+        msg['To'] = to_email
+
+        html = f"""
+        <html>
+        <body style="font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a0a; color: #ffffff; padding: 40px;">
+            <div style="max-width: 480px; margin: 0 auto; background: #111; border-radius: 16px; padding: 40px; border: 1px solid #222;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #2dd4bf; font-size: 24px; margin: 0;">iCafe Dashboard</h1>
+                    <p style="color: #888; font-size: 14px; margin-top: 8px;">Подтверждение регистрации</p>
+                </div>
+                <div style="text-align: center; background: #1a1a2e; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                    <p style="color: #aaa; font-size: 14px; margin: 0 0 12px 0;">Ваш код подтверждения:</p>
+                    <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #2dd4bf;">{code}</div>
+                </div>
+                <p style="color: #666; font-size: 12px; text-align: center; margin-top: 20px;">Код действителен 10 минут. Если вы не регистрировались, проигнорируйте это письмо.</p>
+            </div>
+        </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(html, 'html'))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
+        
+        print(f"✅ Verification email sent to {to_email}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send email to {to_email}: {e}")
+        return False
 
 # Handle persistent data paths for Docker
 CONFIG_DIR = os.environ.get("CONFIG_DIR", os.path.dirname(__file__))
@@ -89,7 +162,7 @@ with app.app_context():
     # Create default admin if none exists
     if not User.query.filter_by(username='admin').first():
         print("🌱 Creating default admin user...")
-        admin = User(username='admin', role='admin')
+        admin = User(username='admin', role='admin', is_verified=True)
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
@@ -183,6 +256,139 @@ def icafe_post(path: str, data: dict = None) -> dict | None:
 
 # ── Auth Routes ───────────────────────────────────────────────────────────────
 
+@app.post("/api/auth/register")
+def register():
+    """Step 1: Register a new user and send verification code to email."""
+    data = request.json or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    phone = (data.get("phone") or "").strip()
+    password = data.get("password", "")
+
+    # Validation
+    if not username or not email or not password:
+        return jsonify({"message": "Заполните все обязательные поля (логин, email, пароль)"}), 400
+    if len(username) < 3:
+        return jsonify({"message": "Логин должен быть не менее 3 символов"}), 400
+    if len(password) < 6:
+        return jsonify({"message": "Пароль должен быть не менее 6 символов"}), 400
+    if "@" not in email:
+        return jsonify({"message": "Укажите корректный email"}), 400
+
+    # Check uniqueness
+    if User.query.filter_by(username=username).first():
+        return jsonify({"message": "Пользователь с таким логином уже существует"}), 409
+    if User.query.filter_by(email=email).first():
+        return jsonify({"message": "Пользователь с таким email уже существует"}), 409
+
+    # Create unverified user
+    user = User(username=username, email=email, phone=phone, role="manager", is_verified=False)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    # Generate and send verification code
+    code = generate_verification_code()
+    verification = EmailVerification(
+        email=email,
+        code=code,
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.session.add(verification)
+    db.session.commit()
+
+    send_verification_email(email, code)
+
+    return jsonify({
+        "message": "Код подтверждения отправлен на вашу почту",
+        "email": email,
+        "user_id": user.id
+    }), 201
+
+
+@app.post("/api/auth/verify-email")
+def verify_email():
+    """Step 2: Verify email with the 6-digit code."""
+    data = request.json or {}
+    email = (data.get("email") or "").strip().lower()
+    code = (data.get("code") or "").strip()
+
+    if not email or not code:
+        return jsonify({"message": "Укажите email и код подтверждения"}), 400
+
+    # Find latest unused verification for this email
+    verification = EmailVerification.query.filter_by(
+        email=email, code=code, used=False
+    ).order_by(EmailVerification.created_at.desc()).first()
+
+    if not verification:
+        return jsonify({"message": "Неверный код подтверждения"}), 400
+
+    if datetime.utcnow() > verification.expires_at:
+        return jsonify({"message": "Код подтверждения истёк. Запросите новый."}), 400
+
+    # Mark code as used
+    verification.used = True
+
+    # Activate user
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "Пользователь не найден"}), 404
+
+    user.is_verified = True
+    db.session.commit()
+
+    # Auto-login after verification
+    access_token = create_access_token(identity=str(user.id))
+
+    return jsonify({
+        "message": "Email успешно подтверждён!",
+        "access_token": access_token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "role": user.role,
+            "email": user.email
+        }
+    })
+
+
+@app.post("/api/auth/resend-code")
+def resend_code():
+    """Resend verification code to email."""
+    data = request.json or {}
+    email = (data.get("email") or "").strip().lower()
+
+    if not email:
+        return jsonify({"message": "Укажите email"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "Пользователь с таким email не найден"}), 404
+    if user.is_verified:
+        return jsonify({"message": "Email уже подтверждён"}), 400
+
+    # Rate limiting: check if a code was sent in the last 60 seconds
+    recent = EmailVerification.query.filter_by(email=email, used=False).order_by(
+        EmailVerification.created_at.desc()
+    ).first()
+    if recent and (datetime.utcnow() - recent.created_at).total_seconds() < 60:
+        return jsonify({"message": "Подождите минуту перед повторной отправкой"}), 429
+
+    code = generate_verification_code()
+    verification = EmailVerification(
+        email=email,
+        code=code,
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.session.add(verification)
+    db.session.commit()
+
+    send_verification_email(email, code)
+
+    return jsonify({"message": "Новый код отправлен на вашу почту"})
+
+
 @app.post("/api/auth/login")
 def login():
     data = request.json
@@ -191,6 +397,8 @@ def login():
     
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
+        if not user.is_verified:
+            return jsonify({"message": "Email не подтверждён. Проверьте почту.", "needs_verification": True, "email": user.email}), 403
         # Convert ID to string for best compatibility with JWT serialization
         access_token = create_access_token(identity=str(user.id))
         return jsonify({
@@ -199,10 +407,11 @@ def login():
                 "id": user.id,
                 "username": user.username,
                 "role": user.role,
+                "email": user.email,
                 "club_name": user.club.name if user.club else None
             }
         })
-    return jsonify({"message": "Invalid credentials"}), 401
+    return jsonify({"message": "Неверный логин или пароль"}), 401
 
 # ── Admin Routes (Clubs Management) ───────────────────────────────────────────
 
@@ -241,6 +450,23 @@ def add_club():
     db.session.commit()
     return jsonify({"message": "Club added successfully", "id": new_club.id})
 
+@app.get("/api/admin/users")
+@admin_required
+def get_all_users():
+    """List all registered users for admin panel."""
+    users = User.query.order_by(User.created_at.desc()).all()
+    return jsonify([{
+        "id": u.id,
+        "username": u.username,
+        "email": u.email,
+        "phone": u.phone,
+        "role": u.role,
+        "is_verified": u.is_verified,
+        "club_id": u.club_id,
+        "club_name": u.club.name if u.club else None,
+        "created_at": u.created_at.isoformat() if u.created_at else None
+    } for u in users])
+
 @app.post("/api/admin/assign-user")
 @admin_required
 def assign_user():
@@ -251,7 +477,7 @@ def assign_user():
     
     user = User.query.filter_by(username=username).first()
     if not user:
-        user = User(username=username, club_id=club_id)
+        user = User(username=username, club_id=club_id, is_verified=True)
         user.set_password(password)
         db.session.add(user)
     else:
