@@ -13,10 +13,10 @@ services:
       - CONFIG_DIR=/app/data
       - DATABASE_URL=mysql+pymysql://icafe_user:icafe_password_change_me@db/icafedash
       - JWT_SECRET_KEY=change-this-to-a-secure-random-string
-      - SMTP_HOST=smtp.icafedash.com
+      - SMTP_HOST=smtp.gmail.com
       - SMTP_PORT=587
       - SMTP_USER=support@icafedash.com
-      - SMTP_PASSWORD=AUD96qZ%
+      - SMTP_PASSWORD=rydn kkct edss ygrw
       - SMTP_FROM=support@icafedash.com
     ports:
       - "5000:5000"
