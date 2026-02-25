@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const plans = [
     {
@@ -123,14 +124,15 @@ const Pricing = () => {
                                 ))}
                             </ul>
 
-                            <button
-                                className={`w-full py-3 rounded-xl font-medium transition-all duration-300 ${plan.highlight
+                            <Link
+                                to="/register"
+                                className={`w-full py-3 rounded-xl font-medium transition-all duration-300 text-center block ${plan.highlight
                                     ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_hsl(170_80%_50%_/_0.3)] hover:shadow-[0_0_25px_hsl(170_80%_50%_/_0.5)]"
                                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-white/5"
                                     }`}
                             >
                                 Выбрать
-                            </button>
+                            </Link>
                         </motion.div>
                     ))}
                 </div>
