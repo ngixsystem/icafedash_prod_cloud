@@ -14,7 +14,7 @@ import ClientsList from "@/components/dashboard/ClientsList";
 
 const Index = () => {
   const { isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState(isAdmin ? "Админка" : "Обзор");
+  const [activeTab, setActiveTab] = useState(isAdmin ? "Клубы" : "Обзор");
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,7 +48,7 @@ const Index = () => {
             <div className="flex items-center justify-center min-h-[400px]">
               <p className="text-muted-foreground">Вкладка "Участники" находится в разработке</p>
             </div>
-          ) : activeTab === "Админка" ? (
+          ) : activeTab === "Клубы" ? (
             <AdminDashboard />
           ) : activeTab === "Клиенты" ? (
             <ClientsList />

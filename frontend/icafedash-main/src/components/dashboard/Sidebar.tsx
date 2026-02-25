@@ -26,7 +26,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const clubLogo = cfg?.club_logo_url;
 
   const displayNavItems = isAdmin
-    ? [{ icon: Shield, label: "Админка" }, { icon: UserCheck, label: "Клиенты" }]
+    ? [{ icon: Shield, label: "Клубы" }, { icon: UserCheck, label: "Клиенты" }]
     : [...navItems];
 
   return (
