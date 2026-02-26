@@ -22,14 +22,13 @@ export default function Index() {
       <div className="relative px-6 pt-16 pb-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-display font-black tracking-tight flex items-center gap-3">
-              <span className="gradient-text">ICAFE</span>
-              <span className="text-white/20">/</span>
-              <span className="text-white">DASH</span>
-            </h1>
-            <p className="text-sm text-muted-foreground mt-2 font-medium">
-              Premium Gaming Club Finder
-            </p>
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="ICAFE DASH" className="h-10 w-auto object-contain" />
+              <div className="h-8 w-px bg-white/10 mx-1" />
+              <p className="text-[10px] text-primary uppercase font-black tracking-[0.3em] leading-none">
+                Premium<br />Finder
+              </p>
+            </div>
           </div>
           <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center border-primary/20 animate-float">
             <TrendingUp className="w-6 h-6 text-primary" />
@@ -53,15 +52,15 @@ export default function Index() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="px-6 mb-10 overflow-x-auto pb-4 hide-scrollbar">
-        <div className="flex gap-4 min-w-[500px]">
+      <div className="px-6 mb-10">
+        <div className="grid grid-cols-3 gap-3">
           <MetricCard
-            label="Total Clubs"
+            label="In Total"
             value={clubs.length}
             icon={<MapPin className="w-4 h-4 text-purple-400" />}
           />
           <MetricCard
-            label="Free Battlefronts"
+            label="Free PCs"
             value={clubs.reduce((s, c) => s + c.pcsFree, 0)}
             icon={<Cpu className="w-4 h-4 text-cyan-400" />}
             highlight
