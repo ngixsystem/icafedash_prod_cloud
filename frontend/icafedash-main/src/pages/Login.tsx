@@ -131,7 +131,7 @@ const Login = () => {
                         <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_5px_#00ffa3]" />
                         System Online
                     </span>
-                    <span>&copy; iCafeDash 2024</span>
+                    <span>&copy; iCafeDash 2026</span>
                 </div>
             </div>
         </div>
