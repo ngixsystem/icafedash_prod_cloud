@@ -24,9 +24,7 @@ export default function Index() {
           <div>
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="ICAFE DASH" className="h-8 w-auto object-contain" />
-              <div className="h-4 w-px bg-white/10 mx-1" />
-              <span className="text-sm font-bold tracking-tight text-white/90">cloud.icafedash.com</span>
-              <div className="h-4 w-px bg-white/10 mx-1" />
+              <div className="h-6 w-px bg-white/10 mx-1" />
               <p className="text-[9px] text-primary uppercase font-black tracking-[0.2em] leading-tight">
                 Премиум<br />Поиск
               </p>
