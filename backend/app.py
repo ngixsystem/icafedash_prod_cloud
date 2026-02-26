@@ -487,12 +487,25 @@ def client_register():
     if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
         return jsonify({"message": "Пользователь уже существует"}), 409
 
-    user = User(username=username, email=email, role="client", is_verified=True)
+    # Create unverified user with 'member' role
+    user = User(username=username, email=email, role="member", is_verified=False)
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"message": "Успешная регистрация"}), 201
+    # Generate and send verification code
+    code = generate_verification_code()
+    verification = EmailVerification(
+        email=email,
+        code=code,
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.session.add(verification)
+    db.session.commit()
+
+    send_verification_email(email, code)
+
+    return jsonify({"message": "Код подтверждения отправлен на вашу почту"}), 201
 
 
 @app.post("/api/clients/login")
@@ -501,8 +514,11 @@ def client_login():
     username = data.get("username")
     password = data.get("password")
     
-    user = User.query.filter_by(username=username, role="client").first()
+    # Allow both legacy 'client' and new 'member' roles
+    user = User.query.filter(User.username == username, User.role.in_(["client", "member"])).first()
     if user and user.check_password(password):
+        if not user.is_verified:
+            return jsonify({"message": "Email не подтверждён. Проверьте почту."}), 403
         access_token = create_access_token(identity=str(user.id))
         return jsonify({
             "access_token": access_token,

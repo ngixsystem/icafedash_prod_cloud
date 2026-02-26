@@ -47,7 +47,9 @@ const ClientsList = () => {
         }
     };
 
-    const filteredUsers = users.filter(
+    const managers = users.filter(u => u.role !== "member");
+
+    const filteredUsers = managers.filter(
         (u) =>
             u.username.toLowerCase().includes(search.toLowerCase()) ||
             (u.email && u.email.toLowerCase().includes(search.toLowerCase())) ||
@@ -66,10 +68,10 @@ const ClientsList = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
                         <Users className="h-6 w-6 text-primary" />
-                        Клиенты
+                        Менеджеры
                     </h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Зарегистрированные пользователи через лендинг
+                        Администраторы разделов и владельцы клубов
                     </p>
                 </div>
                 <button

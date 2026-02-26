@@ -8,9 +8,9 @@ import TotalIncomeChart from "@/components/dashboard/TotalIncomeChart";
 import MonthlyIncomeChart from "@/components/dashboard/MonthlyIncomeChart";
 import StatusPanel from "@/components/dashboard/StatusPanel";
 import Monitoring from "@/components/dashboard/Monitoring";
-import MembersList from "@/components/dashboard/MembersList";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import ClientsList from "@/components/dashboard/ClientsList";
+import ParticipantsList from "@/components/dashboard/ParticipantsList";
 
 const Index = () => {
   const { isAdmin } = useAuth();
@@ -45,12 +45,10 @@ const Index = () => {
           ) : activeTab === "Мониторинг" ? (
             <Monitoring />
           ) : activeTab === "Участники" ? (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <p className="text-muted-foreground">Вкладка "Участники" находится в разработке</p>
-            </div>
+            <ParticipantsList />
           ) : activeTab === "Клубы" ? (
             <AdminDashboard />
-          ) : activeTab === "Клиенты" ? (
+          ) : activeTab === "Клиенты" || activeTab === "Менеджеры" ? (
             <ClientsList />
           ) : (
             <div className="flex items-center justify-center min-h-[400px]">
