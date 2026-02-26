@@ -36,7 +36,7 @@ export default function ClubCard({ club }: ClubCardProps) {
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${club.isOpen ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-red-500"}`} />
             <span className="text-[10px] font-bold uppercase tracking-wider text-white/90">
-              {club.isOpen ? "Online" : "Closed"}
+              {club.isOpen ? "Онлайн" : "Закрыто"}
             </span>
           </div>
         </div>
@@ -48,7 +48,7 @@ export default function ClubCard({ club }: ClubCardProps) {
           </h3>
           <div className="flex items-center gap-1.5 text-white/70">
             <MapPin className="w-3.5 h-3.5 text-primary" />
-            <p className="text-xs truncate">{club.address}</p>
+            <p className="text-xs truncate">{club.address || "Адрес не указан"}</p>
           </div>
         </div>
       </div>
@@ -61,21 +61,21 @@ export default function ClubCard({ club }: ClubCardProps) {
               <Monitor className="w-4.5 h-4.5 text-primary" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Available Seats</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Мест свободно</span>
               <span className="text-sm font-semibold">
                 <span className={freePercent > 30 ? "text-emerald-400" : "text-amber-400"}>
                   {club.pcsFree}
                 </span>
-                <span className="text-white/40 font-normal ml-1"> / {club.pcsTotal} PCs</span>
+                <span className="text-white/40 font-normal ml-1"> / {club.pcsTotal} ПК</span>
               </span>
             </div>
           </div>
 
           <div className="text-right">
-            <span className="block text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none mb-1">Hourly Rate</span>
+            <span className="block text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none mb-1">Цена за час</span>
             <div className="flex items-baseline justify-end gap-1">
               <span className="text-xl font-display font-bold text-white">{club.pricePerHour}</span>
-              <span className="text-xs text-white/40 font-medium">₽/hr</span>
+              <span className="text-xs text-white/40 font-medium">СУМ</span>
             </div>
           </div>
         </div>

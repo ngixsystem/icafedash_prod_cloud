@@ -46,11 +46,15 @@ export default function MapPage() {
       L.marker([club.lat, club.lng], { icon })
         .addTo(map)
         .bindPopup(
-          `<div style="font-family: 'Space Grotesk', sans-serif; background: #141820; color: #e5e7eb; padding: 8px; border-radius: 8px; min-width: 160px;">
-            <strong style="color: #22d3ee;">${club.name}</strong><br/>
-            <span style="font-size:12px;">${club.address}</span><br/>
-            <span style="font-size:12px; color: ${color};">${club.pcsFree} / ${club.pcsTotal} ПК свободно</span><br/>
-            <span style="font-size:12px;">от ${club.pricePerHour} ₽/ч</span>
+          `<div style="font-family: 'Outfit', sans-serif; background: rgba(10,15,26,0.9); color: #e5e7eb; padding: 8px; border-radius: 12px; min-width: 160px;">
+            <strong style="color: #22d3ee; font-size: 14px;">${club.name}</strong><br/>
+            <span style="font-size:11px; opacity: 0.7;">${club.address || "Адрес не указан"}</span><br/>
+            <div style="margin-top: 8px; font-size: 11px; font-weight: 600; color: ${color};">
+               ${club.pcsFree} / ${club.pcsTotal} ПК свободно
+            </div>
+            <div style="font-size: 13px; font-weight: 800; margin-top: 4px;">
+               ${club.pricePerHour} СУМ/ч
+            </div>
           </div>`,
           { className: "dark-popup" }
         )
@@ -72,13 +76,13 @@ export default function MapPage() {
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-3xl font-display font-black tracking-tight flex items-center gap-3">
             <Map className="w-8 h-8 text-primary" />
-            <span className="gradient-text uppercase">Map</span>
+            <span className="gradient-text uppercase">Карта</span>
           </h1>
           <div className="glass-dark px-3 py-1 rounded-full border border-white/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Live Mode</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">В эфире</span>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground font-medium">Real-time PC availability across the city</p>
+        <p className="text-sm text-muted-foreground font-medium">Свободные места в клубах города в реальном времени</p>
       </div>
 
       <div className="mx-6 relative group">

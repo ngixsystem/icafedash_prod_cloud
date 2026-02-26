@@ -66,7 +66,7 @@ export default function ClubPage() {
               <div key={zone.id} className="rounded-lg glass p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-display font-bold text-sm">{zone.name}</h3>
-                  <span className="text-primary font-display font-bold">{zone.pricePerHour} ₽/ч</span>
+                  <span className="text-primary font-display font-bold">{zone.pricePerHour} СУМ/ч</span>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">{zone.specs}</p>
                 <div className="flex items-center gap-3">
@@ -78,8 +78,8 @@ export default function ClubPage() {
                         background: freePercent > 30
                           ? "hsl(var(--success))"
                           : freePercent > 0
-                          ? "hsl(var(--warning))"
-                          : "hsl(var(--destructive))",
+                            ? "hsl(var(--warning))"
+                            : "hsl(var(--destructive))",
                       }}
                     />
                   </div>
@@ -104,7 +104,7 @@ export default function ClubPage() {
               <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
                 <Clock className="w-3 h-3" /> {t.label}
               </div>
-              <p className="text-primary font-display font-bold text-lg">{t.price} ₽</p>
+              <p className="text-primary font-display font-bold text-lg">{t.price} СУМ</p>
             </div>
           ))}
         </div>
