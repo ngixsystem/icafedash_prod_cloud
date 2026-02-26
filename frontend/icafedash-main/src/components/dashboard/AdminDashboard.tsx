@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, Building, Key } from "lucide-react";
+import { Plus, Users, Building, PenLine } from "lucide-react";
 import { toast } from "sonner";
+import { ClubEditModal } from "./ClubEditModal";
 
 const AdminDashboard = () => {
     const qc = useQueryClient();
@@ -17,6 +18,8 @@ const AdminDashboard = () => {
 
     const [newClub, setNewClub] = useState({ name: "", api_key: "", cafe_id: "" });
     const [newUser, setNewUser] = useState({ username: "", password: "", club_id: "" });
+
+    const [editingClub, setEditingClub] = useState<any>(null);
 
     const addClub = useMutation({
         mutationFn: (data: typeof newClub) => api.addClub(data),
@@ -70,7 +73,7 @@ const AdminDashboard = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Cafe ID</Label>
+                                <Label>Cafe ID / License ID</Label>
                                 <Input
                                     value={newClub.cafe_id}
                                     onChange={e => setNewClub({ ...newClub, cafe_id: e.target.value })}
@@ -134,7 +137,7 @@ const AdminDashboard = () => {
                             >
                                 <option value="">Выберите клуб...</option>
                                 {clubs?.map((c: any) => (
-                                    <option key={c.id} value={c.id}>{c.name} ({c.cafe_id})</option>
+                                    <option key={c.id} value={c.id}>{c.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -166,21 +169,25 @@ const AdminDashboard = () => {
                         <table className="w-full text-sm text-left">
                             <thead className="bg-secondary/50 text-xs uppercase text-muted-foreground">
                                 <tr>
-                                    <th className="px-4 py-3">ID</th>
+                                    <th className="px-4 py-3 w-[60px]">ID</th>
                                     <th className="px-4 py-3">Название</th>
-                                    <th className="px-4 py-3">Cafe ID</th>
-                                    <th className="px-4 py-3 text-right">Статус</th>
+                                    <th className="px-4 py-3">License ID</th>
+                                    <th className="px-4 py-3 text-right">Действия</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {clubs?.map((c: any) => (
                                     <tr key={c.id} className="hover:bg-secondary/30 transition-colors">
                                         <td className="px-4 py-3 font-mono text-xs">{c.id}</td>
-                                        <td className="px-4 py-3 font-medium">{c.name}</td>
+                                        <td className="px-4 py-3 font-medium flex items-center gap-3">
+                                            {c.logo_url && <img src={c.logo_url} alt="logo" className="w-6 h-6 rounded-full object-cover" />}
+                                            {c.name}
+                                        </td>
                                         <td className="px-4 py-3 text-muted-foreground">{c.cafe_id}</td>
                                         <td className="px-4 py-3 text-right">
-                                            <span className="inline-flex h-2 w-2 rounded-full bg-green-500 mr-2" />
-                                            Активен
+                                            <Button variant="ghost" size="icon" onClick={() => setEditingClub(c)}>
+                                                <PenLine className="w-4 h-4 text-muted-foreground" />
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}
@@ -196,6 +203,8 @@ const AdminDashboard = () => {
                     </div>
                 </CardContent>
             </Card>
+
+            <ClubEditModal club={editingClub} isOpen={!!editingClub} onClose={() => setEditingClub(null)} />
         </div>
     );
 };

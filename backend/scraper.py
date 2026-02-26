@@ -63,13 +63,24 @@ def scrape_clubs():
                             continue
                             
                         # Извлекаем фото. 
-                        # Например <img class="logo" src="...">
+                        # Лучший вариант: OpenGraph Image
                         logo = ""
-                        img_tag = c_soup.find("img", {"class": re.compile(r"logo|avatar|image", re.IGNORECASE)})
-                        if img_tag and img_tag.get("src"):
-                            src = img_tag["src"]
-                            logo = src if src.startswith("http") else base_url + src
-                            
+                        og_img = c_soup.find("meta", property="og:image")
+                        if og_img and og_img.get("content"):
+                            logo = og_img["content"]
+                        else:
+                            # Запасной: Например <img class="logo" src="...">
+                            img_tag = c_soup.find("img", {"class": re.compile(r"logo|avatar|image|foto", re.IGNORECASE)})
+                            if not img_tag:
+                                # Ищем просто большую картинку
+                                for img in c_soup.find_all("img"):
+                                    if "avatar" in img.get("src", "").lower() or "upload" in img.get("src", "").lower():
+                                        img_tag = img
+                                        break
+                                        
+                            if img_tag and img_tag.get("src"):
+                                src = img_tag["src"]
+                                logo = src if src.startswith("http") else base_url + src
                         # Извлекаем контакты (телефон и адрес) - 
                         # Ищем по тексту
                         address = "Адрес не указан"

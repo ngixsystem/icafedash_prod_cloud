@@ -203,8 +203,22 @@ export const api = {
     health: () => get<{ status: string; configured: boolean; timestamp: string }>("/health"),
 
     // Admin routes
-    adminClubs: () => get<{ id: number; name: string; cafe_id: string }[]>("/admin/clubs"),
+    adminClubs: () => get<{
+        id: number;
+        name: string;
+        cafe_id: string;
+        api_key: string;
+        logo_url: string;
+        address: string;
+        phone: string;
+        instagram: string;
+        working_hours: string;
+        lat: number;
+        lng: number;
+        description: string;
+    }[]>("/admin/clubs"),
     addClub: (data: { name: string; api_key: string; cafe_id: string }) => post<{ ok: boolean }>("/admin/clubs", data),
+    updateClub: (clubId: number, data: any) => put<{ message: string }>(`/admin/clubs/${clubId}`, data),
     assignUser: (data: { username: string; password: string; club_id: string }) => post<{ ok: boolean }>("/admin/assign-user", data),
     adminUsers: () => get<RegisteredUser[]>("/admin/users"),
     updateUser: (userId: number, data: { role?: string; club_id?: number | null; is_verified?: boolean }) =>

@@ -73,6 +73,8 @@ class Club(db.Model):
     description = db.Column(db.Text, nullable=True)
     lat = db.Column(db.Float, nullable=True)
     lng = db.Column(db.Float, nullable=True)
+    instagram = db.Column(db.String(100), nullable=True)
+    working_hours = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     users = db.relationship('User', backref='club', lazy=True)
@@ -202,7 +204,13 @@ with app.app_context():
         if 'lng' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN lng FLOAT"))
             conn.commit()
-    
+        if 'instagram' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN instagram VARCHAR(100)"))
+            conn.commit()
+        if 'working_hours' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN working_hours VARCHAR(100)"))
+            conn.commit()
+            
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
     if not admin:
@@ -545,6 +553,8 @@ def public_clubs():
                 "description": c.description or "",
                 "lat": c.lat or 0.0,
                 "lng": c.lng or 0.0,
+                "instagram": c.instagram or "",
+                "working_hours": c.working_hours or "Круглосуточно",
                 "isOpen": True,
                 "pricePerHour": 100
             })
@@ -562,6 +572,8 @@ def public_clubs():
                 "description": c.description or "",
                 "lat": c.lat or 0.0,
                 "lng": c.lng or 0.0,
+                "instagram": c.instagram or "",
+                "working_hours": c.working_hours or "Круглосуточно",
                 "isOpen": False,
                 "pricePerHour": 0
             })
@@ -590,8 +602,41 @@ def get_clubs():
         "id": c.id,
         "name": c.name,
         "cafe_id": c.cafe_id,
-        "logo_url": c.club_logo_url
+        "api_key": c.api_key,
+        "logo_url": c.club_logo_url,
+        "address": c.address or "",
+        "phone": c.phone or "",
+        "instagram": c.instagram or "",
+        "working_hours": c.working_hours or "",
+        "lat": c.lat or 0.0,
+        "lng": c.lng or 0.0,
+        "description": c.description or ""
     } for c in clubs])
+
+@app.put("/api/admin/clubs/<int:club_id>")
+@admin_required
+def update_club(club_id):
+    club = Club.query.get_or_404(club_id)
+    data = request.json or {}
+
+    if "name" in data: club.name = data["name"]
+    if "api_key" in data: club.api_key = data["api_key"]
+    if "cafe_id" in data: club.cafe_id = data["cafe_id"]
+    if "logo_url" in data: club.club_logo_url = data["logo_url"]
+    if "address" in data: club.address = data["address"]
+    if "phone" in data: club.phone = data["phone"]
+    if "instagram" in data: club.instagram = data["instagram"]
+    if "working_hours" in data: club.working_hours = data["working_hours"]
+    if "description" in data: club.description = data["description"]
+    
+    try:
+        if "lat" in data: club.lat = float(data["lat"])
+        if "lng" in data: club.lng = float(data["lng"])
+    except:
+        pass
+
+    db.session.commit()
+    return jsonify({"message": "Club updated successfully"})
 
 @app.post("/api/admin/clubs")
 @admin_required
