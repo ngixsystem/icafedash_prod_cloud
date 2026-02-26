@@ -51,10 +51,13 @@ def scrape_clubs():
                             
                         c_soup = BeautifulSoup(c_res.text, "html.parser")
                         
-                        # Парсим название (обычно h1 или h2 на странице клуба/профиля)
-                        # Точный селектор зависит от верстки frag.gg. Пример:
+                        # Парсим название 
                         name_tag = c_soup.find("h1") or c_soup.find("h2")
-                        name = name_tag.text.strip() if name_tag else "Unknown Club"
+                        if not name_tag:
+                            og_title = c_soup.find("meta", property="og:title")
+                            name = og_title["content"] if og_title else "Unknown Club"
+                        else:
+                            name = name_tag.text.strip()
                         
                         # Избегаем дублирования
                         existing = Club.query.filter_by(name=name).first()
@@ -62,56 +65,70 @@ def scrape_clubs():
                             print(f"  Клуб '{name}' уже есть в БД. Пропуск.")
                             continue
                             
-                        # Извлекаем фото. 
-                        # Лучший вариант: OpenGraph Image
+                        # --- Извлекаем фото ---
                         logo = ""
-                        og_img = c_soup.find("meta", property="og:image")
-                        if og_img and og_img.get("content"):
-                            logo = og_img["content"]
-                        else:
-                            # Запасной: Например <img class="logo" src="...">
-                            img_tag = c_soup.find("img", {"class": re.compile(r"logo|avatar|image|foto", re.IGNORECASE)})
-                            if not img_tag:
-                                # Ищем просто большую картинку
+                        # 1. Проверяем основной баннер клуба (background-image)
+                        top_img_div = c_soup.find("div", class_="clubDetailTopImage")
+                        if top_img_div and top_img_div.get("style") and "url(" in top_img_div["style"]:
+                            style = top_img_div["style"]
+                            match = re.search(r"url\((.*?)\)", style)
+                            if match:
+                                logo = match.group(1).strip("'\"")
+                        
+                        # 2. Если нет, ищем в галерее или og:image
+                        if not logo or "frag-og.png" in logo:
+                            # Проверяем og:image
+                            og_img = c_soup.find("meta", property="og:image")
+                            if og_img and og_img.get("content") and "frag-og.png" not in og_img["content"]:
+                                logo = og_img["content"]
+                            else:
+                                # Ищем первую картинку из загрузок клуба
                                 for img in c_soup.find_all("img"):
-                                    if "avatar" in img.get("src", "").lower() or "upload" in img.get("src", "").lower():
-                                        img_tag = img
+                                    src = img.get("src", "")
+                                    if "/uploads/club/" in src:
+                                        logo = src
                                         break
-                                        
-                            if img_tag and img_tag.get("src"):
-                                src = img_tag["src"]
-                                logo = src if src.startswith("http") else base_url + src
-                        # Извлекаем контакты (телефон и адрес) - 
-                        # Ищем по тексту
+                        
+                        if logo and not logo.startswith("http"):
+                            logo = base_url + logo
+
+                        # --- Контакты и инфо ---
                         address = "Адрес не указан"
                         phone = ""
+                        instagram = ""
+                        working_hours = "Круглосуточно"
                         description = ""
                         
-                        # Наивный парсинг всех параграфов
+                        # Ищем все ссылки
+                        for a in c_soup.find_all("a", href=True):
+                            href = a["href"]
+                            if "instagram.com" in href and "fragportal" not in href:
+                                instagram = href
+                            if href.startswith("tel:"):
+                                phone = href.replace("tel:", "").strip()
+
+                        # Текстовые поля
                         for p in c_soup.find_all(["p", "div", "span", "li"]):
                             text = p.text.strip()
-                            # Телефон
-                            if not phone and re.search(r"(\+?\d{1,3}[\s-]?\(?\d{2,3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})", text):
-                                phone_match = re.search(r"(\+?\d{1,3}[\s-]?\(?\d{2,3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})", text)
+                            # Телефон (если еще не найден)
+                            if not phone and re.search(r"(\+?998[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})", text):
+                                phone_match = re.search(r"(\+?998[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})", text)
                                 if phone_match:
                                     phone = phone_match.group(1)
                             # Адрес
-                            if "улица" in text.lower() or "ул." in text.lower() or "пр." in text.lower() or "район" in text.lower():
-                                if len(text) < 150:
+                            if ("улица" in text.lower() or "ул." in text.lower() or "пр." in text.lower() or "г." in text.lower()) and len(text) < 150:
+                                if "frag portal" not in text.lower() and "frag.gg" not in text.lower():
                                     address = text
 
-                        # Пробуем найти iframe карты, чтобы вытащить координаты (lat, lng)
+                        # Пробуем найти координаты
                         lat, lng = 0.0, 0.0
                         for iframe in c_soup.find_all("iframe"):
                             src = iframe.get("src", "")
-                            # Например Яндекс карты: ll=37.6173,55.7558
                             ll_match = re.search(r"ll=([\d\.]+),([\d\.]+)", src)
                             if ll_match:
                                 lng = float(ll_match.group(1))
                                 lat = float(ll_match.group(2))
                                 break
-                            
-                        # Также можно спарсить VIP залы, ПК и т.д., но для этого нужна модель Zone.
                         
                         new_club = Club(
                             name=name[:100],
@@ -121,13 +138,18 @@ def scrape_clubs():
                             address=address[:255],
                             phone=phone[:50],
                             description=description,
+                            instagram=instagram[:100],
+                            working_hours=working_hours[:100],
                             lat=lat,
                             lng=lng
                         )
                         db.session.add(new_club)
                         db.session.commit()
                         clubs_added += 1
-                        print(f"  [+] Добавлен клуб: {name}")
+                        print(f"  [+] Добавлен: {name}")
+                        print(f"      - Фото: {logo[:50]}...")
+                        print(f"      - Тел: {phone}")
+                        print(f"      - Inst: {instagram}")
                         
                         time.sleep(1) # Не спамим запросами
                         
