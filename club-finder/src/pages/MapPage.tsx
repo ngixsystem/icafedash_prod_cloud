@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { Map } from "lucide-react";
 import { clubs } from "@/data/clubs";
 
 export default function MapPage() {
@@ -63,20 +64,58 @@ export default function MapPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen pb-20">
-      <div className="px-4 pt-12 pb-3">
-        <h1 className="text-xl font-display font-bold">🗺 Карта клубов</h1>
-        <p className="text-xs text-muted-foreground">Свободные ПК в реальном времени</p>
+    <div className="min-h-screen pb-32 bg-background">
+      {/* Dynamic Background Element */}
+      <div className="fixed top-0 left-0 right-0 h-96 bg-gradient-to-b from-primary/10 via-transparent to-transparent -z-10 pointer-events-none" />
+
+      <div className="px-6 pt-16 pb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-display font-black tracking-tight flex items-center gap-3">
+            <Map className="w-8 h-8 text-primary" />
+            <span className="gradient-text uppercase">Map</span>
+          </h1>
+          <div className="glass-dark px-3 py-1 rounded-full border border-white/10">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Live Mode</span>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground font-medium">Real-time PC availability across the city</p>
       </div>
-      <div ref={mapRef} className="mx-4 rounded-lg overflow-hidden border border-border" style={{ height: "calc(100vh - 180px)" }} />
+
+      <div className="mx-6 relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-accent/30 rounded-[2rem] blur opacity-20 transition duration-500" />
+        <div
+          ref={mapRef}
+          className="relative glass-dark rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl"
+          style={{ height: "calc(100vh - 300px)", minHeight: "400px" }}
+        />
+      </div>
+
       <style>{`
         .dark-popup .leaflet-popup-content-wrapper {
-          background: #141820;
-          border: 1px solid #1e2330;
-          box-shadow: 0 0 15px rgba(34,211,238,0.15);
+          background: rgba(10, 15, 26, 0.85);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 1.25rem;
+          color: white;
+          padding: 4px;
         }
-        .dark-popup .leaflet-popup-tip { background: #141820; }
+        .dark-popup .leaflet-popup-tip { 
+          background: rgba(10, 15, 26, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
         .custom-marker { background: none !important; border: none !important; }
+        .leaflet-container { background: #06080d !important; }
+        .leaflet-control-zoom { border: none !important; margin: 20px !important; }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out {
+          background: rgba(20, 24, 32, 0.8) !important;
+          backdrop-filter: blur(8px) !important;
+          color: white !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          border-radius: 12px !important;
+          margin-bottom: 5px !important;
+        }
+        .leaflet-bar a:first-child { border-top-left-radius: 12px !important; border-top-right-radius: 12px !important; }
+        .leaflet-bar a:last-child { border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; }
       `}</style>
     </div>
   );
