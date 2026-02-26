@@ -59,12 +59,8 @@ def scrape_clubs():
                         else:
                             name = name_tag.text.strip()
                         
-                        # Избегаем дублирования
                         existing = Club.query.filter_by(name=name).first()
-                        if existing:
-                            print(f"  Клуб '{name}' уже есть в БД. Пропуск.")
-                            continue
-                            
+                        
                         # --- Извлекаем фото ---
                         logo = ""
                         # 1. Проверяем основной баннер клуба (background-image)
@@ -93,13 +89,11 @@ def scrape_clubs():
                             logo = base_url + logo
 
                         # --- Контакты и инфо ---
-                        address = "Адрес не указан"
                         phone = ""
                         instagram = ""
-                        working_hours = "Круглосуточно"
-                        description = ""
+                        address = "Адрес не указан"
                         
-                        # Ищем все ссылки
+                        # Извлекаем данные из страницы
                         for a in c_soup.find_all("a", href=True):
                             href = a["href"]
                             if "instagram.com" in href and "fragportal" not in href:
@@ -107,29 +101,27 @@ def scrape_clubs():
                             if href.startswith("tel:"):
                                 phone = href.replace("tel:", "").strip()
 
-                        # Текстовые поля
                         for p in c_soup.find_all(["p", "div", "span", "li"]):
                             text = p.text.strip()
-                            # Телефон (если еще не найден)
                             if not phone and re.search(r"(\+?998[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})", text):
-                                phone_match = re.search(r"(\+?998[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})", text)
-                                if phone_match:
-                                    phone = phone_match.group(1)
-                            # Адрес
-                            if ("улица" in text.lower() or "ул." in text.lower() or "пр." in text.lower() or "г." in text.lower()) and len(text) < 150:
+                                m = re.search(r"(\+?998[\s-]?\(?\d{2}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})", text)
+                                if m: phone = m.group(1)
+                            if ("улица" in text.lower() or "ул." in text.lower() or "г." in text.lower()) and len(text) < 150:
                                 if "frag portal" not in text.lower() and "frag.gg" not in text.lower():
                                     address = text
 
-                        # Пробуем найти координаты
-                        lat, lng = 0.0, 0.0
-                        for iframe in c_soup.find_all("iframe"):
-                            src = iframe.get("src", "")
-                            ll_match = re.search(r"ll=([\d\.]+),([\d\.]+)", src)
-                            if ll_match:
-                                lng = float(ll_match.group(1))
-                                lat = float(ll_match.group(2))
-                                break
-                        
+                        # Если клуб уже есть, ОБНОВЛЯЕМ его данные (особенно если нет фото)
+                        if existing:
+                            print(f"  Клуб '{name}' уже в базе. Обновляем данные...")
+                            if not existing.club_logo_url or "frag-og.png" in existing.club_logo_url:
+                                existing.club_logo_url = logo
+                            if not existing.phone: existing.phone = phone
+                            if not existing.instagram: existing.instagram = instagram
+                            if address != "Адрес не указан" and not existing.address: existing.address = address
+                            db.session.commit()
+                            print(f"      [~] Обновлено: {name} | Фото: {'OK' if logo else 'Fail'}")
+                            continue
+
                         new_club = Club(
                             name=name[:100],
                             api_key="",
@@ -137,11 +129,11 @@ def scrape_clubs():
                             club_logo_url=logo[:255],
                             address=address[:255],
                             phone=phone[:50],
-                            description=description,
+                            description="",
                             instagram=instagram[:100],
-                            working_hours=working_hours[:100],
-                            lat=lat,
-                            lng=lng
+                            working_hours="Круглосуточно",
+                            lat=0.0,
+                            lng=0.0
                         )
                         db.session.add(new_club)
                         db.session.commit()
