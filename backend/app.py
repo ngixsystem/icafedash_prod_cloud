@@ -440,6 +440,103 @@ def login():
         })
     return jsonify({"message": "Неверный логин или пароль"}), 401
 
+# ── Client / Public API (Club-Finder) ─────────────────────────────────────────
+
+@app.post("/api/clients/register")
+def client_register():
+    data = request.json or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password", "")
+
+    if not username or not email or not password:
+        return jsonify({"message": "Заполните все поля"}), 400
+        
+    if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+        return jsonify({"message": "Пользователь уже существует"}), 409
+
+    user = User(username=username, email=email, role="client", is_verified=True)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({"message": "Успешная регистрация"}), 201
+
+
+@app.post("/api/clients/login")
+def client_login():
+    data = request.json or {}
+    username = data.get("username")
+    password = data.get("password")
+    
+    user = User.query.filter_by(username=username, role="client").first()
+    if user and user.check_password(password):
+        access_token = create_access_token(identity=str(user.id))
+        return jsonify({
+            "access_token": access_token,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role
+            }
+        })
+    return jsonify({"message": "Неверный логин или пароль"}), 401
+
+
+@app.get("/api/public/clubs")
+def public_clubs():
+    """Return an aggregated list of clubs with some basic stats based on iCafeCloud API"""
+    clubs = Club.query.all()
+    result = []
+    
+    for c in clubs:
+        try:
+            # We fetch simple public stats if API key is valid
+            headers = {"Authorization": f"Bearer {c.api_key.strip()}", "Accept": "application/json"}
+            
+            # Count PCs
+            pc_raw = requests.get(f"{ICAFE_BASE}/cafe/{c.cafe_id}/pcList", headers=headers, timeout=5).json()
+            total_pcs = 0
+            free_pcs = 0
+            if pc_raw.get("code") == 200:
+                data_field = pc_raw.get("data", {})
+                pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
+                total_pcs = len(pcs)
+                for pc in pcs:
+                    if not (pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account")):
+                        s_str = str(pc.get("pc_status", "")).lower()
+                        if s_str not in ("busy", "locked", "ordered", "using", "offline", "off"):
+                            free_pcs += 1
+            
+            result.append({
+                "id": c.id,
+                "name": c.name,
+                "logo": c.club_logo_url,
+                "pcsTotal": total_pcs,
+                "pcsFree": free_pcs,
+                "rating": 4.8, # Mock rating for demo
+                "address": "Адрес не указан",
+                "isOpen": True,
+                "pricePerHour": 100
+            })
+        except:
+            # Add anyway as offline/unknown
+            result.append({
+                "id": c.id,
+                "name": c.name,
+                "logo": c.club_logo_url,
+                "pcsTotal": 0,
+                "pcsFree": 0,
+                "rating": 0,
+                "address": "Адрес не указан",
+                "isOpen": False,
+                "pricePerHour": 0
+            })
+            
+    return jsonify(result)
+
+
 # ── Admin Routes (Clubs Management) ───────────────────────────────────────────
 
 def admin_required(fn):

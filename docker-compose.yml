@@ -84,6 +84,19 @@ services:
     depends_on:
       - showcase
       - frontend
+      - clubfinder
+
+  clubfinder:
+    image: ngixsystem/icafedash-clubfinder:latest
+    build:
+      context: ./club-finder
+      dockerfile: Dockerfile
+    container_name: icafe_clubfinder
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - icafe_net
 
 volumes:
   icafe_data:

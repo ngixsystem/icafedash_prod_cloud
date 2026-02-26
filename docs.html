@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iCafeDash — Документация проекта</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a2e;--border:#2a2a3e;--text:#e0e0e8;--text2:#8888a0;--accent:#2dd4bf;--accent2:#06b6d4;--red:#ef4444;--yellow:#eab308;--green:#22c55e;--blue:#3b82f6}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+.container{max-width:1100px;margin:0 auto;padding:20px 24px 80px}
+h1{font-size:2.4em;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.subtitle{color:var(--text2);font-size:1.05em;margin-bottom:40px}
+h2{font-size:1.5em;font-weight:700;color:var(--accent);margin:48px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:1.15em;font-weight:600;color:var(--text);margin:24px 0 12px}
+p{margin:8px 0;color:var(--text2)}
+a{color:var(--accent);text-decoration:none}
+code{background:var(--surface2);padding:2px 7px;border-radius:4px;font-size:.88em;color:var(--accent)}
+pre{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;overflow-x:auto;font-size:.85em;margin:12px 0;color:#c0c0d0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.92em}
+th{background:var(--surface2);color:var(--accent);text-align:left;padding:10px 14px;font-weight:600;border:1px solid var(--border)}
+td{padding:10px 14px;border:1px solid var(--border);color:var(--text2)}
+tr:hover td{background:var(--surface)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:12px 0}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78em;font-weight:600;margin:2px}
+.badge-ok{background:#22c55e22;color:var(--green)}
+.badge-warn{background:#eab30822;color:var(--yellow)}
+.badge-err{background:#ef444422;color:var(--red)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 28px;margin:24px 0}
+.toc a{display:block;padding:4px 0;color:var(--text2);font-size:.93em}
+.toc a:hover{color:var(--accent)}
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;font-family:monospace;font-size:.85em;white-space:pre;overflow-x:auto;color:#88ccbb;margin:12px 0;line-height:1.5}
+.header-bar{padding:40px 0 10px;text-align:center}
+.meta{text-align:center;color:var(--text2);font-size:.85em;margin-bottom:40px}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header-bar">
+<h1>🚀 iCafeDash Platform</h1>
+<p class="subtitle">Multi-tenant Gaming Club Management — Техническая документация</p>
+<p class="meta">Сгенерировано: 26.02.2026 | Ветка: main | Версия: prod_cloud</p>
+</div>
+
+<div class="toc">
+<strong style="color:var(--accent)">📑 Содержание</strong>
+<a href="#arch">1. Общая архитектура</a>
+<a href="#modules">2. Модули проекта</a>
+<a href="#backend">3. Backend (Flask API)</a>
+<a href="#frontend">4. Frontend (Dashboard)</a>
+<a href="#showcase">5. Showcase (Landing)</a>
+<a href="#clubfinder">6. Club-Finder</a>
+<a href="#docker">7. Docker-инфраструктура</a>
+<a href="#security">8. Безопасность</a>
+<a href="#issues">9. Обнаруженные проблемы</a>
+<a href="#launch">10. Запуск проекта</a>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="arch">1. Общая архитектура</h2>
+<p>Мультитенантная SaaS-платформа для управления игровыми клубами, интегрированная с <a href="https://api.icafecloud.com">iCafeCloud API</a>. 5 Docker-сервисов в единой bridge-сети.</p>
+
+<div class="diagram">
+                    ┌─────────────────┐
+                    │      Caddy      │  ← SSL + Reverse Proxy
+                    │   :80 / :443    │
+                    └───────┬─────────┘
+                 ┌──────────┼──────────┐
+                 │          │          │
+     ┌───────────▼──┐ ┌─────▼─────┐ ┌──▼──────────┐
+     │   Showcase   │ │ Frontend  │ │   Backend   │
+     │  (Landing)   │ │(Dashboard)│ │   (Flask)   │
+     │  :80 nginx   │ │ :80 nginx │ │   :5000     │
+     └──────────────┘ └───────────┘ └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │   MySQL 8   │
+                                    │    (db)     │
+                                    └─────────────┘</div>
+
+<h3>Маршрутизация (Caddyfile)</h3>
+<table>
+<tr><th>Домен</th><th>Сервис</th></tr>
+<tr><td><code>icafedash.com</code>, <code>www.icafedash.com</code></td><td>Showcase (лэндинг)</td></tr>
+<tr><td><code>cp.icafedash.com</code>, <code>cloud.icafedash.com</code></td><td>Frontend (dashboard)</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="modules">2. Модули проекта</h2>
+<table>
+<tr><th>Модуль</th><th>Технологии</th><th>Назначение</th><th>Docker-образ</th></tr>
+<tr><td><strong>backend</strong></td><td>Flask, SQLAlchemy, MySQL 8, JWT, Bcrypt</td><td>API-сервер, бизнес-логика</td><td><code>ngixsystem/icafedash-backend</code></td></tr>
+<tr><td><strong>frontend</strong></td><td>React 18, Vite 5, TailwindCSS, ShadCN UI, Recharts</td><td>Панель управления</td><td><code>ngixsystem/icafedash-frontend</code></td></tr>
+<tr><td><strong>showcase</strong></td><td>React 18, Vite 5, TailwindCSS, Framer Motion</td><td>Лэндинг-страница</td><td><code>ngixsystem/icafedash-showcase</code></td></tr>
+<tr><td><strong>club-finder</strong></td><td>React 18, Vite 5, Leaflet</td><td>Поиск клубов (карта)</td><td>⚠️ Нет Dockerfile</td></tr>
+<tr><td><strong>db</strong></td><td>MySQL 8.0</td><td>База данных</td><td><code>mysql:8.0</code></td></tr>
+<tr><td><strong>caddy</strong></td><td>Caddy</td><td>Reverse proxy + SSL</td><td><code>caddy:latest</code></td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="backend">3. Backend (Flask API)</h2>
+<p>Файл: <code>backend/app.py</code> — 1065 строк. Python 3.11 + Flask.</p>
+
+<h3>3.1 Модели БД (SQLAlchemy)</h3>
+<div class="grid2">
+<div class="card">
+<h3>Club</h3>
+<p><code>id</code> — Integer PK<br>
+<code>name</code> — String(100)<br>
+<code>api_key</code> — Text (iCafeCloud ключ)<br>
+<code>cafe_id</code> — String(50)<br>
+<code>club_logo_url</code> — String(255)<br>
+<code>created_at</code> — DateTime<br>
+<code>users</code> → relationship → User[]</p>
+</div>
+<div class="card">
+<h3>User</h3>
+<p><code>id</code> — Integer PK<br>
+<code>username</code> — String(80), unique<br>
+<code>email</code> — String(120), unique<br>
+<code>phone</code> — String(20)<br>
+<code>password_hash</code> — String(255), Bcrypt<br>
+<code>role</code> — "admin" | "manager"<br>
+<code>is_verified</code> — Boolean<br>
+<code>club_id</code> → FK(clubs.id)</p>
+</div>
+<div class="card">
+<h3>EmailVerification</h3>
+<p><code>id</code> — Integer PK<br>
+<code>email</code> — String(120)<br>
+<code>code</code> — String(6)<br>
+<code>created_at</code> — DateTime<br>
+<code>expires_at</code> — DateTime (10 мин)<br>
+<code>used</code> — Boolean</p>
+</div>
+</div>
+
+<h3>3.2 API-эндпоинты</h3>
+
+<h3>Аутентификация</h3>
+<table>
+<tr><th>Метод</th><th>Путь</th><th>Описание</th><th>Auth</th></tr>
+<tr><td>POST</td><td><code>/api/auth/register</code></td><td>Регистрация + отправка email кода</td><td>—</td></tr>
+<tr><td>POST</td><td><code>/api/auth/verify-email</code></td><td>Подтверждение 6-значным кодом</td><td>—</td></tr>
+<tr><td>POST</td><td><code>/api/auth/resend-code</code></td><td>Повторная отправка кода (лимит 60 сек)</td><td>—</td></tr>
+<tr><td>POST</td><td><code>/api/auth/login</code></td><td>Вход → JWT-токен (2 часа)</td><td>—</td></tr>
+</table>
+
+<h3>Админ-панель</h3>
+<table>
+<tr><th>Метод</th><th>Путь</th><th>Описание</th><th>Auth</th></tr>
+<tr><td>GET</td><td><code>/api/admin/clubs</code></td><td>Список клубов</td><td>admin</td></tr>
+<tr><td>POST</td><td><code>/api/admin/clubs</code></td><td>Добавить клуб</td><td>admin</td></tr>
+<tr><td>GET</td><td><code>/api/admin/users</code></td><td>Список пользователей</td><td>admin</td></tr>
+<tr><td>POST</td><td><code>/api/admin/assign-user</code></td><td>Назначить менеджера клубу</td><td>admin</td></tr>
+<tr><td>PUT</td><td><code>/api/admin/users/&lt;id&gt;</code></td><td>Обновить роль/клуб</td><td>admin</td></tr>
+<tr><td>DELETE</td><td><code>/api/admin/users/&lt;id&gt;</code></td><td>Удалить пользователя</td><td>admin</td></tr>
+</table>
+
+<h3>Дашборд (iCafeCloud прокси)</h3>
+<table>
+<tr><th>Метод</th><th>Путь</th><th>Описание</th><th>Auth</th></tr>
+<tr><td>GET</td><td><code>/api/overview</code></td><td>Выручка, активные ПК, участники</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/charts/daily</code></td><td>Доход за 7 дней</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/charts/monthly</code></td><td>Доход за 30 дней (cash vs balance)</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/charts/payments</code></td><td>Методы оплаты за 7 дней</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/charts/income-monthly</code></td><td>Агрегация за 7 месяцев</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/pcs</code></td><td>Мониторинг ПК (free/busy/offline)</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/members</code></td><td>Список участников (пагинация, поиск)</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/billing-logs</code></td><td>Логи платежей</td><td>JWT</td></tr>
+<tr><td>GET</td><td><code>/api/members/&lt;id&gt;/billings</code></td><td>Платежи участника</td><td>JWT</td></tr>
+</table>
+
+<h3>Служебные</h3>
+<table>
+<tr><th>Метод</th><th>Путь</th><th>Описание</th><th>Auth</th></tr>
+<tr><td>GET/POST</td><td><code>/api/config</code></td><td>Настройки клуба</td><td>JWT</td></tr>
+<tr><td>POST</td><td><code>/api/upload-logo</code></td><td>Загрузка логотипа</td><td>⚠️ нет</td></tr>
+<tr><td>GET</td><td><code>/api/uploads/&lt;file&gt;</code></td><td>Отдача файлов</td><td>—</td></tr>
+<tr><td>GET</td><td><code>/api/health</code></td><td>Health check</td><td>—</td></tr>
+</table>
+
+<h3>3.3 Зависимости (requirements.txt)</h3>
+<pre>flask, flask-cors, flask-sqlalchemy, pymysql, cryptography
+flask-jwt-extended, flask-bcrypt, python-dotenv, requests</pre>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="frontend">4. Frontend (Dashboard)</h2>
+<p>Путь: <code>frontend/icafedash-main/</code> | Порт dev: <code>8080</code></p>
+
+<h3>Стек</h3>
+<p>React 18 + TypeScript + Vite 5 + TailwindCSS 3 + ShadCN UI (49 Radix-компонентов) + Recharts + TanStack Query + React Router v6</p>
+
+<h3>Компоненты</h3>
+<table>
+<tr><th>Компонент</th><th>Файл</th><th>Назначение</th></tr>
+<tr><td>Login</td><td><code>pages/Login.tsx</code></td><td>Страница входа</td></tr>
+<tr><td>Index</td><td><code>pages/Index.tsx</code></td><td>Главная с вкладками</td></tr>
+<tr><td>AuthProvider</td><td><code>components/auth/AuthProvider.tsx</code></td><td>Контекст auth + timeout 2ч</td></tr>
+<tr><td>AuthGuard</td><td><code>components/auth/AuthGuard.tsx</code></td><td>Защита маршрутов</td></tr>
+<tr><td>StatCards</td><td><code>components/dashboard/StatCards.tsx</code></td><td>Карточки метрик</td></tr>
+<tr><td>DailyIncomeChart</td><td><code>components/dashboard/DailyIncomeChart.tsx</code></td><td>График 7 дней</td></tr>
+<tr><td>TotalIncomeChart</td><td><code>components/dashboard/TotalIncomeChart.tsx</code></td><td>Общий доход</td></tr>
+<tr><td>MonthlyIncomeChart</td><td><code>components/dashboard/MonthlyIncomeChart.tsx</code></td><td>График 7 месяцев</td></tr>
+<tr><td>StatusPanel</td><td><code>components/dashboard/StatusPanel.tsx</code></td><td>Статус подключения</td></tr>
+<tr><td>Monitoring</td><td><code>components/dashboard/Monitoring.tsx</code></td><td>Мониторинг ПК</td></tr>
+<tr><td>MembersList</td><td><code>components/dashboard/MembersList.tsx</code></td><td>Список участников</td></tr>
+<tr><td>AdminDashboard</td><td><code>components/dashboard/AdminDashboard.tsx</code></td><td>Админ: клубы + менеджеры</td></tr>
+<tr><td>ClientsList</td><td><code>components/dashboard/ClientsList.tsx</code></td><td>Управление пользователями</td></tr>
+<tr><td>Sidebar</td><td><code>components/dashboard/Sidebar.tsx</code></td><td>Боковая навигация</td></tr>
+<tr><td>TopBar</td><td><code>components/dashboard/TopBar.tsx</code></td><td>Верхняя панель</td></tr>
+</table>
+
+<h3>Вкладки навигации</h3>
+<p><strong>Обзор</strong> → StatCards + 3 графика + StatusPanel | <strong>Мониторинг</strong> → ПК-мониторинг | <strong>Участники</strong> → ⚠️ заглушка | <strong>Клубы</strong> → Админ-панель (только admin) | <strong>Клиенты</strong> → Управление пользователями</p>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="showcase">5. Showcase (Landing)</h2>
+<p>Путь: <code>showcase/</code> | Домен: <code>icafedash.com</code></p>
+<p>Лэндинг-страница с: Hero, Showcase, Features, Pricing, CTA, Register, Footer. Framer Motion для parallax-эффектов, DynamicBackground, ScrollProgress.</p>
+
+<h3>Маршруты</h3>
+<table>
+<tr><th>Путь</th><th>Компонент</th></tr>
+<tr><td><code>/</code></td><td>Index (Hero + Features + Pricing + CTA)</td></tr>
+<tr><td><code>/register</code></td><td>Register (email-верификация)</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="clubfinder">6. Club-Finder</h2>
+<p>Путь: <code>club-finder/</code> | ⚠️ Не в Docker, untracked в git</p>
+<p>Мобильное SPA для поиска клубов с картой (Leaflet + react-leaflet).</p>
+<table>
+<tr><th>Путь</th><th>Страница</th></tr>
+<tr><td><code>/</code></td><td>Index — поиск + список клубов</td></tr>
+<tr><td><code>/map</code></td><td>MapPage — карта</td></tr>
+<tr><td><code>/club/:id</code></td><td>ClubPage — детали клуба</td></tr>
+<tr><td><code>/booking</code></td><td>BookingPage — бронирование</td></tr>
+<tr><td><code>/profile</code></td><td>ProfilePage — профиль</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="docker">7. Docker-инфраструктура</h2>
+
+<h3>Docker Volumes</h3>
+<table>
+<tr><th>Volume</th><th>Назначение</th></tr>
+<tr><td><code>icafe_data</code></td><td>Backend: config.json, uploads/</td></tr>
+<tr><td><code>icafe_db_data</code></td><td>MySQL данные</td></tr>
+<tr><td><code>icafe_caddy_data</code></td><td>Caddy SSL-сертификаты</td></tr>
+<tr><td><code>icafe_caddy_config</code></td><td>Caddy конфигурация</td></tr>
+</table>
+
+<h3>Переменные окружения (Backend)</h3>
+<table>
+<tr><th>Переменная</th><th>Описание</th><th>Значение по-умолчанию</th></tr>
+<tr><td><code>DATABASE_URL</code></td><td>Строка подключения к MySQL</td><td>sqlite:///icafe.db (fallback)</td></tr>
+<tr><td><code>JWT_SECRET_KEY</code></td><td>Секрет JWT</td><td>dev-secret-key</td></tr>
+<tr><td><code>CONFIG_DIR</code></td><td>Директория данных</td><td>/app/data</td></tr>
+<tr><td><code>SMTP_HOST</code></td><td>SMTP сервер</td><td>smtp.gmail.com</td></tr>
+<tr><td><code>SMTP_PORT</code></td><td>SMTP порт</td><td>587</td></tr>
+<tr><td><code>SMTP_USER</code></td><td>Email отправителя</td><td>—</td></tr>
+<tr><td><code>SMTP_PASSWORD</code></td><td>Пароль SMTP</td><td>—</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="security">8. Безопасность</h2>
+<table>
+<tr><th>Аспект</th><th>Реализация</th><th>Статус</th></tr>
+<tr><td>Хэширование паролей</td><td>Bcrypt</td><td><span class="badge badge-ok">✅ ОК</span></td></tr>
+<tr><td>Аутентификация</td><td>JWT-токен, 2 часа</td><td><span class="badge badge-ok">✅ ОК</span></td></tr>
+<tr><td>Inactivity timeout</td><td>2 часа на frontend</td><td><span class="badge badge-ok">✅ ОК</span></td></tr>
+<tr><td>Email-верификация</td><td>6-значный код, 10 мин</td><td><span class="badge badge-ok">✅ ОК</span></td></tr>
+<tr><td>Rate limiting (resend)</td><td>60 секунд</td><td><span class="badge badge-ok">✅ ОК</span></td></tr>
+<tr><td>CORS</td><td>origins: * для /api/*</td><td><span class="badge badge-warn">⚠️ Широко</span></td></tr>
+<tr><td>Rate limiting (общий)</td><td>Не реализован</td><td><span class="badge badge-warn">⚠️ Нет</span></td></tr>
+<tr><td>SMTP пароль</td><td>Открытый текст в docker-compose</td><td><span class="badge badge-err">❌ Критично</span></td></tr>
+<tr><td>JWT Secret</td><td>Дефолтный dev-secret-key</td><td><span class="badge badge-err">❌ Критично</span></td></tr>
+<tr><td>DB пароли</td><td>icafe_password_change_me</td><td><span class="badge badge-warn">⚠️ Сменить</span></td></tr>
+<tr><td>Upload-logo</td><td>Без @jwt_required()</td><td><span class="badge badge-err">❌ Нет auth</span></td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="issues">9. Обнаруженные проблемы</h2>
+
+<div class="card" style="border-color:var(--red)">
+<h3 style="color:var(--red)">🔴 Критичные</h3>
+<p>1. <strong>Секреты в docker-compose.yml</strong> — SMTP-пароль, JWT-ключ, DB-пароли открытым текстом → вынести в <code>.env</code><br>
+2. <strong>config.json содержит полный API-ключ iCafeCloud</strong> — legacy файл, данные уже в БД (модель Club)<br>
+3. <strong>CORS origins: *</strong> — в prod ограничить до конкретных доменов<br>
+4. <strong>/api/upload-logo без JWT</strong> — любой может загружать файлы</p>
+</div>
+
+<div class="card" style="border-color:var(--yellow)">
+<h3 style="color:var(--yellow)">🟡 Средний приоритет</h3>
+<p>5. <strong>club-finder не интегрирован</strong> — нет Dockerfile, не в docker-compose, untracked в git<br>
+6. <strong>Вкладка "Участники"</strong> — заглушка (не реализована)<br>
+7. <strong>Backend = 1 файл</strong> (1065 строк) — стоит разбить на модули<br>
+8. <strong>showcase без package-lock.json</strong></p>
+</div>
+
+<div class="card" style="border-color:var(--green)">
+<h3 style="color:var(--green)">🟢 Мелкие</h3>
+<p>9. Legacy fallback на config.json можно убрать<br>
+10. <code>/api/health</code> использует load_config() вместо проверки БД<br>
+11. Dev-сервер frontend на порту 8080 — возможные конфликты</p>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="launch">10. Запуск проекта</h2>
+
+<h3>Docker (Production)</h3>
+<pre>docker-compose up -d --build</pre>
+<p>Логин: <code>http://localhost/login</code> → admin / admin123</p>
+
+<h3>Локально (Windows)</h3>
+<pre>.\start.ps1</pre>
+<p>Скрипт: создаёт venv → pip install → npm build → запускает Flask на <code>:5000</code> (SQLite fallback)</p>
+
+<h3>Разработка (Frontend отдельно)</h3>
+<pre># Frontend
+cd frontend/icafedash-main
+# Раскомментировать VITE_API_URL=http://localhost:5000/api в .env
+npm install --legacy-peer-deps
+npm run dev    # → http://localhost:8080
+
+# Backend
+cd backend
+python -m venv venv && .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+set JWT_SECRET_KEY=dev-secret-platform-key-123
+python app.py  # → http://localhost:5000</pre>
+
+<h3>Git-статус</h3>
+<p>Ветка: <code>main</code> (up to date с origin) | Последний коммит: "Update copyright year from 2024 to 2026" | ⚠️ <code>club-finder/</code> — untracked</p>
+
+<!-- Footer -->
+<div style="text-align:center;margin-top:60px;padding:24px;border-top:1px solid var(--border);color:var(--text2);font-size:.85em">
+<p>📄 Документация сгенерирована автоматически на основе анализа исходного кода</p>
+<p>© 2026 iCafeDash Platform</p>
+</div>
+
+</div>
+</body>
+</html>

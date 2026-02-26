@@ -2,6 +2,10 @@ icafedash.com, www.icafedash.com {
     reverse_proxy showcase:80
 }
 
-cp.icafedash.com, cloud.icafedash.com {
+cp.icafedash.com {
     reverse_proxy frontend:80
+}
+
+cloud.icafedash.com {
+    reverse_proxy clubfinder:80
 }
