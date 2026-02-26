@@ -65,9 +65,14 @@ class Club(db.Model):
     __tablename__ = 'clubs'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    api_key = db.Column(db.Text, nullable=False)
-    cafe_id = db.Column(db.String(50), nullable=False)
+    api_key = db.Column(db.Text, nullable=True)
+    cafe_id = db.Column(db.String(50), nullable=True)
     club_logo_url = db.Column(db.String(255), default="")
+    address = db.Column(db.String(255), nullable=True)
+    phone = db.Column(db.String(50), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    lat = db.Column(db.Float, nullable=True)
+    lng = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     users = db.relationship('User', backref='club', lazy=True)
@@ -178,6 +183,25 @@ with app.app_context():
             conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
             conn.commit()
             print("✅ Added 'is_verified' column to users table")
+            
+    # Migration for clubs
+    existing_club_columns = [col['name'] for col in inspector.get_columns('clubs')]
+    with db.engine.connect() as conn:
+        if 'address' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN address VARCHAR(255)"))
+            conn.commit()
+        if 'phone' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN phone VARCHAR(50)"))
+            conn.commit()
+        if 'description' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN description TEXT"))
+            conn.commit()
+        if 'lat' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN lat FLOAT"))
+            conn.commit()
+        if 'lng' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN lng FLOAT"))
+            conn.commit()
     
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
@@ -516,7 +540,11 @@ def public_clubs():
                 "pcsTotal": total_pcs,
                 "pcsFree": free_pcs,
                 "rating": 4.8, # Mock rating for demo
-                "address": "Адрес не указан",
+                "address": c.address or "Адрес не указан",
+                "phone": c.phone or "",
+                "description": c.description or "",
+                "lat": c.lat or 0.0,
+                "lng": c.lng or 0.0,
                 "isOpen": True,
                 "pricePerHour": 100
             })
@@ -529,7 +557,11 @@ def public_clubs():
                 "pcsTotal": 0,
                 "pcsFree": 0,
                 "rating": 0,
-                "address": "Адрес не указан",
+                "address": c.address or "Адрес не указан",
+                "phone": c.phone or "",
+                "description": c.description or "",
+                "lat": c.lat or 0.0,
+                "lng": c.lng or 0.0,
                 "isOpen": False,
                 "pricePerHour": 0
             })
