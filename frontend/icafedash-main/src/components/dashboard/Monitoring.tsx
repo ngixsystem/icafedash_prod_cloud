@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import { Monitor, RefreshCcw, UserRound } from "lucide-react";
 
 const Monitoring = () => {
-    const [selectedBusyPc, setSelectedBusyPc] = useState<{
+    const [hoveredBusyPc, setHoveredBusyPc] = useState<{
         id: string | number;
         name: string;
         member: string;
@@ -18,6 +18,7 @@ const Monitoring = () => {
     });
 
     const pcs = data?.pcs ?? [];
+    const sortedPcs = [...pcs].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
     return (
         <div className="space-y-4">
@@ -44,7 +45,6 @@ const Monitoring = () => {
                     </div>
                 ) : (
                     <div className="relative w-fit h-fit min-w-full min-h-[500px]">
-                        {/* The container will expand based on absolute items thanks to min-w/min-h and overflow-auto on parent */}
                         {pcs.map((pc) => (
                             <div
                                 key={pc.id}
@@ -55,22 +55,19 @@ const Monitoring = () => {
                                             ? "border-muted-foreground/30 bg-muted/20 text-muted-foreground"
                                             : "border-success/50 bg-success/10 text-success"
                                     }`}
-                                onClick={() => {
-                                    if (pc.status !== "busy") {
-                                        setSelectedBusyPc(null);
-                                        return;
-                                    }
-                                    setSelectedBusyPc({
+                                onMouseEnter={() => {
+                                    if (pc.status !== "busy") return;
+                                    setHoveredBusyPc({
                                         id: pc.id,
                                         name: pc.name,
                                         member: pc.member || "Не указано",
                                         time_left: pc.time_left || "",
                                     });
                                 }}
+                                onMouseLeave={() => setHoveredBusyPc(null)}
                                 style={{
                                     top: pc.top ?? 0,
                                     left: pc.left ?? 0,
-                                    boxShadow: selectedBusyPc?.id === pc.id ? "0 0 0 2px rgba(251, 146, 60, 0.7)" : undefined,
                                 }}
                                 title={`${pc.name} - ${pc.status}${pc.member ? ` (${pc.member})` : ""}`}
                             >
@@ -95,21 +92,64 @@ const Monitoring = () => {
                 )}
             </div>
 
-            {selectedBusyPc && (
+            {hoveredBusyPc && (
                 <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4">
                     <div className="text-sm font-semibold text-orange-400">
-                        {selectedBusyPc.name} занят
+                        {hoveredBusyPc.name} занят
                     </div>
                     <div className="text-sm text-foreground mt-1">
-                        Клиент: <span className="font-medium">{selectedBusyPc.member}</span>
+                        Клиент: <span className="font-medium">{hoveredBusyPc.member}</span>
                     </div>
-                    {selectedBusyPc.time_left && (
+                    {hoveredBusyPc.time_left && (
                         <div className="text-xs text-muted-foreground mt-1">
-                            Осталось времени: {selectedBusyPc.time_left}
+                            Осталось времени: {hoveredBusyPc.time_left}
                         </div>
                     )}
                 </div>
             )}
+
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="px-4 py-3 border-b border-border/60">
+                    <h3 className="text-sm font-semibold text-foreground">Список ПК</h3>
+                    <p className="text-xs text-muted-foreground">Красивый и адаптивный список для мобильных и desktop</p>
+                </div>
+
+                <div className="divide-y divide-border/50">
+                    {sortedPcs.map((pc) => {
+                        const isBusy = pc.status === "busy";
+                        const isFree = pc.status === "free";
+                        const statusLabel = isBusy ? "занято" : isFree ? "свободно" : "блокировка";
+                        const statusClass = isBusy
+                            ? "bg-orange-500/15 text-orange-400 border-orange-500/40"
+                            : isFree
+                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/40"
+                                : "bg-muted/20 text-muted-foreground border-muted-foreground/30";
+
+                        return (
+                            <div key={`row-${pc.id}`} className="px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="h-8 w-8 rounded-lg bg-secondary/60 border border-border flex items-center justify-center shrink-0">
+                                        <Monitor className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="text-sm font-semibold text-foreground truncate">{pc.name}</div>
+                                        <div className="text-xs text-muted-foreground truncate">{pc.member || "—"}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 sm:justify-end">
+                                    {pc.time_left && (
+                                        <span className="text-[11px] text-muted-foreground">{pc.time_left}</span>
+                                    )}
+                                    <span className={`text-xs rounded-full border px-2 py-1 font-medium ${statusClass}`}>
+                                        {statusLabel}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
 
             <div className="flex flex-wrap gap-4 pt-2">
                 <div className="flex items-center gap-2">
