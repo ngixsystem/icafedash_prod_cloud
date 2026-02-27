@@ -404,6 +404,48 @@ def to_wa_link(phone_value: str | None) -> str | None:
     return f"https://wa.me/{digits}"
 
 
+def parse_booking_pc_entries(raw_value: str | None) -> list[dict]:
+    if not raw_value:
+        return []
+    try:
+        parsed = json.loads(raw_value)
+    except Exception:
+        return []
+
+    entries = []
+    if isinstance(parsed, list):
+        for item in parsed:
+            if isinstance(item, dict):
+                zone_name = str(item.get("zone_name") or "").strip()
+                pc_name = str(item.get("pc_name") or "").strip()
+                if zone_name and pc_name:
+                    entries.append({"zone_name": zone_name, "pc_name": pc_name})
+            elif isinstance(item, str):
+                value = item.strip()
+                if not value:
+                    continue
+                if ":" in value:
+                    zone_name, pc_name = value.split(":", 1)
+                    zone_name = zone_name.strip()
+                    pc_name = pc_name.strip()
+                    if zone_name and pc_name:
+                        entries.append({"zone_name": zone_name, "pc_name": pc_name})
+                else:
+                    entries.append({"zone_name": "", "pc_name": value})
+    return entries
+
+
+def booking_display_pc_names(entries: list[dict]) -> list[str]:
+    result = []
+    for entry in entries:
+        zone_name = str(entry.get("zone_name") or "").strip()
+        pc_name = str(entry.get("pc_name") or "").strip()
+        if not pc_name:
+            continue
+        result.append(f"{zone_name}/{pc_name}" if zone_name else pc_name)
+    return result
+
+
 # ── iCafeCloud API helper ─────────────────────────────────────────────────────
 
 def icafe_get(path: str, params: dict = None) -> dict | None:
@@ -1189,26 +1231,39 @@ def create_public_booking(club_id):
     zone_name = (data.get("zone_name") or "").strip()
     duration = (data.get("duration") or "").strip()
     pc_names = data.get("pc_names") or []
+    selected_pcs = data.get("selected_pcs") or []
 
     if not client_name:
         return jsonify({"message": "Client name is required"}), 400
     if not phone:
         return jsonify({"message": "Phone is required"}), 400
-    if not zone_name:
-        return jsonify({"message": "Zone is required"}), 400
-    if not isinstance(pc_names, list):
-        return jsonify({"message": "pc_names must be an array"}), 400
+    normalized_entries = []
+    if isinstance(selected_pcs, list) and len(selected_pcs) > 0:
+        for item in selected_pcs:
+            if not isinstance(item, dict):
+                continue
+            z = str(item.get("zone_name") or "").strip()
+            p = str(item.get("pc_name") or "").strip()
+            if z and p:
+                normalized_entries.append({"zone_name": z, "pc_name": p})
+    else:
+        if not zone_name:
+            return jsonify({"message": "Zone is required"}), 400
+        if not isinstance(pc_names, list):
+            return jsonify({"message": "pc_names must be an array"}), 400
+        for name in pc_names:
+            p = str(name).strip()
+            if p:
+                normalized_entries.append({"zone_name": zone_name, "pc_name": p})
 
-    cleaned_pc_names = []
-    for name in pc_names:
-        name_str = str(name).strip()
-        if name_str:
-            cleaned_pc_names.append(name_str)
+    unique_entries = list({
+        (entry["zone_name"], entry["pc_name"]): entry
+        for entry in normalized_entries
+    }.values())
 
-    cleaned_pc_names = list(dict.fromkeys(cleaned_pc_names))
-    if len(cleaned_pc_names) < 1:
+    if len(unique_entries) < 1:
         return jsonify({"message": "Select at least one PC"}), 400
-    if len(cleaned_pc_names) > 10:
+    if len(unique_entries) > 10:
         return jsonify({"message": "Maximum 10 PCs per booking"}), 400
 
     active_booking = BookingRequest.query.filter(
@@ -1227,29 +1282,42 @@ def create_public_booking(club_id):
 
     pc_raw = icafe_get_for_club(club, "/pcList", timeout=8)
     all_pcs = parse_icafe_pcs(pc_raw)
-    zone_folded = zone_name.casefold()
-    zone_pcs = [
-        pc for pc in all_pcs
-        if str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip().casefold() == zone_folded
-    ]
+    pc_map = {}
+    for pc in all_pcs:
+        z = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
+        p = str(pc.get("pc_name") or "").strip()
+        if z and p:
+            pc_map[(z.casefold(), p.casefold())] = pc
 
-    zone_pc_map = {str(pc.get("pc_name", "")).strip(): pc for pc in zone_pcs}
-    missing = [pc_name for pc_name in cleaned_pc_names if pc_name not in zone_pc_map]
+    missing = []
+    unavailable = []
+    for entry in unique_entries:
+        z = entry["zone_name"]
+        p = entry["pc_name"]
+        found = pc_map.get((z.casefold(), p.casefold()))
+        if not found:
+            missing.append(f"{z}/{p}")
+            continue
+        if detect_pc_status(found) != "free":
+            unavailable.append(f"{z}/{p}")
+
     if missing:
-        return jsonify({"message": "Some PCs are not in this zone", "invalid_pcs": missing}), 400
+        return jsonify({"message": "Some PCs are invalid for selected zones", "invalid_pcs": missing}), 400
 
-    unavailable = [pc_name for pc_name in cleaned_pc_names if detect_pc_status(zone_pc_map[pc_name]) != "free"]
     if unavailable:
         return jsonify({"message": "Some selected PCs are busy or offline", "unavailable_pcs": unavailable}), 409
+
+    selected_zones = sorted(list({entry["zone_name"] for entry in unique_entries}))
+    zone_label = selected_zones[0] if len(selected_zones) == 1 else ", ".join(selected_zones[:3]) + ("..." if len(selected_zones) > 3 else "")
 
     booking = BookingRequest(
         club_id=club.id,
         user_id=user.id,
         client_name=client_name,
         phone=phone,
-        zone_name=zone_name,
+        zone_name=zone_label,
         duration=duration or None,
-        pc_names=json.dumps(cleaned_pc_names, ensure_ascii=False),
+        pc_names=json.dumps(unique_entries, ensure_ascii=False),
         status="pending",
     )
     db.session.add(booking)
@@ -1265,7 +1333,8 @@ def create_public_booking(club_id):
             "phone": booking.phone,
             "zone_name": booking.zone_name,
             "duration": booking.duration,
-            "pc_names": cleaned_pc_names,
+            "pc_names": booking_display_pc_names(unique_entries),
+            "pc_entries": unique_entries,
             "status": normalize_booking_status(booking.status),
             "cancellation_reason": booking.cancellation_reason,
             "canceled_by": booking.canceled_by,
@@ -1289,12 +1358,8 @@ def get_my_public_bookings():
     rows = BookingRequest.query.filter_by(user_id=user.id).order_by(BookingRequest.created_at.desc()).limit(300).all()
     payload = []
     for b in rows:
-        try:
-            pc_names = json.loads(b.pc_names) if b.pc_names else []
-            if not isinstance(pc_names, list):
-                pc_names = []
-        except Exception:
-            pc_names = []
+        pc_entries = parse_booking_pc_entries(b.pc_names)
+        pc_names = booking_display_pc_names(pc_entries)
         payload.append({
             "id": b.id,
             "club_id": b.club_id,
@@ -1304,6 +1369,7 @@ def get_my_public_bookings():
             "zone_name": b.zone_name,
             "duration": b.duration,
             "pc_names": pc_names,
+            "pc_entries": pc_entries,
             "status": normalize_booking_status(b.status),
             "cancellation_reason": b.cancellation_reason,
             "canceled_by": b.canceled_by,
@@ -1385,12 +1451,8 @@ def get_bookings_for_dashboard():
 
     payload = []
     for b in bookings:
-        try:
-            pc_names = json.loads(b.pc_names) if b.pc_names else []
-            if not isinstance(pc_names, list):
-                pc_names = []
-        except Exception:
-            pc_names = []
+        pc_entries = parse_booking_pc_entries(b.pc_names)
+        pc_names = booking_display_pc_names(pc_entries)
         payload.append({
             "id": b.id,
             "club_id": b.club_id,
@@ -1402,6 +1464,7 @@ def get_bookings_for_dashboard():
             "zone_name": b.zone_name,
             "duration": b.duration,
             "pc_names": pc_names,
+            "pc_entries": pc_entries,
             "status": normalize_booking_status(b.status),
             "cancellation_reason": b.cancellation_reason,
             "canceled_by": b.canceled_by,
@@ -1448,12 +1511,8 @@ def update_booking_status(booking_id):
     booking.status = next_status
     db.session.commit()
 
-    try:
-        pc_names = json.loads(booking.pc_names) if booking.pc_names else []
-        if not isinstance(pc_names, list):
-            pc_names = []
-    except Exception:
-        pc_names = []
+    pc_entries = parse_booking_pc_entries(booking.pc_names)
+    pc_names = booking_display_pc_names(pc_entries)
 
     return jsonify({
         "message": "Booking status updated",
@@ -1466,6 +1525,7 @@ def update_booking_status(booking_id):
             "zone_name": booking.zone_name,
             "duration": booking.duration,
             "pc_names": pc_names,
+            "pc_entries": pc_entries,
             "status": normalize_booking_status(booking.status),
             "cancellation_reason": booking.cancellation_reason,
             "canceled_by": booking.canceled_by,
@@ -1516,6 +1576,7 @@ def cancel_booking_by_manager(booking_id):
             "cancellation_reason": booking.cancellation_reason,
             "canceled_by": booking.canceled_by,
             "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
+            "pc_names": booking_display_pc_names(parse_booking_pc_entries(booking.pc_names)),
         }
     })
 

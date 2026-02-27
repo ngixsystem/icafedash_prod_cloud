@@ -78,7 +78,7 @@ export default function BookingPage() {
   const [selectedZone, setSelectedZone] = useState("");
   const [zonePcs, setZonePcs] = useState<ZonePc[]>([]);
   const [loadingPcs, setLoadingPcs] = useState(false);
-  const [selectedPcs, setSelectedPcs] = useState<string[]>([]);
+  const [selectedByZone, setSelectedByZone] = useState<Record<string, string[]>>({});
 
   const [duration, setDuration] = useState(durationOptions[1]);
   const [clientName, setClientName] = useState("");
@@ -238,7 +238,6 @@ export default function BookingPage() {
 
     let alive = true;
     setLoadingPcs(true);
-    setSelectedPcs([]);
 
     fetch(`/api/public/clubs/${clubId}/zone-pcs?zone_name=${encodeURIComponent(selectedZone)}`)
       .then(async (res) => {
@@ -268,20 +267,44 @@ export default function BookingPage() {
   }, [clubId, selectedZone, toast]);
 
   const freeCount = useMemo(() => zonePcs.filter((pc) => pc.status === "free").length, [zonePcs]);
+  const selectedPcsInZone = selectedByZone[selectedZone] || [];
+  const totalSelectedCount = useMemo(
+    () => Object.values(selectedByZone).reduce((acc, items) => acc + items.length, 0),
+    [selectedByZone]
+  );
+  const selectedPcEntries = useMemo(
+    () =>
+      Object.entries(selectedByZone).flatMap(([zoneName, pcs]) =>
+        pcs.map((pcName) => ({ zone_name: zoneName, pc_name: pcName }))
+      ),
+    [selectedByZone]
+  );
 
   const togglePc = (pc: ZonePc) => {
     if (pc.status !== "free") return;
-    setSelectedPcs((prev) => {
-      if (prev.includes(pc.name)) return prev.filter((name) => name !== pc.name);
-      if (prev.length >= 10) {
+    setSelectedByZone((prev) => {
+      const zoneItems = prev[selectedZone] || [];
+      if (zoneItems.includes(pc.name)) {
+        const nextZoneItems = zoneItems.filter((name) => name !== pc.name);
+        return {
+          ...prev,
+          [selectedZone]: nextZoneItems,
+        };
+      }
+
+      const currentTotal = Object.values(prev).reduce((acc, items) => acc + items.length, 0);
+      if (currentTotal >= 10) {
         toast({
           title: "Лимит",
           description: "Можно забронировать максимум 10 ПК",
           variant: "destructive",
         });
-        return prev;
+        return { ...prev };
       }
-      return [...prev, pc.name];
+      return {
+        ...prev,
+        [selectedZone]: [...zoneItems, pc.name],
+      };
     });
   };
 
@@ -307,7 +330,7 @@ export default function BookingPage() {
       toast({ title: "Ошибка", description: "Введите номер телефона", variant: "destructive" });
       return;
     }
-    if (selectedPcs.length < 1) {
+    if (selectedPcEntries.length < 1) {
       toast({ title: "Ошибка", description: "Выберите хотя бы один ПК", variant: "destructive" });
       return;
     }
@@ -323,9 +346,8 @@ export default function BookingPage() {
         body: JSON.stringify({
           client_name: clientName.trim(),
           phone: phone.trim(),
-          zone_name: selectedZone,
           duration,
-          pc_names: selectedPcs,
+          selected_pcs: selectedPcEntries,
         }),
       });
 
@@ -346,9 +368,12 @@ export default function BookingPage() {
       setBooked({
         id: payload.booking?.id || 0,
         zone_name: payload.booking?.zone_name || selectedZone,
-        pc_names: Array.isArray(payload.booking?.pc_names) ? payload.booking.pc_names : selectedPcs,
+        pc_names: Array.isArray(payload.booking?.pc_names)
+          ? payload.booking.pc_names
+          : selectedPcEntries.map((item) => `${item.zone_name}/${item.pc_name}`),
         status: payload.booking?.status || "pending",
       });
+      setSelectedByZone({});
       await loadMyBookings();
       toast({ title: "Готово", description: "Бронь отправлена менеджеру (статус: ожидание)" });
     } catch (err: any) {
@@ -518,14 +543,14 @@ export default function BookingPage() {
               <Monitor className="w-3.5 h-3.5 inline mr-1" /> Выбери ПК
             </h2>
             <div className="text-xs text-muted-foreground mb-2">
-              Свободно: {freeCount} из {zonePcs.length} · Выбрано: {selectedPcs.length}/10
+              Свободно: {freeCount} из {zonePcs.length} · Выбрано: {totalSelectedCount}/10
             </div>
             {loadingPcs ? (
               <div className="text-sm text-muted-foreground">Загрузка ПК...</div>
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {zonePcs.map((pc) => {
-                  const selected = selectedPcs.includes(pc.name);
+                  const selected = selectedPcsInZone.includes(pc.name);
                   const clickable = pc.status === "free";
                   const statusClass =
                     pc.status === "free"
@@ -582,7 +607,7 @@ export default function BookingPage() {
           <div className="px-4">
             <Button
               onClick={submitBooking}
-              disabled={!!activeBooking || submitting || selectedPcs.length < 1 || !clientName.trim() || !phone.trim()}
+              disabled={!!activeBooking || submitting || totalSelectedCount < 1 || !clientName.trim() || !phone.trim()}
               className="w-full h-12 rounded-lg gradient-primary text-primary-foreground font-display font-bold text-base neon-glow disabled:opacity-40 disabled:shadow-none"
             >
               {submitting ? "Отправка..." : "Забронировать"}
