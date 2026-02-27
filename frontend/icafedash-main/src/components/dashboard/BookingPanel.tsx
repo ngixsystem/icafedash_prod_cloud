@@ -23,6 +23,9 @@ function statusUi(status: string) {
   if (status === "rejected") {
     return { label: "Отказано", className: "bg-rose-500/20 text-rose-300 border border-rose-500/40" };
   }
+  if (status === "cancelled") {
+    return { label: "Отменено", className: "bg-slate-500/20 text-slate-300 border border-slate-500/40" };
+  }
   return { label: "Ожидание", className: "bg-amber-500/20 text-amber-300 border border-amber-500/40" };
 }
 
@@ -35,12 +38,26 @@ const BookingPanel = () => {
   });
 
   const bookings = data?.bookings || [];
-  const summary = data?.summary || { count: 0, pending_count: 0 };
+  const summary = data?.summary || { count: 0, pending_count: 0, cancelled_count: 0 };
 
   const handleStatusUpdate = async (bookingId: number, status: "approved" | "rejected") => {
     setUpdatingId(bookingId);
     try {
       await api.updateBookingStatus(bookingId, status);
+      await refetch();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleCancel = async (bookingId: number) => {
+    const reason = window.prompt("Укажите причину отмены");
+    if (!reason || !reason.trim()) return;
+    setUpdatingId(bookingId);
+    try {
+      await api.cancelBooking(bookingId, reason.trim());
       await refetch();
     } catch (err) {
       console.error(err);
@@ -71,7 +88,7 @@ const BookingPanel = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="text-sm text-muted-foreground">Всего заявок</div>
           <div className="mt-1 text-2xl font-bold">{summary.count}</div>
@@ -79,6 +96,10 @@ const BookingPanel = () => {
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
           <div className="text-sm text-amber-300">Ожидают решения</div>
           <div className="mt-1 text-2xl font-bold text-amber-200">{summary.pending_count}</div>
+        </div>
+        <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4">
+          <div className="text-sm text-rose-300">Отменено</div>
+          <div className="mt-1 text-2xl font-bold text-rose-200">{summary.cancelled_count}</div>
         </div>
       </div>
 
@@ -132,6 +153,12 @@ const BookingPanel = () => {
                   </span>
                 </div>
 
+                {booking.status === "cancelled" && booking.cancellation_reason ? (
+                  <div className="mt-3 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+                    Причина отмены: {booking.cancellation_reason}
+                  </div>
+                ) : null}
+
                 {isPending ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
@@ -149,6 +176,25 @@ const BookingPanel = () => {
                       className="rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-500/30 disabled:opacity-60"
                     >
                       Отказать
+                    </button>
+                    <button
+                      type="button"
+                      disabled={updatingId === booking.id}
+                      onClick={() => handleCancel(booking.id)}
+                      className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/60 disabled:opacity-60"
+                    >
+                      Отменить
+                    </button>
+                  </div>
+                ) : booking.status === "approved" ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={updatingId === booking.id}
+                      onClick={() => handleCancel(booking.id)}
+                      className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/60 disabled:opacity-60"
+                    >
+                      Отменить с причиной
                     </button>
                   </div>
                 ) : null}

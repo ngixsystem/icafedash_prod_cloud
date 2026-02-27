@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Monitor, Clock, Check } from "lucide-react";
+import { ArrowLeft, Monitor, Clock, Check, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +28,11 @@ interface MyBooking {
   zone_name: string;
   duration: string | null;
   pc_names: string[];
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "cancelled";
+  cancellation_reason?: string | null;
+  canceled_by?: string | null;
+  canceled_at?: string | null;
+  chat_url?: string | null;
   created_at: string | null;
 }
 
@@ -53,6 +57,9 @@ function bookingStatusUi(status: string) {
   }
   if (status === "rejected") {
     return { label: "Отказано", className: "bg-rose-500/20 text-rose-300 border border-rose-500/40" };
+  }
+  if (status === "cancelled") {
+    return { label: "Отменено", className: "bg-slate-500/20 text-slate-300 border border-slate-500/40" };
   }
   return { label: "Ожидание", className: "bg-amber-500/20 text-amber-300 border border-amber-500/40" };
 }
@@ -81,8 +88,14 @@ export default function BookingPage() {
 
   const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
   const [loadingMyBookings, setLoadingMyBookings] = useState(false);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   const token = localStorage.getItem("icafe_client_token");
+
+  const activeBooking = useMemo(
+    () => myBookings.find((b) => b.status === "pending" || b.status === "approved"),
+    [myBookings]
+  );
 
   const loadMyBookings = async () => {
     if (!token) {
@@ -107,6 +120,34 @@ export default function BookingPage() {
       setMyBookings([]);
     } finally {
       setLoadingMyBookings(false);
+    }
+  };
+
+  const cancelMyBooking = async (bookingId: number) => {
+    if (!token) return;
+    const reason = window.prompt("Укажите причину отмены");
+    if (!reason || !reason.trim()) {
+      toast({ title: "Ошибка", description: "Причина отмены обязательна", variant: "destructive" });
+      return;
+    }
+    setCancellingId(bookingId);
+    try {
+      const res = await fetch(`/api/public/bookings/${bookingId}/cancel`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload?.message || "Не удалось отменить бронь");
+      await loadMyBookings();
+      toast({ title: "Готово", description: "Бронь отменена" });
+    } catch (err: any) {
+      toast({ title: "Ошибка", description: err?.message || "Не удалось отменить бронь", variant: "destructive" });
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -214,6 +255,14 @@ export default function BookingPage() {
       navigate("/auth", { state: { from: { pathname: "/booking", search: `?club=${clubId}&zone=${encodeURIComponent(selectedZone)}` } } });
       return;
     }
+    if (activeBooking) {
+      toast({
+        title: "Ограничение",
+        description: "У вас уже есть активная бронь. Сначала отмените её.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!clientName.trim()) {
       toast({ title: "Ошибка", description: "Введите имя", variant: "destructive" });
       return;
@@ -304,8 +353,16 @@ export default function BookingPage() {
           ) : (
             myBookings.map((b) => {
               const ui = bookingStatusUi(b.status);
+              const canCancel = b.status === "pending" || b.status === "approved";
+              const canOpenChat = b.status === "approved" && !!b.chat_url;
               return (
-                <div key={b.id} className="rounded-xl border border-white/10 bg-[#11131a] p-4">
+                <div
+                  key={b.id}
+                  onClick={() => {
+                    if (canOpenChat && b.chat_url) window.open(b.chat_url, "_blank", "noopener,noreferrer");
+                  }}
+                  className={`rounded-xl border border-white/10 bg-[#11131a] p-4 ${canOpenChat ? "cursor-pointer hover:border-emerald-400/40" : ""}`}
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-semibold text-white">#{b.id} · {b.club_name}</div>
                     <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${ui.className}`}>{ui.label}</span>
@@ -313,6 +370,40 @@ export default function BookingPage() {
                   <div className="mt-2 text-sm text-white/80">{b.zone_name}</div>
                   <div className="mt-1 text-xs text-white/60">{b.pc_names.join(", ")}</div>
                   <div className="mt-1 text-xs text-white/50">{formatDate(b.created_at)}</div>
+
+                  {b.status === "cancelled" && b.cancellation_reason ? (
+                    <div className="mt-2 rounded-lg border border-slate-500/40 bg-slate-500/10 px-2.5 py-2 text-xs text-slate-200">
+                      Причина отмены: {b.cancellation_reason}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {canCancel ? (
+                      <button
+                        type="button"
+                        disabled={cancellingId === b.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelMyBooking(b.id);
+                        }}
+                        className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/60 disabled:opacity-60"
+                      >
+                        Отменить бронь
+                      </button>
+                    ) : null}
+                    {b.status === "approved" && b.chat_url ? (
+                      <a
+                        href={b.chat_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/30"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Чат с менеджером
+                      </a>
+                    ) : null}
+                  </div>
                 </div>
               );
             })
@@ -360,6 +451,12 @@ export default function BookingPage() {
         <div className="px-4 text-sm text-muted-foreground">Клуб не найден</div>
       ) : (
         <>
+          {activeBooking ? (
+            <div className="mx-4 mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              У вас уже есть активная бронь #{activeBooking.id}. Чтобы создать новую, сначала отмените текущую в разделе "Мои брони".
+            </div>
+          ) : null}
+
           <div className="px-4 mb-5">
             <h2 className="text-sm font-display font-bold mb-2 text-muted-foreground uppercase tracking-wider">Зона</h2>
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -445,7 +542,7 @@ export default function BookingPage() {
           <div className="px-4">
             <Button
               onClick={submitBooking}
-              disabled={submitting || selectedPcs.length < 1 || !clientName.trim() || !phone.trim()}
+              disabled={!!activeBooking || submitting || selectedPcs.length < 1 || !clientName.trim() || !phone.trim()}
               className="w-full h-12 rounded-lg gradient-primary text-primary-foreground font-display font-bold text-base neon-glow disabled:opacity-40 disabled:shadow-none"
             >
               {submitting ? "Отправка..." : "Забронировать"}

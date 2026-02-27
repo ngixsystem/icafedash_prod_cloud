@@ -188,6 +188,9 @@ export interface DashboardBooking {
     duration: string | null;
     pc_names: string[];
     status: string;
+    cancellation_reason?: string | null;
+    canceled_by?: string | null;
+    canceled_at?: string | null;
     created_at: string | null;
 }
 
@@ -272,9 +275,11 @@ export const api = {
         put<{ message: string }>(`/admin/users/${userId}`, data),
     deleteUser: (userId: number) => del<{ message: string }>(`/admin/users/${userId}`),
     managerReviews: () => get<{ reviews: DashboardReview[]; summary: { count: number; average_rating: number } }>("/reviews"),
-    managerBookings: () => get<{ bookings: DashboardBooking[]; summary: { count: number; pending_count: number } }>("/bookings"),
+    managerBookings: () => get<{ bookings: DashboardBooking[]; summary: { count: number; pending_count: number; cancelled_count: number } }>("/bookings"),
     updateBookingStatus: (bookingId: number, status: "approved" | "rejected") =>
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/status`, { status }),
+    cancelBooking: (bookingId: number, reason: string) =>
+        put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/cancel`, { reason }),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),

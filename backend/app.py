@@ -138,6 +138,9 @@ class BookingRequest(db.Model):
     duration = db.Column(db.String(50), nullable=True)
     pc_names = db.Column(db.Text, nullable=False)  # JSON array
     status = db.Column(db.String(20), nullable=False, default="pending")
+    cancellation_reason = db.Column(db.Text, nullable=True)
+    canceled_by = db.Column(db.String(20), nullable=True)  # client / manager / admin
+    canceled_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     club = db.relationship("Club", backref=db.backref("booking_requests", lazy=True))
@@ -261,6 +264,21 @@ with app.app_context():
         if 'club_photos' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN club_photos TEXT"))
             conn.commit()
+
+    # Migration for booking_requests
+    existing_tables = inspector.get_table_names()
+    if 'booking_requests' in existing_tables:
+        existing_booking_columns = [col['name'] for col in inspector.get_columns('booking_requests')]
+        with db.engine.connect() as conn:
+            if 'cancellation_reason' not in existing_booking_columns:
+                conn.execute(text("ALTER TABLE booking_requests ADD COLUMN cancellation_reason TEXT"))
+                conn.commit()
+            if 'canceled_by' not in existing_booking_columns:
+                conn.execute(text("ALTER TABLE booking_requests ADD COLUMN canceled_by VARCHAR(20)"))
+                conn.commit()
+            if 'canceled_at' not in existing_booking_columns:
+                conn.execute(text("ALTER TABLE booking_requests ADD COLUMN canceled_at DATETIME"))
+                conn.commit()
             
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
@@ -374,9 +392,16 @@ def normalize_booking_status(raw_status: str | None) -> str:
     status = (raw_status or "").strip().lower()
     if status in ("new", "", "pending"):
         return "pending"
-    if status in ("approved", "rejected"):
+    if status in ("approved", "rejected", "cancelled"):
         return status
     return "pending"
+
+
+def to_wa_link(phone_value: str | None) -> str | None:
+    digits = "".join(ch for ch in str(phone_value or "") if ch.isdigit())
+    if len(digits) < 9:
+        return None
+    return f"https://wa.me/{digits}"
 
 
 # ── iCafeCloud API helper ─────────────────────────────────────────────────────
@@ -1186,6 +1211,20 @@ def create_public_booking(club_id):
     if len(cleaned_pc_names) > 10:
         return jsonify({"message": "Maximum 10 PCs per booking"}), 400
 
+    active_booking = BookingRequest.query.filter(
+        BookingRequest.user_id == user.id,
+        BookingRequest.status.in_(["pending", "approved", "new"])
+    ).order_by(BookingRequest.created_at.desc()).first()
+    if active_booking:
+        return jsonify({
+            "message": "You already have an active booking. Cancel it before creating a new one.",
+            "active_booking": {
+                "id": active_booking.id,
+                "status": normalize_booking_status(active_booking.status),
+                "zone_name": active_booking.zone_name,
+            }
+        }), 409
+
     pc_raw = icafe_get_for_club(club, "/pcList", timeout=8)
     all_pcs = parse_icafe_pcs(pc_raw)
     zone_folded = zone_name.casefold()
@@ -1228,6 +1267,10 @@ def create_public_booking(club_id):
             "duration": booking.duration,
             "pc_names": cleaned_pc_names,
             "status": normalize_booking_status(booking.status),
+            "cancellation_reason": booking.cancellation_reason,
+            "canceled_by": booking.canceled_by,
+            "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
+            "chat_url": to_wa_link(club.phone),
             "created_at": booking.created_at.isoformat() + "Z" if booking.created_at else None,
         }
     }), 201
@@ -1262,6 +1305,11 @@ def get_my_public_bookings():
             "duration": b.duration,
             "pc_names": pc_names,
             "status": normalize_booking_status(b.status),
+            "cancellation_reason": b.cancellation_reason,
+            "canceled_by": b.canceled_by,
+            "canceled_at": b.canceled_at.isoformat() + "Z" if b.canceled_at else None,
+            "club_phone": b.club.phone if b.club else "",
+            "chat_url": to_wa_link(b.club.phone if b.club else None),
             "created_at": b.created_at.isoformat() + "Z" if b.created_at else None,
         })
 
@@ -1270,6 +1318,47 @@ def get_my_public_bookings():
         "summary": {
             "count": len(payload),
             "pending_count": sum(1 for b in payload if b["status"] == "pending"),
+        }
+    })
+
+
+@app.put("/api/public/bookings/<int:booking_id>/cancel")
+@jwt_required()
+def cancel_public_booking(booking_id):
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can cancel bookings"}), 403
+
+    booking = BookingRequest.query.get(booking_id)
+    if not booking or booking.user_id != user.id:
+        return jsonify({"message": "Booking not found"}), 404
+
+    current_status = normalize_booking_status(booking.status)
+    if current_status in ("rejected", "cancelled"):
+        return jsonify({"message": "This booking is already closed"}), 409
+
+    body = request.json or {}
+    reason = (body.get("reason") or "").strip()
+    if not reason:
+        return jsonify({"message": "Cancellation reason is required"}), 400
+
+    booking.status = "cancelled"
+    booking.cancellation_reason = reason
+    booking.canceled_by = "client"
+    booking.canceled_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "message": "Booking cancelled",
+        "booking": {
+            "id": booking.id,
+            "status": normalize_booking_status(booking.status),
+            "cancellation_reason": booking.cancellation_reason,
+            "canceled_by": booking.canceled_by,
+            "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
         }
     })
 
@@ -1284,7 +1373,7 @@ def get_bookings_for_dashboard():
 
     if user.role == "manager":
         if not user.club_id:
-            return jsonify({"bookings": [], "summary": {"count": 0, "pending_count": 0}}), 200
+            return jsonify({"bookings": [], "summary": {"count": 0, "pending_count": 0, "cancelled_count": 0}}), 200
         query = BookingRequest.query.filter_by(club_id=user.club_id)
     elif user.role == "admin":
         club_id = request.args.get("club_id", type=int)
@@ -1314,6 +1403,9 @@ def get_bookings_for_dashboard():
             "duration": b.duration,
             "pc_names": pc_names,
             "status": normalize_booking_status(b.status),
+            "cancellation_reason": b.cancellation_reason,
+            "canceled_by": b.canceled_by,
+            "canceled_at": b.canceled_at.isoformat() + "Z" if b.canceled_at else None,
             "created_at": b.created_at.isoformat() + "Z" if b.created_at else None,
         })
 
@@ -1322,6 +1414,7 @@ def get_bookings_for_dashboard():
         "summary": {
             "count": len(payload),
             "pending_count": sum(1 for b in payload if b["status"] == "pending"),
+            "cancelled_count": sum(1 for b in payload if b["status"] == "cancelled"),
         }
     })
 
@@ -1349,6 +1442,9 @@ def update_booking_status(booking_id):
     if next_status not in ("approved", "rejected"):
         return jsonify({"message": "status must be approved or rejected"}), 400
 
+    if normalize_booking_status(booking.status) == "cancelled":
+        return jsonify({"message": "Cannot change status of cancelled booking"}), 409
+
     booking.status = next_status
     db.session.commit()
 
@@ -1371,7 +1467,55 @@ def update_booking_status(booking_id):
             "duration": booking.duration,
             "pc_names": pc_names,
             "status": normalize_booking_status(booking.status),
+            "cancellation_reason": booking.cancellation_reason,
+            "canceled_by": booking.canceled_by,
+            "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
             "created_at": booking.created_at.isoformat() + "Z" if booking.created_at else None,
+        }
+    })
+
+
+@app.put("/api/bookings/<int:booking_id>/cancel")
+@jwt_required()
+def cancel_booking_by_manager(booking_id):
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("manager", "admin"):
+        return jsonify({"message": "Access denied"}), 403
+
+    booking = BookingRequest.query.get(booking_id)
+    if not booking:
+        return jsonify({"message": "Booking not found"}), 404
+
+    if user.role == "manager":
+        if not user.club_id or booking.club_id != user.club_id:
+            return jsonify({"message": "Access denied"}), 403
+
+    current_status = normalize_booking_status(booking.status)
+    if current_status in ("rejected", "cancelled"):
+        return jsonify({"message": "This booking is already closed"}), 409
+
+    body = request.json or {}
+    reason = (body.get("reason") or "").strip()
+    if not reason:
+        return jsonify({"message": "Cancellation reason is required"}), 400
+
+    booking.status = "cancelled"
+    booking.cancellation_reason = reason
+    booking.canceled_by = "admin" if user.role == "admin" else "manager"
+    booking.canceled_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "message": "Booking cancelled",
+        "booking": {
+            "id": booking.id,
+            "status": normalize_booking_status(booking.status),
+            "cancellation_reason": booking.cancellation_reason,
+            "canceled_by": booking.canceled_by,
+            "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
         }
     })
 
