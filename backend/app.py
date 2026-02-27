@@ -890,6 +890,9 @@ def debug_dump_icafe():
 
         club_data["pcList"] = safe_get("/pcList")
         club_data["member_group"] = safe_get("/member/group")
+        club_data["offers"] = safe_get("/offer/list")
+        club_data["priceList"] = safe_get("/priceList")
+        club_data["goods"] = safe_get("/goods/list")
         results.append(club_data)
 
     return jsonify(results)
