@@ -97,12 +97,14 @@ export default function BookingPage() {
     [myBookings]
   );
 
-  const loadMyBookings = async () => {
+  const loadMyBookings = async (opts?: { silent?: boolean }) => {
     if (!token) {
       setMyBookings([]);
       return;
     }
-    setLoadingMyBookings(true);
+    if (!opts?.silent) {
+      setLoadingMyBookings(true);
+    }
     try {
       const res = await fetch("/api/public/bookings/my", {
         headers: { Authorization: `Bearer ${token}` },
@@ -115,11 +117,19 @@ export default function BookingPage() {
         return;
       }
       if (!res.ok) throw new Error(payload?.message || "Не удалось загрузить бронирования");
-      setMyBookings(Array.isArray(payload?.bookings) ? payload.bookings : []);
+      const nextBookings = Array.isArray(payload?.bookings) ? payload.bookings : [];
+      setMyBookings((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(nextBookings)) return prev;
+        return nextBookings;
+      });
     } catch {
-      setMyBookings([]);
+      if (!opts?.silent) {
+        setMyBookings([]);
+      }
     } finally {
-      setLoadingMyBookings(false);
+      if (!opts?.silent) {
+        setLoadingMyBookings(false);
+      }
     }
   };
 
@@ -158,7 +168,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      loadMyBookings();
+      loadMyBookings({ silent: true });
     }, 5000);
     return () => window.clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -166,7 +176,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     const onFocus = () => {
-      loadMyBookings();
+      loadMyBookings({ silent: true });
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
