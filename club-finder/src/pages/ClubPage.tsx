@@ -235,9 +235,10 @@ export default function ClubPage() {
                 <p className="text-[13px] text-white/50 mb-5 font-medium tracking-wide">{zone.specs}</p>
                 <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-1000 ease-out bg-[#10b981] shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                    className="h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(34,197,94,0.35)]"
                     style={{
-                      width: `${progressPercent}%`
+                      width: `${progressPercent}%`,
+                      background: "linear-gradient(90deg, #22c55e 0%, #eab308 55%, #ef4444 100%)"
                     }}
                   />
                 </div>
