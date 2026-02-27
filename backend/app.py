@@ -812,8 +812,8 @@ def get_icafe_data():
     if not user or not user.club:
         return jsonify({"message": "No club assigned"}), 404
 
-    zones_text = ""
-    tariffs_text = ""
+    zones_list = []
+    tariffs_list = []
 
     # 1. Fetch PCs to extract unique Zones / Area names
     pc_raw = icafe_get("/pcList")
@@ -834,10 +834,10 @@ def get_icafe_data():
                     price_names.add(str(pr))
                     
             if zones:
-                zones_text = "Залы / Зоны:\n- " + "\n- ".join(sorted(zones))
+                zones_list = [{"name": z, "specs": "RTX 3060 / i5-12400 / 16GB", "price": "100", "capacity": "30"} for z in sorted(zones)]
             
             if price_names:
-                tariffs_text += "Тарифные планы (по ПК):\n- " + "\n- ".join(sorted(price_names)) + "\n\n"
+                tariffs_list = [{"duration": t, "price": "150"} for t in sorted(price_names)]
     except Exception as e:
         print(f"Error parsing zones: {e}")
 
@@ -849,18 +849,18 @@ def get_icafe_data():
             if groups:
                 names = [str(g.get("member_group_name")) for g in groups if g.get("member_group_name")]
                 if names:
-                    tariffs_text += "Группы клиентов:\n- " + "\n- ".join(names) + "\n\n"
+                    # Append new tariffs if not already added from PC list
+                    existing_tariffs = set(t["duration"] for t in tariffs_list)
+                    for n in names:
+                        if n not in existing_tariffs:
+                            tariffs_list.append({"duration": n, "price": "200"})
     except Exception as e:
         print(f"Error parsing member groups: {e}")
 
-    if not zones_text:
-        zones_text = "Не удалось загрузить залы автоматически."
-    if not tariffs_text:
-        tariffs_text = "Не удалось загрузить тарифы автоматически. Пожалуйста, введите их вручную."
-
+    # Return lists as JSON encoded strings so frontend can just store them directly
     return jsonify({
-        "zones": zones_text.strip(),
-        "tariffs": tariffs_text.strip()
+        "zones": json.dumps(zones_list, ensure_ascii=False) if zones_list else "[]",
+        "tariffs": json.dumps(tariffs_list, ensure_ascii=False) if tariffs_list else "[]"
     })
 
 

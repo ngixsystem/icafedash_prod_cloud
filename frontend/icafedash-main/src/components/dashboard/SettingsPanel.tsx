@@ -2,10 +2,21 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2, Upload, MapPin, Clock, Wifi, LayoutGrid, DollarSign, Save, CloudDownload } from "lucide-react";
+import { Loader2, Upload, MapPin, Clock, Wifi, LayoutGrid, DollarSign, Save, CloudDownload, Plus, Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
+interface Zone {
+    name: string;
+    specs: string;
+    price: string;
+    capacity: string;
+}
+
+interface Tariff {
+    duration: string;
+    price: string;
+}
 
 const SettingsPanel = () => {
     const queryClient = useQueryClient();
@@ -14,9 +25,10 @@ const SettingsPanel = () => {
         address: "",
         working_hours: "",
         internet_speed: "",
-        zones: "",
-        tariffs: "",
     });
+
+    const [zones, setZones] = useState<Zone[]>([]);
+    const [tariffs, setTariffs] = useState<Tariff[]>([]);
 
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -33,21 +45,70 @@ const SettingsPanel = () => {
                 address: config.address || "",
                 working_hours: config.working_hours || "",
                 internet_speed: config.internet_speed || "",
-                zones: config.zones || "",
-                tariffs: config.tariffs || "",
             });
             setLogoPreview(config.club_logo_url || null);
+
+            // Parse zones
+            try {
+                if (config.zones && config.zones.trim().startsWith("[")) {
+                    setZones(JSON.parse(config.zones));
+                } else {
+                    setZones([]);
+                }
+            } catch (e) {
+                console.error("Failed to parse zones", e);
+                setZones([]);
+            }
+
+            // Parse tariffs
+            try {
+                if (config.tariffs && config.tariffs.trim().startsWith("[")) {
+                    setTariffs(JSON.parse(config.tariffs));
+                } else {
+                    setTariffs([]);
+                }
+            } catch (e) {
+                console.error("Failed to parse tariffs", e);
+                setTariffs([]);
+            }
         }
     }, [config]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleZoneChange = (index: number, field: keyof Zone, value: string) => {
+        const newZones = [...zones];
+        newZones[index][field] = value;
+        setZones(newZones);
+    };
+
+    const addZone = () => {
+        setZones([...zones, { name: "", specs: "", price: "", capacity: "" }]);
+    };
+
+    const removeZone = (index: number) => {
+        setZones(zones.filter((_, i) => i !== index));
+    };
+
+    const handleTariffChange = (index: number, field: keyof Tariff, value: string) => {
+        const newTariffs = [...tariffs];
+        newTariffs[index][field] = value;
+        setTariffs(newTariffs);
+    };
+
+    const addTariff = () => {
+        setTariffs([...tariffs, { duration: "", price: "" }]);
+    };
+
+    const removeTariff = (index: number) => {
+        setTariffs(tariffs.filter((_, i) => i !== index));
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            // Only allow images
             if (!file.type.startsWith("image/")) {
                 toast.error("Пожалуйста, загрузите изображение (JPG/PNG)");
                 return;
@@ -56,7 +117,6 @@ const SettingsPanel = () => {
             const objectUrl = URL.createObjectURL(file);
             setLogoPreview(objectUrl);
 
-            // Free memory when component unmounts
             return () => URL.revokeObjectURL(objectUrl);
         }
     };
@@ -64,12 +124,17 @@ const SettingsPanel = () => {
     const loadIcafeDataMutation = useMutation({
         mutationFn: api.getIcafeData,
         onSuccess: (data) => {
-            setFormData(prev => ({
-                ...prev,
-                zones: data.zones || prev.zones,
-                tariffs: data.tariffs || prev.tariffs
-            }));
-            toast.success("Данные успешно загружены из iCafeCloud");
+            try {
+                if (data.zones && data.zones !== "[]") {
+                    setZones(JSON.parse(data.zones));
+                }
+                if (data.tariffs && data.tariffs !== "[]") {
+                    setTariffs(JSON.parse(data.tariffs));
+                }
+                toast.success("Данные успешно загружены из iCafeCloud");
+            } catch (e) {
+                toast.error("Ошибка парсинга данных из iCafeCloud");
+            }
         },
         onError: () => {
             toast.error("Ошибка при загрузке данных из iCafeCloud");
@@ -80,22 +145,22 @@ const SettingsPanel = () => {
         mutationFn: async () => {
             let finalLogoUrl = config?.club_logo_url || "";
 
-            // 1. Upload new logo if selected
             if (selectedFile) {
                 const uploadRes = await api.uploadLogo(selectedFile);
                 finalLogoUrl = uploadRes.url;
             }
 
-            // 2. Save all config data
             return api.saveConfig({
                 ...formData,
+                zones: JSON.stringify(zones),
+                tariffs: JSON.stringify(tariffs),
                 club_logo_url: finalLogoUrl,
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["config"] });
             toast.success("Настройки успешно сохранены!");
-            setSelectedFile(null); // Reset file selection after successful save
+            setSelectedFile(null);
         },
         onError: (error) => {
             console.error(error);
@@ -213,13 +278,13 @@ const SettingsPanel = () => {
                     </div>
                 </div>
 
-                {/* Zones & Tariffs */}
+                {/* Zones Section */}
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                         <div>
-                            <h3 className="text-lg font-semibold flex items-center gap-2"><LayoutGrid className="w-5 h-5 text-primary" /> Описание залов и тарифов</h3>
+                            <h3 className="text-lg font-semibold flex items-center gap-2"><LayoutGrid className="w-5 h-5 text-primary" /> Залы и Зоны</h3>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Опишите зоны или нажмите кнопку, чтобы скопировать данные напрямую из iCafeCloud.
+                                Добавьте зоны клуба. Можно также загрузить предзаполненные группы ПК из iCafeCloud.
                             </p>
                         </div>
                         <button
@@ -237,29 +302,76 @@ const SettingsPanel = () => {
                         </button>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="zones" className="flex items-center gap-2 font-medium mb-2">Залы и Зоны</Label>
-                        <Textarea
-                            id="zones"
-                            name="zones"
-                            value={formData.zones}
-                            onChange={handleChange}
-                            placeholder="Standard: RTX 3060, монитор 144Hz. VIP: RTX 4070..."
-                            className="min-h-[120px]"
-                        />
+                    <div className="space-y-4">
+                        {zones.map((zone, index) => (
+                            <div key={index} className="flex flex-col gap-4 p-4 border border-border rounded-lg bg-background/50 relative">
+                                <button type="button" onClick={() => removeZone(index)} className="absolute top-4 right-4 text-destructive hover:bg-destructive/10 p-1 rounded-md transition-colors">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
+                                    <div className="space-y-2">
+                                        <Label>Название зоны</Label>
+                                        <Input value={zone.name} onChange={(e) => handleZoneChange(index, "name", e.target.value)} placeholder="Standard, VIP..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Характеристики ПК (CPU / GPU / RAM)</Label>
+                                        <Input value={zone.specs} onChange={(e) => handleZoneChange(index, "specs", e.target.value)} placeholder="RTX 4070 / i7 / 32GB..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Цена в час</Label>
+                                        <Input value={zone.price} onChange={(e) => handleZoneChange(index, "price", e.target.value)} placeholder="Например: 15000" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Вместимость ПК</Label>
+                                        <Input value={zone.capacity} onChange={(e) => handleZoneChange(index, "capacity", e.target.value)} placeholder="Кол-во ПК в зоне" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={addZone}
+                            className="w-full py-3 border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors rounded-lg flex items-center justify-center gap-2 font-medium"
+                        >
+                            <Plus className="w-4 h-4" /> Добавить зону
+                        </button>
+                    </div>
+                </div>
+
+                {/* Tariffs Section */}
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-2"><DollarSign className="w-5 h-5 text-primary" /> Тарифные планы</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Укажите основные пакеты и их стоимость для отображения на сайте.
+                        </p>
                     </div>
 
-                    <div className="space-y-2 pt-4 border-t border-border">
-                        <Label htmlFor="tariffs" className="flex items-center gap-2 font-medium mb-2"><DollarSign className="w-4 h-4 text-muted-foreground" /> Тарифы</Label>
-                        <Textarea
-                            id="tariffs"
-                            name="tariffs"
-                            value={formData.tariffs}
-                            onChange={handleChange}
-                            placeholder="1 час - 100 руб, Пакет 'Ночь' - 500 руб..."
-                            className="min-h-[120px]"
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {tariffs.map((tariff, index) => (
+                            <div key={index} className="flex gap-4 p-4 border border-border rounded-lg bg-background/50 relative items-end">
+                                <div className="flex-1 space-y-2">
+                                    <Label>Пакет / Длительность</Label>
+                                    <Input value={tariff.duration} onChange={(e) => handleTariffChange(index, "duration", e.target.value)} placeholder="3 часа, Пакет Ночь..." />
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <Label>Цена</Label>
+                                    <Input value={tariff.price} onChange={(e) => handleTariffChange(index, "price", e.target.value)} placeholder="Например: 45000" />
+                                </div>
+                                <button type="button" onClick={() => removeTariff(index)} className="text-destructive hover:bg-destructive/10 p-2.5 rounded-md transition-colors mb-[1px]">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
                     </div>
+                    <button
+                        type="button"
+                        onClick={addTariff}
+                        className="w-full py-3 border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors rounded-lg flex items-center justify-center gap-2 font-medium"
+                    >
+                        <Plus className="w-4 h-4" /> Добавить пакет
+                    </button>
                 </div>
 
                 <div className="flex justify-end pt-4 pb-8">
