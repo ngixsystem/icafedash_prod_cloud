@@ -118,18 +118,22 @@ const Monitoring = () => {
                     {sortedPcs.map((pc) => {
                         const isBusy = pc.status === "busy";
                         const isFree = pc.status === "free";
-                        const statusLabel = isBusy ? "занято" : isFree ? "свободно" : "блокировка";
-                        const statusClass = isBusy
-                            ? "bg-orange-500/15 text-orange-400 border-orange-500/40"
+                        const iconClass = isBusy
+                            ? "text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.55)]"
                             : isFree
-                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/40"
-                                : "bg-muted/20 text-muted-foreground border-muted-foreground/30";
+                                ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.55)]"
+                                : "text-muted-foreground";
+                        const iconWrapClass = isBusy
+                            ? "border-orange-500/35 bg-orange-500/10"
+                            : isFree
+                                ? "border-emerald-500/35 bg-emerald-500/10"
+                                : "border-border bg-secondary/60";
 
                         return (
                             <div key={`row-${pc.id}`} className="px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className="h-8 w-8 rounded-lg bg-secondary/60 border border-border flex items-center justify-center shrink-0">
-                                        <Monitor className="h-4 w-4 text-muted-foreground" />
+                                    <div className={`h-8 w-8 rounded-lg border flex items-center justify-center shrink-0 ${iconWrapClass}`}>
+                                        <Monitor className={`h-4 w-4 ${iconClass}`} />
                                     </div>
                                     <div className="min-w-0">
                                         <div className="text-sm font-semibold text-foreground truncate">{pc.name}</div>
@@ -141,9 +145,6 @@ const Monitoring = () => {
                                     {pc.time_left && (
                                         <span className="text-[11px] text-muted-foreground">{pc.time_left}</span>
                                     )}
-                                    <span className={`text-xs rounded-full border px-2 py-1 font-medium ${statusClass}`}>
-                                        {statusLabel}
-                                    </span>
                                 </div>
                             </div>
                         );
