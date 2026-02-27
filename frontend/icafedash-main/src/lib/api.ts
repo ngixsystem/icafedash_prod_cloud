@@ -184,6 +184,8 @@ export const api = {
 
     getConfig: () => get<ConfigData>("/config"),
 
+    getIcafeData: () => get<{ zones: string; tariffs: string }>("/config/icafe-data"),
+
     saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string; address?: string; working_hours?: string; zones?: string; tariffs?: string; internet_speed?: string }) =>
         post<{ ok: boolean }>("/config", data),
 

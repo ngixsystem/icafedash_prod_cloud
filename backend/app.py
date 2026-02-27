@@ -804,6 +804,66 @@ def set_config():
     return jsonify({"ok": True})
 
 
+@app.get("/api/config/icafe-data")
+@jwt_required()
+def get_icafe_data():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user or not user.club:
+        return jsonify({"message": "No club assigned"}), 404
+
+    zones_text = ""
+    tariffs_text = ""
+
+    # 1. Fetch PCs to extract unique Zones / Area names
+    pc_raw = icafe_get("/pcList")
+    try:
+        if pc_raw and pc_raw.get("code") == 200:
+            data_field = pc_raw.get("data", {})
+            pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
+            
+            zones = set()
+            price_names = set()
+            for pc in pcs:
+                area = pc.get("pc_area_name") or pc.get("pc_group_name")
+                if area:
+                    zones.add(str(area))
+                # Sometime price names are assigned per PC
+                pr = pc.get("price_name")
+                if pr and pr != "Default":
+                    price_names.add(str(pr))
+                    
+            if zones:
+                zones_text = "Залы / Зоны:\n- " + "\n- ".join(sorted(zones))
+            
+            if price_names:
+                tariffs_text += "Тарифные планы (по ПК):\n- " + "\n- ".join(sorted(price_names)) + "\n\n"
+    except Exception as e:
+        print(f"Error parsing zones: {e}")
+
+    # 2. Fetch Member groups (often used as Tariffs/Packages in iCafe)
+    mg_raw = icafe_get("/member/group")
+    try:
+        if mg_raw and mg_raw.get("code") == 200:
+            groups = mg_raw.get("data", [])
+            if groups:
+                names = [str(g.get("member_group_name")) for g in groups if g.get("member_group_name")]
+                if names:
+                    tariffs_text += "Группы клиентов:\n- " + "\n- ".join(names) + "\n\n"
+    except Exception as e:
+        print(f"Error parsing member groups: {e}")
+
+    if not zones_text:
+        zones_text = "Не удалось загрузить залы автоматически."
+    if not tariffs_text:
+        tariffs_text = "Не удалось загрузить тарифы автоматически. Пожалуйста, введите их вручную."
+
+    return jsonify({
+        "zones": zones_text.strip(),
+        "tariffs": tariffs_text.strip()
+    })
+
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2, Upload, MapPin, Clock, Wifi, LayoutGrid, DollarSign, Save } from "lucide-react";
+import { Loader2, Upload, MapPin, Clock, Wifi, LayoutGrid, DollarSign, Save, CloudDownload } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,6 +60,21 @@ const SettingsPanel = () => {
             return () => URL.revokeObjectURL(objectUrl);
         }
     };
+
+    const loadIcafeDataMutation = useMutation({
+        mutationFn: api.getIcafeData,
+        onSuccess: (data) => {
+            setFormData(prev => ({
+                ...prev,
+                zones: data.zones || prev.zones,
+                tariffs: data.tariffs || prev.tariffs
+            }));
+            toast.success("Данные успешно загружены из iCafeCloud");
+        },
+        onError: () => {
+            toast.error("Ошибка при загрузке данных из iCafeCloud");
+        }
+    });
 
     const saveMutation = useMutation({
         mutationFn: async () => {
@@ -200,11 +215,30 @@ const SettingsPanel = () => {
 
                 {/* Zones & Tariffs */}
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                        <div>
+                            <h3 className="text-lg font-semibold flex items-center gap-2"><LayoutGrid className="w-5 h-5 text-primary" /> Описание залов и тарифов</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Опишите зоны или нажмите кнопку, чтобы скопировать данные напрямую из iCafeCloud.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => loadIcafeDataMutation.mutate()}
+                            disabled={loadIcafeDataMutation.isPending}
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors font-medium rounded-lg text-sm disabled:opacity-50 shrink-0"
+                        >
+                            {loadIcafeDataMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <CloudDownload className="w-4 h-4" />
+                            )}
+                            Загрузить из iCafeCloud
+                        </button>
+                    </div>
+
                     <div className="space-y-2">
-                        <Label htmlFor="zones" className="flex items-center gap-2 text-lg font-semibold mb-2"><LayoutGrid className="w-5 h-5 text-primary" /> Описание залов и зон</Label>
-                        <p className="text-sm text-muted-foreground mb-2">
-                            Опишите какие зоны есть в клубе (Standard, VIP, Boot-camp), характеристики ПК и периферии.
-                        </p>
+                        <Label htmlFor="zones" className="flex items-center gap-2 font-medium mb-2">Залы и Зоны</Label>
                         <Textarea
                             id="zones"
                             name="zones"
@@ -216,10 +250,7 @@ const SettingsPanel = () => {
                     </div>
 
                     <div className="space-y-2 pt-4 border-t border-border">
-                        <Label htmlFor="tariffs" className="flex items-center gap-2 text-lg font-semibold mb-2"><DollarSign className="w-5 h-5 text-primary" /> Тарифы</Label>
-                        <p className="text-sm text-muted-foreground mb-2">
-                            Опишите ваши тарифы (почасовые, пакеты 3 часа, пакет ночь и т.д.)
-                        </p>
+                        <Label htmlFor="tariffs" className="flex items-center gap-2 font-medium mb-2"><DollarSign className="w-4 h-4 text-muted-foreground" /> Тарифы</Label>
                         <Textarea
                             id="tariffs"
                             name="tariffs"
