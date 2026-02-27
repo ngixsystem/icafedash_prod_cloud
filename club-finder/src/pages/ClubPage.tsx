@@ -27,82 +27,83 @@ export default function ClubPage() {
   return (
     <div className="min-h-screen pb-24">
       {/* Hero */}
-      <div className="relative h-56">
+      <div className="relative h-64 overflow-hidden rounded-b-[2rem]">
         <img src={club.logo || club.image} alt={club.name} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        {/* Dark gradient for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/40 to-transparent" />
+
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-10 left-4 w-9 h-9 rounded-full glass flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
+          className="absolute top-10 left-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
+
+        {/* Title Overlaid on Hero Bottom */}
+        <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+          <h1 className="text-3xl font-display font-black tracking-wide text-white drop-shadow-xl">{club.name}</h1>
+          <div className="flex items-center gap-1.5 text-warning font-black drop-shadow-md mb-1">
+            <Star className="w-5 h-5 fill-current" />
+            <span className="text-lg">{club.rating}</span>
+          </div>
+        </div>
       </div>
 
       {/* Info */}
-      <div className="px-4 -mt-8 relative z-10">
-        <div className="flex items-start justify-between mb-2">
-          <h1 className="text-2xl font-display font-bold">{club.name}</h1>
-          <div className="flex items-center gap-1 text-warning text-sm font-bold mt-1">
-            <Star className="w-4 h-4 fill-current" /> {club.rating}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+      <div className="px-6 py-5 relative z-10 space-y-7">
+        <div className="flex items-center gap-2 text-[13px] text-white/50 -mt-2">
           <MapPin className="w-3.5 h-3.5" /> {club.address}
         </div>
 
         {/* Status chips */}
-        <div className="flex gap-2 mb-6 flex-wrap">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${club.isOpen ? "status-free" : "status-busy"}`}>
+        <div className="flex gap-2.5 flex-wrap">
+          <span className="px-4 py-1.5 rounded-full text-xs font-bold text-black bg-white">
             {club.isOpen ? "Открыто" : "Закрыто"}
           </span>
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary">
-            <Monitor className="w-3 h-3 inline mr-1" />
+          <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#04283b] text-[#00bfff]">
+            <Monitor className="w-3.5 h-3.5 inline mr-1.5" />
             {club.pcsFree} свободно
           </span>
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-            <Wifi className="w-3 h-3 inline mr-1" />1 Гбит/с
+          <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-white/5 text-white/60">
+            <Wifi className="w-3.5 h-3.5 inline mr-1.5" />1 Гбит/с
           </span>
         </div>
 
         {/* Zones */}
-        <h2 className="text-lg font-display font-bold mb-3">Зоны</h2>
-        <div className="space-y-3 mb-6">
+        <h2 className="text-xl font-display font-black tracking-wide mb-4 mt-2">Зоны</h2>
+        <div className="space-y-4 mb-8">
           {(!club.zones || club.zones.length === 0) ? (
-            <div className="text-sm text-muted-foreground">Нет информации о залах</div>
+            <div className="text-sm text-white/40">Нет информации о залах</div>
           ) : club.zones.map((zone: any, i: number) => {
             const zTotal = parseInt(zone.capacity) || 0;
             const zFree = parseInt(zone.pcsFree) || 0;
-            const freePercent = zTotal > 0 ? (zFree / zTotal) * 100 : 0;
+            // Progress bar shows "Busy" or simply how much is available. Based on styling, it looks like it's a fill. Let's make it the occupied percentage.
+            const progressPercent = zTotal > 0 ? ((zTotal - zFree) / zTotal) * 100 : 0;
 
             return (
               <div
                 key={i}
                 onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
-                className="rounded-lg glass p-4 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all"
+                className="rounded-2xl bg-[#0f1015]/90 border border-white/5 p-5 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all group"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-display font-bold text-sm group-hover:text-primary transition-colors">{zone.name}</h3>
-                  <span className="text-primary font-display font-bold">{zone.price || 0} СУМ/ч</span>
+                  <h3 className="font-display font-black uppercase tracking-wider text-base text-white group-hover:text-[#00bfff] transition-colors">
+                    {zone.name}
+                  </h3>
+                  <span className="text-[#00bfff] font-display font-bold text-base">{zone.price || 0} СУМ/ч</span>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{zone.specs}</p>
+                <p className="text-[13px] text-white/50 mb-5">{zone.specs}</p>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                  <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all duration-1000 ease-out"
+                      className="h-full rounded-full transition-all duration-1000 ease-out bg-[#10b981] shadow-[0_0_10px_rgba(16,185,129,0.4)]"
                       style={{
-                        width: `${freePercent}%`,
-                        background: freePercent > 30
-                          ? "hsl(var(--success))"
-                          : freePercent > 0
-                            ? "hsl(var(--warning))"
-                            : "hsl(var(--destructive))",
+                        width: `${progressPercent}%`
                       }}
                     />
                   </div>
-                  <span className="text-xs font-semibold whitespace-nowrap min-w-[3rem] text-right">
-                    <span className={zFree > 0 ? "text-emerald-400" : "text-destructive"}>{zFree}</span>
-                    <span className="text-muted-foreground"> / {zTotal} ПК</span>
+                  <span className="text-[13px] font-medium text-white/40 whitespace-nowrap leading-none mt-0.5">
+                    {zTotal} ПК
                   </span>
                 </div>
               </div>
@@ -111,8 +112,8 @@ export default function ClubPage() {
         </div>
 
         {/* Tariffs */}
-        <h2 className="text-lg font-display font-bold mb-3">Тарифы</h2>
-        <div className="grid grid-cols-3 gap-2 mb-6">
+        <h2 className="text-xl font-display font-black tracking-wide mb-4">Тарифы</h2>
+        <div className="grid grid-cols-3 gap-3 mb-8">
           {(!club.tariffs || club.tariffs.length === 0) ? (
             <div className="col-span-3 text-sm text-muted-foreground">Нет информации о тарифах</div>
           ) : club.tariffs.map((t: any, i: number) => (
