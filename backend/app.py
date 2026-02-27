@@ -137,7 +137,7 @@ class BookingRequest(db.Model):
     zone_name = db.Column(db.String(120), nullable=False)
     duration = db.Column(db.String(50), nullable=True)
     pc_names = db.Column(db.Text, nullable=False)  # JSON array
-    status = db.Column(db.String(20), nullable=False, default="new")
+    status = db.Column(db.String(20), nullable=False, default="pending")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     club = db.relationship("Club", backref=db.backref("booking_requests", lazy=True))
@@ -368,6 +368,15 @@ def icafe_get_for_club(club: Club, path: str, params: dict = None, timeout: int 
     except Exception as e:
         print(f"Public API Error ({path}): {e}")
         return None
+
+
+def normalize_booking_status(raw_status: str | None) -> str:
+    status = (raw_status or "").strip().lower()
+    if status in ("new", "", "pending"):
+        return "pending"
+    if status in ("approved", "rejected"):
+        return status
+    return "pending"
 
 
 # ── iCafeCloud API helper ─────────────────────────────────────────────────────
@@ -1202,7 +1211,7 @@ def create_public_booking(club_id):
         zone_name=zone_name,
         duration=duration or None,
         pc_names=json.dumps(cleaned_pc_names, ensure_ascii=False),
-        status="new",
+        status="pending",
     )
     db.session.add(booking)
     db.session.commit()
@@ -1218,10 +1227,51 @@ def create_public_booking(club_id):
             "zone_name": booking.zone_name,
             "duration": booking.duration,
             "pc_names": cleaned_pc_names,
-            "status": booking.status,
+            "status": normalize_booking_status(booking.status),
             "created_at": booking.created_at.isoformat() + "Z" if booking.created_at else None,
         }
     }), 201
+
+
+@app.get("/api/public/bookings/my")
+@jwt_required()
+def get_my_public_bookings():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can view bookings"}), 403
+
+    rows = BookingRequest.query.filter_by(user_id=user.id).order_by(BookingRequest.created_at.desc()).limit(300).all()
+    payload = []
+    for b in rows:
+        try:
+            pc_names = json.loads(b.pc_names) if b.pc_names else []
+            if not isinstance(pc_names, list):
+                pc_names = []
+        except Exception:
+            pc_names = []
+        payload.append({
+            "id": b.id,
+            "club_id": b.club_id,
+            "club_name": b.club.name if b.club else "",
+            "client_name": b.client_name,
+            "phone": b.phone,
+            "zone_name": b.zone_name,
+            "duration": b.duration,
+            "pc_names": pc_names,
+            "status": normalize_booking_status(b.status),
+            "created_at": b.created_at.isoformat() + "Z" if b.created_at else None,
+        })
+
+    return jsonify({
+        "bookings": payload,
+        "summary": {
+            "count": len(payload),
+            "pending_count": sum(1 for b in payload if b["status"] == "pending"),
+        }
+    })
 
 
 @app.get("/api/bookings")
@@ -1234,7 +1284,7 @@ def get_bookings_for_dashboard():
 
     if user.role == "manager":
         if not user.club_id:
-            return jsonify({"bookings": [], "summary": {"count": 0, "new_count": 0}}), 200
+            return jsonify({"bookings": [], "summary": {"count": 0, "pending_count": 0}}), 200
         query = BookingRequest.query.filter_by(club_id=user.club_id)
     elif user.role == "admin":
         club_id = request.args.get("club_id", type=int)
@@ -1263,7 +1313,7 @@ def get_bookings_for_dashboard():
             "zone_name": b.zone_name,
             "duration": b.duration,
             "pc_names": pc_names,
-            "status": b.status,
+            "status": normalize_booking_status(b.status),
             "created_at": b.created_at.isoformat() + "Z" if b.created_at else None,
         })
 
@@ -1271,7 +1321,57 @@ def get_bookings_for_dashboard():
         "bookings": payload,
         "summary": {
             "count": len(payload),
-            "new_count": sum(1 for b in payload if b["status"] == "new"),
+            "pending_count": sum(1 for b in payload if b["status"] == "pending"),
+        }
+    })
+
+
+@app.put("/api/bookings/<int:booking_id>/status")
+@jwt_required()
+def update_booking_status(booking_id):
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("manager", "admin"):
+        return jsonify({"message": "Access denied"}), 403
+
+    booking = BookingRequest.query.get(booking_id)
+    if not booking:
+        return jsonify({"message": "Booking not found"}), 404
+
+    if user.role == "manager":
+        if not user.club_id or booking.club_id != user.club_id:
+            return jsonify({"message": "Access denied"}), 403
+
+    body = request.json or {}
+    next_status = (body.get("status") or "").strip().lower()
+    if next_status not in ("approved", "rejected"):
+        return jsonify({"message": "status must be approved or rejected"}), 400
+
+    booking.status = next_status
+    db.session.commit()
+
+    try:
+        pc_names = json.loads(booking.pc_names) if booking.pc_names else []
+        if not isinstance(pc_names, list):
+            pc_names = []
+    except Exception:
+        pc_names = []
+
+    return jsonify({
+        "message": "Booking status updated",
+        "booking": {
+            "id": booking.id,
+            "club_id": booking.club_id,
+            "club_name": booking.club.name if booking.club else "",
+            "client_name": booking.client_name,
+            "phone": booking.phone,
+            "zone_name": booking.zone_name,
+            "duration": booking.duration,
+            "pc_names": pc_names,
+            "status": normalize_booking_status(booking.status),
+            "created_at": booking.created_at.isoformat() + "Z" if booking.created_at else None,
         }
     })
 

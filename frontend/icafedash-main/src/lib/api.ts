@@ -272,7 +272,9 @@ export const api = {
         put<{ message: string }>(`/admin/users/${userId}`, data),
     deleteUser: (userId: number) => del<{ message: string }>(`/admin/users/${userId}`),
     managerReviews: () => get<{ reviews: DashboardReview[]; summary: { count: number; average_rating: number } }>("/reviews"),
-    managerBookings: () => get<{ bookings: DashboardBooking[]; summary: { count: number; new_count: number } }>("/bookings"),
+    managerBookings: () => get<{ bookings: DashboardBooking[]; summary: { count: number; pending_count: number } }>("/bookings"),
+    updateBookingStatus: (bookingId: number, status: "approved" | "rejected") =>
+        put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/status`, { status }),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),

@@ -19,8 +19,9 @@ export default function AuthPage() {
     const location = useLocation();
 
     if (isAuthenticated) {
-        const from = (location.state as any)?.from?.pathname || "/";
-        return <Navigate to={from} replace />;
+        const fromPath = (location.state as any)?.from?.pathname || "/";
+        const fromSearch = (location.state as any)?.from?.search || "";
+        return <Navigate to={`${fromPath}${fromSearch}`} replace />;
     }
 
     const handleSubmit = async (e: React.FormEvent) => {

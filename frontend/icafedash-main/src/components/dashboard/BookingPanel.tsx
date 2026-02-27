@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CalendarClock, Phone, User, Monitor, MapPin, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -15,7 +16,18 @@ function formatDate(value: string | null): string {
   });
 }
 
+function statusUi(status: string) {
+  if (status === "approved") {
+    return { label: "Подтверждено", className: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" };
+  }
+  if (status === "rejected") {
+    return { label: "Отказано", className: "bg-rose-500/20 text-rose-300 border border-rose-500/40" };
+  }
+  return { label: "Ожидание", className: "bg-amber-500/20 text-amber-300 border border-amber-500/40" };
+}
+
 const BookingPanel = () => {
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["manager_bookings"],
     queryFn: api.managerBookings,
@@ -23,7 +35,19 @@ const BookingPanel = () => {
   });
 
   const bookings = data?.bookings || [];
-  const summary = data?.summary || { count: 0, new_count: 0 };
+  const summary = data?.summary || { count: 0, pending_count: 0 };
+
+  const handleStatusUpdate = async (bookingId: number, status: "approved" | "rejected") => {
+    setUpdatingId(bookingId);
+    try {
+      await api.updateBookingStatus(bookingId, status);
+      await refetch();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -34,7 +58,7 @@ const BookingPanel = () => {
             Бронирование
           </h2>
           <p className="text-muted-foreground mt-1">
-            Новые заявки клиентов приходят в эту вкладку автоматически
+            Менеджер подтверждает или отклоняет входящие бронирования клиентов
           </p>
         </div>
         <button
@@ -53,8 +77,8 @@ const BookingPanel = () => {
           <div className="mt-1 text-2xl font-bold">{summary.count}</div>
         </div>
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
-          <div className="text-sm text-amber-300">Новые</div>
-          <div className="mt-1 text-2xl font-bold text-amber-200">{summary.new_count}</div>
+          <div className="text-sm text-amber-300">Ожидают решения</div>
+          <div className="mt-1 text-2xl font-bold text-amber-200">{summary.pending_count}</div>
         </div>
       </div>
 
@@ -68,52 +92,69 @@ const BookingPanel = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {bookings.map((booking) => (
-            <div key={booking.id} className="rounded-xl border border-border bg-card p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-semibold text-foreground">
-                  Заявка #{booking.id}
+          {bookings.map((booking) => {
+            const current = statusUi(booking.status);
+            const isPending = booking.status === "pending";
+            return (
+              <div key={booking.id} className="rounded-xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-foreground">Заявка #{booking.id}</div>
+                  <div className="text-xs text-muted-foreground">{formatDate(booking.created_at)}</div>
                 </div>
-                <div className="text-xs text-muted-foreground">{formatDate(booking.created_at)}</div>
-              </div>
 
-              <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                <div className="inline-flex items-center gap-2 text-foreground">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  {booking.client_name}
+                <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                  <div className="inline-flex items-center gap-2 text-foreground">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    {booking.client_name}
+                  </div>
+                  <div className="inline-flex items-center gap-2 text-foreground">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    {booking.phone}
+                  </div>
+                  <div className="inline-flex items-center gap-2 text-foreground">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    {booking.zone_name}
+                  </div>
+                  <div className="inline-flex items-center gap-2 text-foreground">
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                    {booking.pc_names.join(", ")}
+                  </div>
                 </div>
-                <div className="inline-flex items-center gap-2 text-foreground">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  {booking.phone}
-                </div>
-                <div className="inline-flex items-center gap-2 text-foreground">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  {booking.zone_name}
-                </div>
-                <div className="inline-flex items-center gap-2 text-foreground">
-                  <Monitor className="h-4 w-4 text-muted-foreground" />
-                  {booking.pc_names.join(", ")}
-                </div>
-              </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {booking.duration ? (
-                  <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
-                    {booking.duration}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {booking.duration ? (
+                    <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
+                      {booking.duration}
+                    </span>
+                  ) : null}
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${current.className}`}>
+                    {current.label}
                   </span>
+                </div>
+
+                {isPending ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={updatingId === booking.id}
+                      onClick={() => handleStatusUpdate(booking.id, "approved")}
+                      className="rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-60"
+                    >
+                      Подтвердить
+                    </button>
+                    <button
+                      type="button"
+                      disabled={updatingId === booking.id}
+                      onClick={() => handleStatusUpdate(booking.id, "rejected")}
+                      className="rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-500/30 disabled:opacity-60"
+                    >
+                      Отказать
+                    </button>
+                  </div>
                 ) : null}
-                <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    booking.status === "new"
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                  }`}
-                >
-                  {booking.status === "new" ? "Новая" : booking.status}
-                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

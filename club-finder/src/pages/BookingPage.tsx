@@ -8,8 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 interface ClubZone {
   name: string;
   price?: string;
-  specs?: string;
-  capacity?: string;
 }
 
 interface ClubPayload {
@@ -24,7 +22,40 @@ interface ZonePc {
   status: "free" | "busy" | "offline";
 }
 
+interface MyBooking {
+  id: number;
+  club_name: string;
+  zone_name: string;
+  duration: string | null;
+  pc_names: string[];
+  status: "pending" | "approved" | "rejected";
+  created_at: string | null;
+}
+
 const durationOptions = ["30 мин", "1 час", "2 часа", "3 часа", "5 часов"];
+
+function formatDate(value: string | null): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function bookingStatusUi(status: string) {
+  if (status === "approved") {
+    return { label: "Подтверждено", className: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" };
+  }
+  if (status === "rejected") {
+    return { label: "Отказано", className: "bg-rose-500/20 text-rose-300 border border-rose-500/40" };
+  }
+  return { label: "Ожидание", className: "bg-amber-500/20 text-amber-300 border border-amber-500/40" };
+}
 
 export default function BookingPage() {
   const [searchParams] = useSearchParams();
@@ -46,7 +77,43 @@ export default function BookingPage() {
   const [clientName, setClientName] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [booked, setBooked] = useState<null | { zone_name: string; pc_names: string[] }>(null);
+  const [booked, setBooked] = useState<null | { id: number; zone_name: string; pc_names: string[]; status: string }>(null);
+
+  const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
+  const [loadingMyBookings, setLoadingMyBookings] = useState(false);
+
+  const token = localStorage.getItem("icafe_client_token");
+
+  const loadMyBookings = async () => {
+    if (!token) {
+      setMyBookings([]);
+      return;
+    }
+    setLoadingMyBookings(true);
+    try {
+      const res = await fetch("/api/public/bookings/my", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await res.json();
+      if (res.status === 401 || res.status === 422) {
+        localStorage.removeItem("icafe_client_token");
+        localStorage.removeItem("icafe_client_user");
+        setMyBookings([]);
+        return;
+      }
+      if (!res.ok) throw new Error(payload?.message || "Не удалось загрузить бронирования");
+      setMyBookings(Array.isArray(payload?.bookings) ? payload.bookings : []);
+    } catch {
+      setMyBookings([]);
+    } finally {
+      setLoadingMyBookings(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMyBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!clubId) {
@@ -66,7 +133,6 @@ export default function BookingPage() {
       .then((payload) => {
         if (!alive) return;
         setClub(payload);
-
         const zones = payload.zones || [];
         const queryZone = zones.find((z) => (z.name || "").toLowerCase() === zoneQuery.toLowerCase());
         setSelectedZone(queryZone?.name || zones[0]?.name || "");
@@ -128,11 +194,8 @@ export default function BookingPage() {
 
   const togglePc = (pc: ZonePc) => {
     if (pc.status !== "free") return;
-
     setSelectedPcs((prev) => {
-      if (prev.includes(pc.name)) {
-        return prev.filter((name) => name !== pc.name);
-      }
+      if (prev.includes(pc.name)) return prev.filter((name) => name !== pc.name);
       if (prev.length >= 10) {
         toast({
           title: "Лимит",
@@ -147,13 +210,10 @@ export default function BookingPage() {
 
   const submitBooking = async () => {
     if (!clubId || !selectedZone) return;
-
-    const token = localStorage.getItem("icafe_client_token");
     if (!token) {
-      navigate("/auth", { state: { from: { pathname: `/booking?club=${clubId}&zone=${encodeURIComponent(selectedZone)}` } } });
+      navigate("/auth", { state: { from: { pathname: "/booking", search: `?club=${clubId}&zone=${encodeURIComponent(selectedZone)}` } } });
       return;
     }
-
     if (!clientName.trim()) {
       toast({ title: "Ошибка", description: "Введите имя", variant: "destructive" });
       return;
@@ -193,16 +253,19 @@ export default function BookingPage() {
           description: "Войдите заново, чтобы продолжить бронирование",
           variant: "destructive",
         });
-        navigate("/auth", { state: { from: { pathname: `/booking?club=${clubId}&zone=${encodeURIComponent(selectedZone)}` } } });
+        navigate("/auth", { state: { from: { pathname: "/booking", search: `?club=${clubId}&zone=${encodeURIComponent(selectedZone)}` } } });
         return;
       }
       if (!res.ok) throw new Error(payload?.message || "Не удалось создать бронь");
 
       setBooked({
+        id: payload.booking?.id || 0,
         zone_name: payload.booking?.zone_name || selectedZone,
         pc_names: Array.isArray(payload.booking?.pc_names) ? payload.booking.pc_names : selectedPcs,
+        status: payload.booking?.status || "pending",
       });
-      toast({ title: "Готово", description: "Бронь отправлена менеджеру" });
+      await loadMyBookings();
+      toast({ title: "Готово", description: "Бронь отправлена менеджеру (статус: ожидание)" });
     } catch (err: any) {
       toast({
         title: "Ошибка",
@@ -214,7 +277,53 @@ export default function BookingPage() {
     }
   };
 
+  if (!clubId) {
+    return (
+      <div className="min-h-screen pb-24">
+        <div className="flex items-center gap-3 px-4 pt-12 pb-4">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full glass flex items-center justify-center">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-xl font-display font-bold">Бронирование</h1>
+            <p className="text-xs text-muted-foreground">Мои брони</p>
+          </div>
+        </div>
+
+        <div className="px-4 mb-4">
+          <Button onClick={() => navigate("/")} variant="outline" className="w-full">
+            Выбрать клуб для новой брони
+          </Button>
+        </div>
+
+        <div className="px-4 space-y-3">
+          {loadingMyBookings ? (
+            <div className="text-sm text-muted-foreground">Загрузка бронирований...</div>
+          ) : myBookings.length === 0 ? (
+            <div className="text-sm text-muted-foreground">У вас пока нет бронирований</div>
+          ) : (
+            myBookings.map((b) => {
+              const ui = bookingStatusUi(b.status);
+              return (
+                <div key={b.id} className="rounded-xl border border-white/10 bg-[#11131a] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-semibold text-white">#{b.id} · {b.club_name}</div>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${ui.className}`}>{ui.label}</span>
+                  </div>
+                  <div className="mt-2 text-sm text-white/80">{b.zone_name}</div>
+                  <div className="mt-1 text-xs text-white/60">{b.pc_names.join(", ")}</div>
+                  <div className="mt-1 text-xs text-white/50">{formatDate(b.created_at)}</div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (booked && club) {
+    const ui = bookingStatusUi(booked.status);
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
         <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mb-6 neon-glow">
@@ -224,9 +333,10 @@ export default function BookingPage() {
         <p className="text-muted-foreground text-sm mb-2">
           {club.name} · {booked.zone_name}
         </p>
-        <p className="text-muted-foreground text-sm mb-6">{booked.pc_names.join(", ")}</p>
-        <Button onClick={() => navigate("/")} className="gradient-primary text-primary-foreground font-display font-bold px-8 h-11">
-          На главную
+        <p className="text-muted-foreground text-sm mb-3">{booked.pc_names.join(", ")}</p>
+        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold mb-6 ${ui.className}`}>{ui.label}</span>
+        <Button onClick={() => navigate("/booking")} className="gradient-primary text-primary-foreground font-display font-bold px-8 h-11">
+          Мои брони
         </Button>
       </div>
     );
@@ -244,9 +354,7 @@ export default function BookingPage() {
         </div>
       </div>
 
-      {!clubId ? (
-        <div className="px-4 text-sm text-muted-foreground">Клуб не выбран</div>
-      ) : loadingClub ? (
+      {loadingClub ? (
         <div className="px-4 text-sm text-muted-foreground">Загрузка клуба...</div>
       ) : !club ? (
         <div className="px-4 text-sm text-muted-foreground">Клуб не найден</div>
@@ -279,7 +387,6 @@ export default function BookingPage() {
             <div className="text-xs text-muted-foreground mb-2">
               Свободно: {freeCount} из {zonePcs.length} · Выбрано: {selectedPcs.length}/10
             </div>
-
             {loadingPcs ? (
               <div className="text-sm text-muted-foreground">Загрузка ПК...</div>
             ) : (
