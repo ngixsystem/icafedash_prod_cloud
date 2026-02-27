@@ -822,19 +822,20 @@ def get_icafe_data():
             data_field = pc_raw.get("data", {})
             pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
             
-            zones = set()
+            zone_counts = {}
             price_names = set()
             for pc in pcs:
                 area = pc.get("pc_area_name") or pc.get("pc_group_name")
                 if area:
-                    zones.add(str(area))
+                    area_str = str(area)
+                    zone_counts[area_str] = zone_counts.get(area_str, 0) + 1
                 # Sometime price names are assigned per PC
                 pr = pc.get("price_name")
                 if pr and pr != "Default":
                     price_names.add(str(pr))
                     
-            if zones:
-                zones_list = [{"name": z, "specs": "RTX 3060 / i5-12400 / 16GB", "price": "100", "capacity": "30"} for z in sorted(zones)]
+            if zone_counts:
+                zones_list = [{"name": z, "specs": "RTX 3060 / i5-12400 / 16GB", "price": "100", "capacity": str(count)} for z, count in sorted(zone_counts.items())]
             
             if price_names:
                 tariffs_list = [{"duration": t, "price": "150"} for t in sorted(price_names)]
