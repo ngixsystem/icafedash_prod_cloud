@@ -863,6 +863,15 @@ def get_icafe_data():
         "tariffs": json.dumps(tariffs_list, ensure_ascii=False) if tariffs_list else "[]"
     })
 
+@app.get("/api/debug-dump-icafe")
+def debug_dump_icafe():
+    return jsonify({
+        "pcs": icafe_get("/pcList"),
+        "offers": icafe_get("/offer/list"),
+        "goods": icafe_get("/goods/list"),
+        "groups": icafe_get("/member/group"),
+        "priceList": icafe_get("/priceList")
+    })
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
