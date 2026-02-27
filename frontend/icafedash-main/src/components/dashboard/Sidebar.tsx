@@ -1,4 +1,17 @@
-import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X, Shield, UserCheck, Settings, MessageSquare } from "lucide-react";
+import {
+  LayoutDashboard,
+  Monitor,
+  Wallet,
+  BarChart3,
+  Users,
+  Menu,
+  X,
+  Shield,
+  UserCheck,
+  Settings,
+  MessageSquare,
+  CalendarClock,
+} from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -7,6 +20,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 const navItems = [
   { icon: LayoutDashboard, label: "Обзор" },
   { icon: Monitor, label: "Мониторинг" },
+  { icon: CalendarClock, label: "Бронирование" },
   { icon: Wallet, label: "Финансы" },
   { icon: BarChart3, label: "Аналитика" },
   { icon: Users, label: "Участники" },
@@ -32,13 +46,12 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       { icon: Shield, label: "Клубы" },
       { icon: UserCheck, label: "Менеджеры" },
       { icon: Users, label: "Участники" },
-      { icon: MessageSquare, label: "Отзывы" }
+      { icon: MessageSquare, label: "Отзывы" },
     ]
     : [...navItems];
 
   return (
     <>
-      {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
         className="fixed top-4 left-4 z-50 lg:hidden rounded-lg bg-card p-2 text-muted-foreground"
@@ -46,7 +59,6 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
@@ -54,7 +66,6 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 z-50 h-full w-60 border-r border-border bg-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
