@@ -163,6 +163,17 @@ export interface RegisteredUser {
     created_at: string | null;
 }
 
+export interface DashboardReview {
+    id: number;
+    club_id: number;
+    club_name: string;
+    user_id: number;
+    username: string;
+    rating: number;
+    text: string;
+    created_at: string | null;
+}
+
 // ── API calls ──────────────────────────────────────────────────────────────
 
 export const api = {
@@ -231,6 +242,7 @@ export const api = {
     updateUser: (userId: number, data: { role?: string; club_id?: number | null; is_verified?: boolean }) =>
         put<{ message: string }>(`/admin/users/${userId}`, data),
     deleteUser: (userId: number) => del<{ message: string }>(`/admin/users/${userId}`),
+    managerReviews: () => get<{ reviews: DashboardReview[]; summary: { count: number; average_rating: number } }>("/reviews"),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),

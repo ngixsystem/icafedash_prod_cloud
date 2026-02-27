@@ -15,6 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
+from sqlalchemy import func
 
 # Initialize Flask with static folder pointing to frontend build
 app = Flask(__name__, 
@@ -109,6 +110,19 @@ class EmailVerification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=False)
     used = db.Column(db.Boolean, default=False)
+
+
+class ClubReview(db.Model):
+    __tablename__ = "club_reviews"
+    id = db.Column(db.Integer, primary_key=True)
+    club_id = db.Column(db.Integer, db.ForeignKey("clubs.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    rating = db.Column(db.Integer, nullable=False, default=0)
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    club = db.relationship("Club", backref=db.backref("reviews", lazy=True))
+    user = db.relationship("User", backref=db.backref("club_reviews", lazy=True))
 
 
 def generate_verification_code():
@@ -279,6 +293,17 @@ def load_config() -> dict:
 def save_config(data: dict):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+
+def get_club_rating_stats(club_id: int) -> tuple[float, int]:
+    avg_rating, total_reviews = db.session.query(
+        func.avg(ClubReview.rating),
+        func.count(ClubReview.id)
+    ).filter(ClubReview.club_id == club_id).first()
+
+    avg = float(avg_rating or 0.0)
+    count = int(total_reviews or 0)
+    return avg, count
 
 
 # ── iCafeCloud API helper ─────────────────────────────────────────────────────
@@ -551,6 +576,7 @@ def public_clubs():
     result = []
     
     for c in clubs:
+        avg_rating, rating_count = get_club_rating_stats(c.id)
         try:
             # We fetch simple public stats if API key is valid
             headers = {"Authorization": f"Bearer {c.api_key.strip()}", "Accept": "application/json"}
@@ -575,7 +601,8 @@ def public_clubs():
                 "logo": c.club_logo_url,
                 "pcsTotal": total_pcs,
                 "pcsFree": free_pcs,
-                "rating": 4.8, # Mock rating for demo
+                "rating": round(avg_rating, 1),
+                "rating_count": rating_count,
                 "address": c.address or "Адрес не указан",
                 "phone": c.phone or "",
                 "description": c.description or "",
@@ -594,7 +621,8 @@ def public_clubs():
                 "logo": c.club_logo_url,
                 "pcsTotal": 0,
                 "pcsFree": 0,
-                "rating": 0,
+                "rating": round(avg_rating, 1),
+                "rating_count": rating_count,
                 "address": c.address or "Адрес не указан",
                 "phone": c.phone or "",
                 "description": c.description or "",
@@ -751,6 +779,45 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"message": "Пользователь удалён"})
+
+
+@app.get("/api/reviews")
+@jwt_required()
+def get_reviews_for_dashboard():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    if user.role == "manager":
+        if not user.club_id:
+            return jsonify({"reviews": [], "summary": {"count": 0, "average_rating": 0.0}}), 200
+        reviews_query = ClubReview.query.filter_by(club_id=user.club_id)
+    elif user.role == "admin":
+        club_id = request.args.get("club_id", type=int)
+        reviews_query = ClubReview.query.filter_by(club_id=club_id) if club_id else ClubReview.query
+    else:
+        return jsonify({"message": "Access denied"}), 403
+
+    reviews = reviews_query.order_by(ClubReview.created_at.desc()).limit(300).all()
+    avg_rating = round(sum(r.rating for r in reviews) / len(reviews), 1) if reviews else 0.0
+
+    return jsonify({
+        "reviews": [{
+            "id": r.id,
+            "club_id": r.club_id,
+            "club_name": r.club.name if r.club else "",
+            "user_id": r.user_id,
+            "username": r.user.username if r.user else "unknown",
+            "rating": r.rating,
+            "text": r.text,
+            "created_at": r.created_at.isoformat() + "Z" if r.created_at else None,
+        } for r in reviews],
+        "summary": {
+            "count": len(reviews),
+            "average_rating": avg_rating
+        }
+    })
 
 # ── Config endpoints ──────────────────────────────────────────────────────────
 
@@ -924,6 +991,8 @@ def public_club_detail(club_id):
         z["capacity"] = str(stats["total"])
         z["pcsFree"] = stats["free"]
 
+    avg_rating, rating_count = get_club_rating_stats(c.id)
+
     return jsonify({
         "id": c.id,
         "name": c.name,
@@ -931,7 +1000,8 @@ def public_club_detail(club_id):
         "address": c.address or "Адрес не указан",
         "description": c.description or "",
         "working_hours": c.working_hours or "Круглосуточно",
-        "rating": 4.8, # Mock rating
+        "rating": round(avg_rating, 1),
+        "rating_count": rating_count,
         "lat": c.lat or 0.0,
         "lng": c.lng or 0.0,
         "isOpen": True,
@@ -940,6 +1010,85 @@ def public_club_detail(club_id):
         "zones": zones,
         "tariffs": tariffs
     })
+
+
+@app.get("/api/public/clubs/<int:club_id>/reviews")
+def public_club_reviews(club_id):
+    club = Club.query.get(club_id)
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    reviews = ClubReview.query.filter_by(club_id=club_id).order_by(ClubReview.created_at.desc()).limit(100).all()
+    avg_rating, rating_count = get_club_rating_stats(club_id)
+
+    return jsonify({
+        "club_id": club_id,
+        "average_rating": round(avg_rating, 1),
+        "rating_count": rating_count,
+        "reviews": [{
+            "id": r.id,
+            "user_id": r.user_id,
+            "username": r.user.username if r.user else "unknown",
+            "rating": r.rating,
+            "text": r.text,
+            "created_at": r.created_at.isoformat() + "Z" if r.created_at else None,
+        } for r in reviews]
+    })
+
+
+@app.post("/api/public/clubs/<int:club_id>/reviews")
+@jwt_required()
+def create_public_club_review(club_id):
+    club = Club.query.get(club_id)
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can post reviews"}), 403
+
+    data = request.json or {}
+    text = (data.get("text") or "").strip()
+    try:
+        rating = int(data.get("rating", 0))
+    except Exception:
+        return jsonify({"message": "Rating must be an integer from 0 to 5"}), 400
+
+    if rating < 0 or rating > 5:
+        return jsonify({"message": "Rating must be between 0 and 5"}), 400
+    if len(text) < 3:
+        return jsonify({"message": "Review text is too short"}), 400
+    if len(text) > 1000:
+        return jsonify({"message": "Review text is too long"}), 400
+
+    review = ClubReview(
+        club_id=club_id,
+        user_id=user.id,
+        rating=rating,
+        text=text
+    )
+    db.session.add(review)
+    db.session.commit()
+
+    avg_rating, rating_count = get_club_rating_stats(club_id)
+    return jsonify({
+        "message": "Review submitted",
+        "review": {
+            "id": review.id,
+            "club_id": review.club_id,
+            "user_id": review.user_id,
+            "username": user.username,
+            "rating": review.rating,
+            "text": review.text,
+            "created_at": review.created_at.isoformat() + "Z" if review.created_at else None,
+        },
+        "average_rating": round(avg_rating, 1),
+        "rating_count": rating_count,
+    }), 201
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS

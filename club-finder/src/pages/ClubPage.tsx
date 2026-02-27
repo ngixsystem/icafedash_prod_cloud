@@ -1,12 +1,108 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi } from "lucide-react";
-import { useClub } from "@/hooks/use-clubs";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useClub, useClubReviews } from "@/hooks/use-clubs";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
+
+function formatDate(value: string | null): string {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function ClubPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: club, isLoading } = useClub(id);
+  const { data: reviewsData } = useClubReviews(id);
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [openReviewDialog, setOpenReviewDialog] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewRating, setReviewRating] = useState(0);
+  const [sendingReview, setSendingReview] = useState(false);
+
+  const handleSubmitReview = async () => {
+    if (!id) return;
+    if (!isAuthenticated) {
+      navigate("/auth", { state: { from: { pathname: `/club/${id}` } } });
+      return;
+    }
+
+    if (reviewText.trim().length < 3) {
+      toast({
+        title: "Ошибка",
+        description: "Отзыв должен быть не короче 3 символов",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const token = localStorage.getItem("icafe_client_token");
+    if (!token) {
+      navigate("/auth", { state: { from: { pathname: `/club/${id}` } } });
+      return;
+    }
+
+    setSendingReview(true);
+    try {
+      const res = await fetch(`/api/public/clubs/${id}/reviews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: reviewText.trim(),
+          rating: reviewRating,
+        }),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.message || "Не удалось отправить отзыв");
+
+      setReviewText("");
+      setReviewRating(0);
+      setOpenReviewDialog(false);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["public_club_reviews", id] }),
+        queryClient.invalidateQueries({ queryKey: ["public_club", id] }),
+        queryClient.invalidateQueries({ queryKey: ["public_clubs"] }),
+      ]);
+      toast({
+        title: "Спасибо!",
+        description: "Ваш отзыв отправлен",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Ошибка",
+        description: err?.message || "Не удалось отправить отзыв",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingReview(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -124,6 +220,112 @@ export default function ClubPage() {
               <p className="text-primary font-display font-bold text-lg">{t.price || 0} СУМ</p>
             </div>
           ))}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <h2 className="text-xl font-display font-black tracking-wide">Отзывы</h2>
+          <Dialog open={openReviewDialog} onOpenChange={setOpenReviewDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 text-xs">
+                Оставить отзыв
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Отзыв о клубе</DialogTitle>
+                <DialogDescription>
+                  Оценка от 0 до 5 звезд и короткий комментарий
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm mb-2 text-muted-foreground">Оценка</div>
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: 5 }).map((_, idx) => {
+                      const current = idx + 1;
+                      const active = current <= reviewRating;
+                      return (
+                        <button
+                          key={`rate-${current}`}
+                          type="button"
+                          onClick={() => setReviewRating(current)}
+                          className="rounded-md p-1 hover:bg-accent"
+                        >
+                          <Star className={`h-6 w-6 ${active ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                        </button>
+                      );
+                    })}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setReviewRating(0)}
+                      className="ml-1 h-8 px-2 text-xs"
+                    >
+                      0/5
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm mb-2 text-muted-foreground">Комментарий</div>
+                  <Textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Поделитесь впечатлением о клубе"
+                    className="min-h-[110px]"
+                    maxLength={1000}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpenReviewDialog(false)}
+                  disabled={sendingReview}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmitReview}
+                  disabled={sendingReview}
+                >
+                  {sendingReview ? "Отправка..." : "Отправить"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="space-y-3 mb-8">
+          {(reviewsData?.reviews || []).length === 0 ? (
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">
+              Пока нет отзывов
+            </div>
+          ) : (
+            reviewsData?.reviews.map((review) => (
+              <div key={review.id} className="rounded-xl border border-white/10 bg-[#11131a] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-semibold text-white">{review.username}</div>
+                  <div className="text-xs text-white/50">{formatDate(review.created_at)}</div>
+                </div>
+                <div className="mt-2 flex items-center gap-1 text-amber-400">
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <Star
+                      key={`${review.id}-star-${idx}`}
+                      className={`h-4 w-4 ${idx < review.rating ? "fill-current" : "text-white/20"}`}
+                    />
+                  ))}
+                  <span className="ml-1 text-xs text-white/70">{review.rating}/5</span>
+                </div>
+                <p className="mt-3 text-sm text-white/90 whitespace-pre-wrap">{review.text}</p>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Book button */}

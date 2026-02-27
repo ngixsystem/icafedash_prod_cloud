@@ -16,6 +16,16 @@ export interface ClubData {
     pricePerHour?: number;
     zones?: any[];
     tariffs?: any[];
+    rating_count?: number;
+}
+
+export interface ClubReviewData {
+    id: number;
+    user_id: number;
+    username: string;
+    rating: number;
+    text: string;
+    created_at: string | null;
 }
 
 export const useClubs = () => {
@@ -36,6 +46,19 @@ export const useClub = (id: string | undefined) => {
             if (!id) throw new Error("No ID provided");
             const resp = await fetch(`/api/public/clubs/${id}`);
             if (!resp.ok) throw new Error("Failed to fetch club");
+            return resp.json();
+        },
+        enabled: !!id,
+    });
+};
+
+export const useClubReviews = (id: string | undefined) => {
+    return useQuery({
+        queryKey: ["public_club_reviews", id],
+        queryFn: async (): Promise<{ average_rating: number; rating_count: number; reviews: ClubReviewData[] }> => {
+            if (!id) throw new Error("No ID provided");
+            const resp = await fetch(`/api/public/clubs/${id}/reviews`);
+            if (!resp.ok) throw new Error("Failed to fetch reviews");
             return resp.json();
         },
         enabled: !!id,
