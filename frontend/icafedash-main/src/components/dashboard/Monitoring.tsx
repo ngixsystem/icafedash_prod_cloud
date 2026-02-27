@@ -1,8 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { api } from "@/lib/api";
 import { Monitor, RefreshCcw } from "lucide-react";
 
 const Monitoring = () => {
+    const [selectedBusyPc, setSelectedBusyPc] = useState<{
+        id: string | number;
+        name: string;
+        member: string;
+        time_left?: string;
+    } | null>(null);
+
     const { data, isLoading, refetch, isFetching } = useQuery({
         queryKey: ["pcs"],
         queryFn: api.pcs,
@@ -47,9 +55,22 @@ const Monitoring = () => {
                                             ? "border-muted-foreground/30 bg-muted/20 text-muted-foreground"
                                             : "border-success/50 bg-success/10 text-success"
                                     }`}
+                                onClick={() => {
+                                    if (pc.status !== "busy") {
+                                        setSelectedBusyPc(null);
+                                        return;
+                                    }
+                                    setSelectedBusyPc({
+                                        id: pc.id,
+                                        name: pc.name,
+                                        member: pc.member || "Не указано",
+                                        time_left: pc.time_left || "",
+                                    });
+                                }}
                                 style={{
                                     top: pc.top ?? 0,
                                     left: pc.left ?? 0,
+                                    boxShadow: selectedBusyPc?.id === pc.id ? "0 0 0 2px rgba(251, 146, 60, 0.7)" : undefined,
                                 }}
                                 title={`${pc.name} - ${pc.status}${pc.member ? ` (${pc.member})` : ""}`}
                             >
@@ -65,6 +86,22 @@ const Monitoring = () => {
                     </div>
                 )}
             </div>
+
+            {selectedBusyPc && (
+                <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4">
+                    <div className="text-sm font-semibold text-orange-400">
+                        {selectedBusyPc.name} занят
+                    </div>
+                    <div className="text-sm text-foreground mt-1">
+                        Клиент: <span className="font-medium">{selectedBusyPc.member}</span>
+                    </div>
+                    {selectedBusyPc.time_left && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                            Осталось времени: {selectedBusyPc.time_left}
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="flex flex-wrap gap-4 pt-2">
                 <div className="flex items-center gap-2">
