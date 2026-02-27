@@ -176,6 +176,21 @@ export interface DashboardReview {
     created_at: string | null;
 }
 
+export interface DashboardBooking {
+    id: number;
+    club_id: number;
+    club_name: string;
+    user_id: number;
+    username: string;
+    client_name: string;
+    phone: string;
+    zone_name: string;
+    duration: string | null;
+    pc_names: string[];
+    status: string;
+    created_at: string | null;
+}
+
 // ── API calls ──────────────────────────────────────────────────────────────
 
 export const api = {
@@ -257,6 +272,7 @@ export const api = {
         put<{ message: string }>(`/admin/users/${userId}`, data),
     deleteUser: (userId: number) => del<{ message: string }>(`/admin/users/${userId}`),
     managerReviews: () => get<{ reviews: DashboardReview[]; summary: { count: number; average_rating: number } }>("/reviews"),
+    managerBookings: () => get<{ bookings: DashboardBooking[]; summary: { count: number; new_count: number } }>("/bookings"),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),

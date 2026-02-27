@@ -127,6 +127,23 @@ class ClubReview(db.Model):
     user = db.relationship("User", backref=db.backref("club_reviews", lazy=True))
 
 
+class BookingRequest(db.Model):
+    __tablename__ = "booking_requests"
+    id = db.Column(db.Integer, primary_key=True)
+    club_id = db.Column(db.Integer, db.ForeignKey("clubs.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    client_name = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(30), nullable=False)
+    zone_name = db.Column(db.String(120), nullable=False)
+    duration = db.Column(db.String(50), nullable=True)
+    pc_names = db.Column(db.Text, nullable=False)  # JSON array
+    status = db.Column(db.String(20), nullable=False, default="new")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    club = db.relationship("Club", backref=db.backref("booking_requests", lazy=True))
+    user = db.relationship("User", backref=db.backref("booking_requests", lazy=True))
+
+
 def generate_verification_code():
     return ''.join(random.choices(string.digits, k=6))
 
@@ -312,6 +329,45 @@ def get_club_rating_stats(club_id: int) -> tuple[float, int]:
     avg = float(avg_rating or 0.0)
     count = int(total_reviews or 0)
     return avg, count
+
+
+def parse_icafe_pcs(raw_result: dict | None) -> list:
+    if not raw_result or raw_result.get("code") != 200:
+        return []
+    data_field = raw_result.get("data", {})
+    if isinstance(data_field, list):
+        return data_field
+    if isinstance(data_field, dict):
+        return data_field.get("pcs", [])
+    return []
+
+
+def detect_pc_status(pc: dict) -> str:
+    if pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account"):
+        return "busy"
+
+    status_raw = str(pc.get("pc_status", "")).lower()
+    if status_raw in ("busy", "locked", "ordered", "using"):
+        return "busy"
+    if status_raw in ("offline", "off", "shutdown"):
+        return "offline"
+    return "free"
+
+
+def icafe_get_for_club(club: Club, path: str, params: dict = None, timeout: int = 15) -> dict | None:
+    if not club or not club.api_key or not club.cafe_id:
+        return None
+    headers = {
+        "Authorization": f"Bearer {club.api_key.strip()}",
+        "Accept": "application/json",
+    }
+    url = f"{ICAFE_BASE}/cafe/{club.cafe_id}{path}"
+    try:
+        resp = requests.get(url, headers=headers, params=params, timeout=timeout)
+        return resp.json()
+    except Exception as e:
+        print(f"Public API Error ({path}): {e}")
+        return None
 
 
 # ── iCafeCloud API helper ─────────────────────────────────────────────────────
@@ -1037,6 +1093,186 @@ def public_club_detail(club_id):
         "pcsFree": free_pcs,
         "zones": zones,
         "tariffs": tariffs
+    })
+
+
+@app.get("/api/public/clubs/<int:club_id>/zone-pcs")
+def public_zone_pcs(club_id):
+    club = Club.query.get(club_id)
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    zone_name = (request.args.get("zone_name") or "").strip()
+    if not zone_name:
+        return jsonify({"message": "zone_name is required"}), 400
+
+    pc_raw = icafe_get_for_club(club, "/pcList", timeout=8)
+    pcs = parse_icafe_pcs(pc_raw)
+
+    zone_name_folded = zone_name.casefold()
+    zone_pcs = []
+    for pc in pcs:
+        pc_zone = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
+        if pc_zone.casefold() != zone_name_folded:
+            continue
+        zone_pcs.append({
+            "id": pc.get("pc_icafe_id") or pc.get("pc_mac") or pc.get("pc_name"),
+            "name": pc.get("pc_name", "Unknown"),
+            "status": detect_pc_status(pc),
+            "member": pc.get("member_account", ""),
+            "time_left": pc.get("status_connect_time_left", ""),
+            "zone": pc_zone or zone_name,
+        })
+
+    zone_pcs.sort(key=lambda x: str(x.get("name") or ""))
+    free_count = sum(1 for pc in zone_pcs if pc["status"] == "free")
+    return jsonify({
+        "club_id": club.id,
+        "zone_name": zone_name,
+        "pcs": zone_pcs,
+        "total": len(zone_pcs),
+        "free": free_count,
+    })
+
+
+@app.post("/api/public/clubs/<int:club_id>/bookings")
+@jwt_required()
+def create_public_booking(club_id):
+    club = Club.query.get(club_id)
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can create bookings"}), 403
+
+    data = request.json or {}
+    client_name = (data.get("client_name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    zone_name = (data.get("zone_name") or "").strip()
+    duration = (data.get("duration") or "").strip()
+    pc_names = data.get("pc_names") or []
+
+    if not client_name:
+        return jsonify({"message": "Client name is required"}), 400
+    if not phone:
+        return jsonify({"message": "Phone is required"}), 400
+    if not zone_name:
+        return jsonify({"message": "Zone is required"}), 400
+    if not isinstance(pc_names, list):
+        return jsonify({"message": "pc_names must be an array"}), 400
+
+    cleaned_pc_names = []
+    for name in pc_names:
+        name_str = str(name).strip()
+        if name_str:
+            cleaned_pc_names.append(name_str)
+
+    cleaned_pc_names = list(dict.fromkeys(cleaned_pc_names))
+    if len(cleaned_pc_names) < 1:
+        return jsonify({"message": "Select at least one PC"}), 400
+    if len(cleaned_pc_names) > 10:
+        return jsonify({"message": "Maximum 10 PCs per booking"}), 400
+
+    pc_raw = icafe_get_for_club(club, "/pcList", timeout=8)
+    all_pcs = parse_icafe_pcs(pc_raw)
+    zone_folded = zone_name.casefold()
+    zone_pcs = [
+        pc for pc in all_pcs
+        if str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip().casefold() == zone_folded
+    ]
+
+    zone_pc_map = {str(pc.get("pc_name", "")).strip(): pc for pc in zone_pcs}
+    missing = [pc_name for pc_name in cleaned_pc_names if pc_name not in zone_pc_map]
+    if missing:
+        return jsonify({"message": "Some PCs are not in this zone", "invalid_pcs": missing}), 400
+
+    unavailable = [pc_name for pc_name in cleaned_pc_names if detect_pc_status(zone_pc_map[pc_name]) != "free"]
+    if unavailable:
+        return jsonify({"message": "Some selected PCs are busy or offline", "unavailable_pcs": unavailable}), 409
+
+    booking = BookingRequest(
+        club_id=club.id,
+        user_id=user.id,
+        client_name=client_name,
+        phone=phone,
+        zone_name=zone_name,
+        duration=duration or None,
+        pc_names=json.dumps(cleaned_pc_names, ensure_ascii=False),
+        status="new",
+    )
+    db.session.add(booking)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Booking created",
+        "booking": {
+            "id": booking.id,
+            "club_id": booking.club_id,
+            "user_id": booking.user_id,
+            "client_name": booking.client_name,
+            "phone": booking.phone,
+            "zone_name": booking.zone_name,
+            "duration": booking.duration,
+            "pc_names": cleaned_pc_names,
+            "status": booking.status,
+            "created_at": booking.created_at.isoformat() + "Z" if booking.created_at else None,
+        }
+    }), 201
+
+
+@app.get("/api/bookings")
+@jwt_required()
+def get_bookings_for_dashboard():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    if user.role == "manager":
+        if not user.club_id:
+            return jsonify({"bookings": [], "summary": {"count": 0, "new_count": 0}}), 200
+        query = BookingRequest.query.filter_by(club_id=user.club_id)
+    elif user.role == "admin":
+        club_id = request.args.get("club_id", type=int)
+        query = BookingRequest.query.filter_by(club_id=club_id) if club_id else BookingRequest.query
+    else:
+        return jsonify({"message": "Access denied"}), 403
+
+    bookings = query.order_by(BookingRequest.created_at.desc()).limit(300).all()
+
+    payload = []
+    for b in bookings:
+        try:
+            pc_names = json.loads(b.pc_names) if b.pc_names else []
+            if not isinstance(pc_names, list):
+                pc_names = []
+        except Exception:
+            pc_names = []
+        payload.append({
+            "id": b.id,
+            "club_id": b.club_id,
+            "club_name": b.club.name if b.club else "",
+            "user_id": b.user_id,
+            "username": b.user.username if b.user else "",
+            "client_name": b.client_name,
+            "phone": b.phone,
+            "zone_name": b.zone_name,
+            "duration": b.duration,
+            "pc_names": pc_names,
+            "status": b.status,
+            "created_at": b.created_at.isoformat() + "Z" if b.created_at else None,
+        })
+
+    return jsonify({
+        "bookings": payload,
+        "summary": {
+            "count": len(payload),
+            "new_count": sum(1 for b in payload if b["status"] == "new"),
+        }
     })
 
 
