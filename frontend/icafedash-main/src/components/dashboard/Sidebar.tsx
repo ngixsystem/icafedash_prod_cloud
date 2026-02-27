@@ -12,7 +12,7 @@ import {
   MessageSquare,
   CalendarClock,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -37,9 +37,39 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAdmin } = useAuth();
   const { data: cfg } = useQuery({ queryKey: ["config"], queryFn: api.getConfig });
+  const prevPendingRef = useRef<number | null>(null);
+  const { data: bookingData } = useQuery({
+    queryKey: ["manager_bookings_badge"],
+    queryFn: api.managerBookings,
+    enabled: !isAdmin,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+  });
 
   const clubName = cfg?.club_name || "iCafe";
   const clubLogo = cfg?.club_logo_url;
+  const pendingBookingCount = bookingData?.summary?.pending_count ?? 0;
+
+  useEffect(() => {
+    if (isAdmin) return;
+    const prev = prevPendingRef.current;
+    if (prev !== null && pendingBookingCount > prev && typeof window !== "undefined" && "Notification" in window) {
+      const newCount = pendingBookingCount - prev;
+      const notify = () =>
+        new Notification("Новая бронь", {
+          body: `Новых заявок: ${newCount}`,
+        });
+
+      if (Notification.permission === "granted") {
+        notify();
+      } else if (Notification.permission === "default") {
+        Notification.requestPermission().then((permission) => {
+          if (permission === "granted") notify();
+        });
+      }
+    }
+    prevPendingRef.current = pendingBookingCount;
+  }, [isAdmin, pendingBookingCount]);
 
   const displayNavItems = isAdmin
     ? [
@@ -101,7 +131,12 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 }`}
             >
               <item.icon className="h-5 w-5" />
-              {item.label}
+              <span>{item.label}</span>
+              {!isAdmin && item.icon === CalendarClock && pendingBookingCount > 0 ? (
+                <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">
+                  {pendingBookingCount > 99 ? "99+" : pendingBookingCount}
+                </span>
+              ) : null}
             </button>
           ))}
         </nav>

@@ -34,7 +34,8 @@ const BookingPanel = () => {
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["manager_bookings"],
     queryFn: api.managerBookings,
-    refetchInterval: 10000,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const bookings = data?.bookings || [];
