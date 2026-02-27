@@ -157,6 +157,32 @@ export default function BookingPage() {
   }, []);
 
   useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      loadMyBookings();
+    }, 5000);
+    return () => window.clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const onFocus = () => {
+      loadMyBookings();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!booked) return;
+    const refreshed = myBookings.find((b) => b.id === booked.id);
+    if (!refreshed) return;
+    if (refreshed.status !== booked.status) {
+      setBooked((prev) => (prev ? { ...prev, status: refreshed.status } : prev));
+    }
+  }, [myBookings, booked]);
+
+  useEffect(() => {
     if (!clubId) {
       setLoadingClub(false);
       return;
