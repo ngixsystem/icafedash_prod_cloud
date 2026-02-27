@@ -835,10 +835,10 @@ def get_icafe_data():
                     price_names.add(str(pr))
                     
             if zone_counts:
-                zones_list = [{"name": z, "specs": "RTX 3060 / i5-12400 / 16GB", "price": "100", "capacity": str(count)} for z, count in sorted(zone_counts.items())]
+                zones_list = [{"name": z, "specs": "", "price": "", "capacity": str(count)} for z, count in sorted(zone_counts.items())]
             
             if price_names:
-                tariffs_list = [{"duration": t, "price": "150"} for t in sorted(price_names)]
+                tariffs_list = [{"duration": t, "price": ""} for t in sorted(price_names)]
     except Exception as e:
         print(f"Error parsing zones: {e}")
 
@@ -854,7 +854,7 @@ def get_icafe_data():
                     existing_tariffs = set(t["duration"] for t in tariffs_list)
                     for n in names:
                         if n not in existing_tariffs:
-                            tariffs_list.append({"duration": n, "price": "200"})
+                            tariffs_list.append({"duration": n, "price": ""})
     except Exception as e:
         print(f"Error parsing member groups: {e}")
 
