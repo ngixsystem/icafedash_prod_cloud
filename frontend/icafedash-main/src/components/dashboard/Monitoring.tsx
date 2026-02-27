@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { Monitor, RefreshCcw } from "lucide-react";
+import { Monitor, RefreshCcw, UserRound } from "lucide-react";
 
 const Monitoring = () => {
     const [selectedBusyPc, setSelectedBusyPc] = useState<{
@@ -74,6 +74,14 @@ const Monitoring = () => {
                                 }}
                                 title={`${pc.name} - ${pc.status}${pc.member ? ` (${pc.member})` : ""}`}
                             >
+                                {pc.status === "busy" && (
+                                    <span
+                                        className="absolute -top-1 -right-1 h-4 w-4 rounded-full border border-orange-300/60 bg-orange-500 text-white shadow-[0_0_8px_rgba(249,115,22,0.45)] flex items-center justify-center"
+                                        title="Клиент за ПК"
+                                    >
+                                        <UserRound className="h-2.5 w-2.5" />
+                                    </span>
+                                )}
                                 <Monitor className="h-4 w-4 mb-1" />
                                 <span className="text-[10px] font-bold truncate w-full text-center">
                                     {pc.name}
