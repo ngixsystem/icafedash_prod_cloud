@@ -1,4 +1,4 @@
-import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X, Shield, UserCheck } from "lucide-react";
+import { LayoutDashboard, Monitor, Wallet, BarChart3, Users, Menu, X, Shield, UserCheck, Settings } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -10,6 +10,7 @@ const navItems = [
   { icon: Wallet, label: "Финансы" },
   { icon: BarChart3, label: "Аналитика" },
   { icon: Users, label: "Участники" },
+  { icon: Settings, label: "Настройки" },
 ];
 
 interface SidebarProps {

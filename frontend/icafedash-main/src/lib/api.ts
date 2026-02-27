@@ -144,6 +144,11 @@ export interface ConfigData {
     configured: boolean;
     club_name: string;
     club_logo_url: string;
+    address: string;
+    working_hours: string;
+    zones: string;
+    tariffs: string;
+    internet_speed: string;
 }
 
 export interface RegisteredUser {
@@ -179,7 +184,7 @@ export const api = {
 
     getConfig: () => get<ConfigData>("/config"),
 
-    saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string }) =>
+    saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string; address?: string; working_hours?: string; zones?: string; tariffs?: string; internet_speed?: string }) =>
         post<{ ok: boolean }>("/config", data),
 
     uploadLogo: async (file: File): Promise<{ url: string }> => {

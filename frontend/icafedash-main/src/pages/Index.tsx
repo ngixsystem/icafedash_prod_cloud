@@ -11,6 +11,7 @@ import Monitoring from "@/components/dashboard/Monitoring";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import ClientsList from "@/components/dashboard/ClientsList";
 import ParticipantsList from "@/components/dashboard/ParticipantsList";
+import SettingsPanel from "@/components/dashboard/SettingsPanel";
 
 const Index = () => {
   const { isAdmin } = useAuth();
@@ -48,6 +49,8 @@ const Index = () => {
             <ParticipantsList />
           ) : activeTab === "Клубы" ? (
             <AdminDashboard />
+          ) : activeTab === "Настройки" ? (
+            <SettingsPanel />
           ) : activeTab === "Клиенты" || activeTab === "Менеджеры" ? (
             <ClientsList />
           ) : (

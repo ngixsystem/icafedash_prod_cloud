@@ -75,6 +75,9 @@ class Club(db.Model):
     lng = db.Column(db.Float, nullable=True)
     instagram = db.Column(db.String(100), nullable=True)
     working_hours = db.Column(db.String(100), nullable=True)
+    zones = db.Column(db.Text, nullable=True)
+    tariffs = db.Column(db.Text, nullable=True)
+    internet_speed = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     users = db.relationship('User', backref='club', lazy=True)
@@ -209,6 +212,15 @@ with app.app_context():
             conn.commit()
         if 'working_hours' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN working_hours VARCHAR(100)"))
+            conn.commit()
+        if 'zones' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN zones TEXT"))
+            conn.commit()
+        if 'tariffs' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN tariffs TEXT"))
+            conn.commit()
+        if 'internet_speed' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN internet_speed VARCHAR(50)"))
             conn.commit()
             
     # Create or update default admin user
@@ -755,6 +767,11 @@ def get_config():
         "club_logo_url": user.club.club_logo_url,
         "api_key_masked": "***HIDDEN***",
         "cafe_id": user.club.cafe_id,
+        "address": user.club.address or "",
+        "working_hours": user.club.working_hours or "",
+        "zones": user.club.zones or "",
+        "tariffs": user.club.tariffs or "",
+        "internet_speed": user.club.internet_speed or "",
         "configured": True
     })
 
@@ -772,6 +789,16 @@ def set_config():
         user.club.name = body["club_name"].strip()
     if "club_logo_url" in body:
         user.club.club_logo_url = body["club_logo_url"].strip()
+    if "address" in body:
+        user.club.address = body["address"].strip()
+    if "working_hours" in body:
+        user.club.working_hours = body["working_hours"].strip()
+    if "zones" in body:
+        user.club.zones = body["zones"].strip()
+    if "tariffs" in body:
+        user.club.tariffs = body["tariffs"].strip()
+    if "internet_speed" in body:
+        user.club.internet_speed = body["internet_speed"].strip()
     
     db.session.commit()
     return jsonify({"ok": True})
