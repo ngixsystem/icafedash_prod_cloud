@@ -527,6 +527,12 @@ export default function BookingPage() {
                 {zonePcs.map((pc) => {
                   const selected = selectedPcs.includes(pc.name);
                   const clickable = pc.status === "free";
+                  const statusClass =
+                    pc.status === "free"
+                      ? "border-emerald-500/50 text-emerald-300 bg-emerald-500/10"
+                      : pc.status === "busy"
+                      ? "border-orange-500/50 text-orange-300 bg-orange-500/10"
+                      : "border-slate-500/40 text-slate-400 bg-slate-500/10";
                   return (
                     <button
                       key={String(pc.id)}
@@ -536,9 +542,7 @@ export default function BookingPage() {
                       className={`rounded-md px-2 py-2 text-xs font-bold flex items-center justify-center transition border ${
                         selected
                           ? "border-primary bg-primary/10 text-primary neon-border"
-                          : clickable
-                          ? "border-border bg-secondary text-foreground hover:bg-primary/15"
-                          : "border-border bg-muted/20 text-muted-foreground/70 cursor-not-allowed"
+                          : `${statusClass} ${clickable ? "hover:brightness-110" : "cursor-not-allowed opacity-90"}`
                       }`}
                     >
                       {pc.name}
