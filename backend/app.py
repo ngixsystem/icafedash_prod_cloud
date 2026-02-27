@@ -864,39 +864,63 @@ def get_icafe_data():
         "tariffs": json.dumps(tariffs_list, ensure_ascii=False) if tariffs_list else "[]"
     })
 
-@app.get("/api/debug-dump-icafe")
-def debug_dump_icafe():
-    clubs = Club.query.filter(Club.api_key != None, Club.api_key != "", Club.cafe_id != None).all()
-    if not clubs:
-        return jsonify({"message": "No clubs with API keys found in the database."})
+@app.get("/api/public/clubs/<int:club_id>")
+def public_club_detail(club_id):
+    """Return specific club details including parsed zones and tariffs"""
+    c = Club.query.get(club_id)
+    if not c:
+        return jsonify({"message": "Club not found"}), 404
         
-    results = []
-    for club in clubs:
-        headers = {
-            "Authorization": f"Bearer {club.api_key.strip()}",
-            "Accept": "application/json"
-        }
-        url = f"{ICAFE_BASE}/cafe/{club.cafe_id}"
+    # Safely parse JSON arrays for zones and tariffs
+    zones = []
+    tariffs = []
+    try:
+        if c.zones:
+            zones = json.loads(c.zones)
+    except Exception as e:
+        print(f"Error parsing zones for club {c.id}: {e}")
         
-        club_data = {"club_id": club.id, "cafe_id": club.cafe_id}
+    try:
+        if c.tariffs:
+            tariffs = json.loads(c.tariffs)
+    except Exception as e:
+        print(f"Error parsing tariffs for club {c.id}: {e}")
         
-        def safe_get(path):
-            try:
-                r = requests.get(url + path, headers=headers, timeout=10)
-                if r.status_code == 200:
-                    return r.json()
-                return {"status": r.status_code, "text": r.text, "url": url + path}
-            except Exception as e:
-                return {"error": str(e)}
+    # Try fetching real-time pc counts if API key exists
+    total_pcs = 0
+    free_pcs = 0
+    try:
+        if c.api_key:
+            headers = {"Authorization": f"Bearer {c.api_key.strip()}", "Accept": "application/json"}
+            pc_raw = requests.get(f"{ICAFE_BASE}/cafe/{c.cafe_id}/pcList", headers=headers, timeout=5).json()
+            if pc_raw.get("code") == 200:
+                data_field = pc_raw.get("data", {})
+                pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
+                total_pcs = len(pcs)
+                for pc in pcs:
+                    if not (pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account")):
+                        s_str = str(pc.get("pc_status", "")).lower()
+                        if s_str not in ("busy", "locked", "ordered", "using", "offline", "off"):
+                            free_pcs += 1
+    except:
+        pass
 
-        club_data["pcList"] = safe_get("/pcList")
-        club_data["member_group"] = safe_get("/member/group")
-        club_data["offers"] = safe_get("/offer/list")
-        club_data["priceList"] = safe_get("/priceList")
-        club_data["goods"] = safe_get("/goods/list")
-        results.append(club_data)
-
-    return jsonify(results)
+    return jsonify({
+        "id": c.id,
+        "name": c.name,
+        "logo": c.club_logo_url,
+        "address": c.address or "Адрес не указан",
+        "description": c.description or "",
+        "working_hours": c.working_hours or "Круглосуточно",
+        "rating": 4.8, # Mock rating
+        "lat": c.lat or 0.0,
+        "lng": c.lng or 0.0,
+        "isOpen": True,
+        "pcsTotal": total_pcs,
+        "pcsFree": free_pcs,
+        "zones": zones,
+        "tariffs": tariffs
+    })
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
