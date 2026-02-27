@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi } from "lucide-react";
+import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClub, useClubReviews } from "@/hooks/use-clubs";
@@ -42,6 +42,7 @@ export default function ClubPage() {
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(0);
   const [sendingReview, setSendingReview] = useState(false);
+  const [expandedReviews, setExpandedReviews] = useState<Record<number, boolean>>({});
 
   const handleSubmitReview = async () => {
     if (!id) return;
@@ -322,7 +323,30 @@ export default function ClubPage() {
                   ))}
                   <span className="ml-1 text-xs text-white/70">{review.rating}/5</span>
                 </div>
-                <p className="mt-3 text-sm text-white/90 whitespace-pre-wrap">{review.text}</p>
+                <p className="mt-3 text-sm text-white/90 whitespace-pre-wrap">
+                  {expandedReviews[review.id]
+                    ? review.text
+                    : (review.text.length > 90 ? `${review.text.slice(0, 90)}...` : review.text)}
+                </p>
+                <div className="mt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedReviews((prev) => ({
+                        ...prev,
+                        [review.id]: !prev[review.id],
+                      }))
+                    }
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    {expandedReviews[review.id] ? "Свернуть" : "Развернуть"}
+                    {expandedReviews[review.id] ? (
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
               </div>
             ))
           )}
