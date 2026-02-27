@@ -865,30 +865,34 @@ def get_icafe_data():
 
 @app.get("/api/debug-dump-icafe")
 def debug_dump_icafe():
-    club = Club.query.filter(Club.api_key != None, Club.cafe_id != None).first()
-    if not club:
-        return jsonify({"message": "No club configured in database yet"})
+    clubs = Club.query.filter(Club.api_key != None, Club.api_key != "", Club.cafe_id != None).all()
+    if not clubs:
+        return jsonify({"message": "No clubs with API keys found in the database."})
         
-    headers = {
-        "Authorization": f"Bearer {club.api_key.strip()}",
-        "Accept": "application/json"
-    }
-    url = f"{ICAFE_BASE}/cafe/{club.cafe_id}"
-    
-    def safe_get(path):
-        try:
-            r = requests.get(url + path, headers=headers, timeout=10)
-            return r.json() if r.status_code == 200 else str(r.status_code)
-        except Exception as e:
-            return str(e)
+    results = []
+    for club in clubs:
+        headers = {
+            "Authorization": f"Bearer {club.api_key.strip()}",
+            "Accept": "application/json"
+        }
+        url = f"{ICAFE_BASE}/cafe/{club.cafe_id}"
+        
+        club_data = {"club_id": club.id, "cafe_id": club.cafe_id}
+        
+        def safe_get(path):
+            try:
+                r = requests.get(url + path, headers=headers, timeout=10)
+                if r.status_code == 200:
+                    return r.json()
+                return {"status": r.status_code, "text": r.text, "url": url + path}
+            except Exception as e:
+                return {"error": str(e)}
 
-    return jsonify({
-        "pcs": safe_get("/pcList"),
-        "offers": safe_get("/offer/list"),
-        "goods": safe_get("/goods/list"),
-        "groups": safe_get("/member/group"),
-        "priceList": safe_get("/priceList")
-    })
+        club_data["pcList"] = safe_get("/pcList")
+        club_data["member_group"] = safe_get("/member/group")
+        results.append(club_data)
+
+    return jsonify(results)
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
