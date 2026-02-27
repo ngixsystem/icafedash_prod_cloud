@@ -41,10 +41,10 @@ export default function ClubPage() {
 
         {/* Title Overlaid on Hero Bottom */}
         <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
-          <h1 className="text-3xl font-display font-black tracking-wide text-white drop-shadow-xl">{club.name}</h1>
-          <div className="flex items-center gap-1.5 text-warning font-black drop-shadow-md mb-1">
+          <h1 className="text-4xl font-sans font-extrabold tracking-tight text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">{club.name}</h1>
+          <div className="flex items-center gap-1.5 text-warning font-black drop-shadow-md lg:mb-1">
             <Star className="w-5 h-5 fill-current" />
-            <span className="text-lg">{club.rating}</span>
+            <span className="text-xl">{club.rating}</span>
           </div>
         </div>
       </div>
@@ -84,26 +84,26 @@ export default function ClubPage() {
               <div
                 key={i}
                 onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
-                className="rounded-2xl bg-[#0f1015]/90 border border-white/5 p-5 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all group"
+                className="rounded-[18px] bg-[#11131a] border border-white/5 p-5 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all group shadow-lg"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-display font-black uppercase tracking-wider text-base text-white group-hover:text-[#00bfff] transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-sans font-black uppercase tracking-wide text-lg text-[#00bfff] group-hover:brightness-125 transition-all">
                     {zone.name}
                   </h3>
-                  <span className="text-[#00bfff] font-display font-bold text-base">{zone.price || 0} СУМ/ч</span>
+                  <span className="text-[#00bfff] font-sans font-bold text-base">{zone.price || 0} СУМ/ч</span>
                 </div>
-                <p className="text-[13px] text-white/50 mb-5">{zone.specs}</p>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                <p className="text-[13px] text-white/50 mb-6 font-medium tracking-wide">{zone.specs}</p>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all duration-1000 ease-out bg-[#10b981] shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+                      className="h-full rounded-full transition-all duration-1000 ease-out bg-[#10b981] shadow-[0_0_12px_rgba(16,185,129,0.5)]"
                       style={{
                         width: `${progressPercent}%`
                       }}
                     />
                   </div>
-                  <span className="text-[13px] font-medium text-white/40 whitespace-nowrap leading-none mt-0.5">
-                    {zTotal} ПК
+                  <span className="text-[13px] font-semibold text-white/40 whitespace-nowrap leading-none mt-0.5">
+                    <span className={zFree > 0 ? "text-emerald-400 font-bold" : ""}>{zFree} свободно</span> из {zTotal} ПК
                   </span>
                 </div>
               </div>
