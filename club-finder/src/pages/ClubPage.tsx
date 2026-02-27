@@ -1,12 +1,20 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi } from "lucide-react";
-import { clubs } from "@/data/clubs";
+import { useClub } from "@/hooks/use-clubs";
 import { Button } from "@/components/ui/button";
 
 export default function ClubPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const club = clubs.find((c) => c.id === id);
+  const { data: club, isLoading } = useClub(id);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground animate-pulse">
+        Загрузка...
+      </div>
+    );
+  }
 
   if (!club) {
     return (
@@ -60,13 +68,16 @@ export default function ClubPage() {
         {/* Zones */}
         <h2 className="text-lg font-display font-bold mb-3">Зоны</h2>
         <div className="space-y-3 mb-6">
-          {club.zones.map((zone) => {
-            const freePercent = (zone.pcsFree / zone.pcsTotal) * 100;
+          {(!club.zones || club.zones.length === 0) ? (
+            <div className="text-sm text-muted-foreground">Нет информации о залах</div>
+          ) : club.zones.map((zone: any, i: number) => {
+            const zTotal = parseInt(zone.capacity) || 0;
+            const freePercent = zTotal > 0 ? ((zTotal - 2) / zTotal) * 100 : 0;
             return (
-              <div key={zone.id} className="rounded-lg glass p-4">
+              <div key={i} className="rounded-lg glass p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-display font-bold text-sm">{zone.name}</h3>
-                  <span className="text-primary font-display font-bold">{zone.pricePerHour} СУМ/ч</span>
+                  <span className="text-primary font-display font-bold">{zone.price || 0} СУМ/ч</span>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">{zone.specs}</p>
                 <div className="flex items-center gap-3">
@@ -84,7 +95,7 @@ export default function ClubPage() {
                     />
                   </div>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {zone.pcsFree}/{zone.pcsTotal} ПК
+                    {zone.capacity} ПК
                   </span>
                 </div>
               </div>
@@ -95,16 +106,14 @@ export default function ClubPage() {
         {/* Tariffs */}
         <h2 className="text-lg font-display font-bold mb-3">Тарифы</h2>
         <div className="grid grid-cols-3 gap-2 mb-6">
-          {[
-            { label: "1 час", price: club.pricePerHour },
-            { label: "3 часа", price: Math.round(club.pricePerHour * 2.7) },
-            { label: "Ночь", price: Math.round(club.pricePerHour * 4) },
-          ].map((t) => (
-            <div key={t.label} className="rounded-lg glass p-3 text-center">
+          {(!club.tariffs || club.tariffs.length === 0) ? (
+            <div className="col-span-3 text-sm text-muted-foreground">Нет информации о тарифах</div>
+          ) : club.tariffs.map((t: any, i: number) => (
+            <div key={i} className="rounded-lg glass p-3 text-center">
               <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                <Clock className="w-3 h-3" /> {t.label}
+                <Clock className="w-3 h-3" /> {t.duration}
               </div>
-              <p className="text-primary font-display font-bold text-lg">{t.price} СУМ</p>
+              <p className="text-primary font-display font-bold text-lg">{t.price || 0} СУМ</p>
             </div>
           ))}
         </div>
