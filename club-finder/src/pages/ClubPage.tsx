@@ -86,25 +86,25 @@ export default function ClubPage() {
                 onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
                 className="rounded-[18px] bg-[#11131a] border border-white/5 p-5 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all group shadow-lg"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-sans font-black uppercase tracking-wide text-lg text-[#00bfff] group-hover:brightness-125 transition-all">
-                    {zone.name}
-                  </h3>
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-sans font-black uppercase tracking-wide text-lg text-[#00bfff] group-hover:brightness-125 transition-all leading-none mb-1.5">
+                      {zone.name}
+                    </h3>
+                    <div className="text-[#00bfff] font-sans font-bold text-sm tracking-wide">{zone.price || 0} СУМ/ч</div>
+                  </div>
                   <span className="text-[13px] font-semibold text-white/40 whitespace-nowrap leading-none mt-0.5">
                     <span className={zFree > 0 ? "text-emerald-400 font-bold" : ""}>{zFree} свободно</span> из {zTotal} ПК
                   </span>
                 </div>
-                <p className="text-[13px] text-white/50 mb-6 font-medium tracking-wide">{zone.specs}</p>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-1000 ease-out bg-[#10b981] shadow-[0_0_12px_rgba(16,185,129,0.5)]"
-                      style={{
-                        width: `${progressPercent}%`
-                      }}
-                    />
-                  </div>
-                  <span className="text-[#00bfff] font-sans font-bold text-sm tracking-wide">{zone.price || 0} СУМ/ч</span>
+                <p className="text-[13px] text-white/50 mb-5 font-medium tracking-wide">{zone.specs}</p>
+                <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-1000 ease-out bg-[#10b981] shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                    style={{
+                      width: `${progressPercent}%`
+                    }}
+                  />
                 </div>
               </div>
             );
