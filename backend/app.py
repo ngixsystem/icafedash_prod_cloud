@@ -865,12 +865,29 @@ def get_icafe_data():
 
 @app.get("/api/debug-dump-icafe")
 def debug_dump_icafe():
+    club = Club.query.filter(Club.api_key != None, Club.cafe_id != None).first()
+    if not club:
+        return jsonify({"message": "No club configured in database yet"})
+        
+    headers = {
+        "Authorization": f"Bearer {club.api_key.strip()}",
+        "Accept": "application/json"
+    }
+    url = f"{ICAFE_BASE}/cafe/{club.cafe_id}"
+    
+    def safe_get(path):
+        try:
+            r = requests.get(url + path, headers=headers, timeout=10)
+            return r.json() if r.status_code == 200 else str(r.status_code)
+        except Exception as e:
+            return str(e)
+
     return jsonify({
-        "pcs": icafe_get("/pcList"),
-        "offers": icafe_get("/offer/list"),
-        "goods": icafe_get("/goods/list"),
-        "groups": icafe_get("/member/group"),
-        "priceList": icafe_get("/priceList")
+        "pcs": safe_get("/pcList"),
+        "offers": safe_get("/offer/list"),
+        "goods": safe_get("/goods/list"),
+        "groups": safe_get("/member/group"),
+        "priceList": safe_get("/priceList")
     })
 
 def allowed_file(filename):
