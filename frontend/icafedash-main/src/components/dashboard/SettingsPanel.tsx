@@ -32,6 +32,9 @@ const SettingsPanel = () => {
 
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [clubPhotos, setClubPhotos] = useState<string[]>([]);
+    const [mainPhotoUrl, setMainPhotoUrl] = useState<string>("");
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
     const { data: config, isLoading } = useQuery({
         queryKey: ["config"],
@@ -47,6 +50,7 @@ const SettingsPanel = () => {
                 internet_speed: config.internet_speed || "",
             });
             setLogoPreview(config.club_logo_url || null);
+            setMainPhotoUrl(config.club_main_photo_url || "");
 
             // Parse zones
             try {
@@ -70,6 +74,22 @@ const SettingsPanel = () => {
             } catch (e) {
                 console.error("Failed to parse tariffs", e);
                 setTariffs([]);
+            }
+
+            try {
+                if (config.club_photos && config.club_photos.trim().startsWith("[")) {
+                    const photos = JSON.parse(config.club_photos);
+                    const normalizedPhotos = Array.isArray(photos) ? photos : [];
+                    setClubPhotos(normalizedPhotos);
+                    if (!config.club_main_photo_url && normalizedPhotos.length > 0) {
+                        setMainPhotoUrl(normalizedPhotos[0]);
+                    }
+                } else {
+                    setClubPhotos([]);
+                }
+            } catch (e) {
+                console.error("Failed to parse club photos", e);
+                setClubPhotos([]);
             }
         }
     }, [config]);
@@ -121,6 +141,42 @@ const SettingsPanel = () => {
         }
     };
 
+    const handleClubPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            toast.error("Пожалуйста, загрузите изображение (JPG/PNG/WebP)");
+            return;
+        }
+
+        setIsUploadingPhoto(true);
+        try {
+            const uploadRes = await api.uploadClubPhoto(file);
+            setClubPhotos((prev) => {
+                if (prev.includes(uploadRes.url)) return prev;
+                return [...prev, uploadRes.url];
+            });
+            setMainPhotoUrl((prev) => prev || uploadRes.url);
+            toast.success("Фото клуба добавлено");
+        } catch (err) {
+            toast.error("Ошибка при загрузке фото клуба");
+        } finally {
+            setIsUploadingPhoto(false);
+            e.target.value = "";
+        }
+    };
+
+    const removeClubPhoto = (url: string) => {
+        setClubPhotos((prev) => {
+            const next = prev.filter((item) => item !== url);
+            setMainPhotoUrl((prevMain) => {
+                if (prevMain !== url) return prevMain;
+                return next[0] || "";
+            });
+            return next;
+        });
+    };
+
     const loadIcafeDataMutation = useMutation({
         mutationFn: api.getIcafeData,
         onSuccess: (data) => {
@@ -144,6 +200,10 @@ const SettingsPanel = () => {
     const saveMutation = useMutation({
         mutationFn: async () => {
             let finalLogoUrl = config?.club_logo_url || "";
+            const normalizedPhotos = clubPhotos.filter(Boolean);
+            const normalizedMainPhoto = normalizedPhotos.includes(mainPhotoUrl)
+                ? mainPhotoUrl
+                : (normalizedPhotos[0] || "");
 
             if (selectedFile) {
                 const uploadRes = await api.uploadLogo(selectedFile);
@@ -154,6 +214,8 @@ const SettingsPanel = () => {
                 ...formData,
                 zones: JSON.stringify(zones),
                 tariffs: JSON.stringify(tariffs),
+                club_photos: JSON.stringify(normalizedPhotos),
+                club_main_photo_url: normalizedMainPhoto,
                 club_logo_url: finalLogoUrl,
             });
         },
@@ -195,44 +257,103 @@ const SettingsPanel = () => {
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"> Фотографии и логотип</h3>
 
-                    <div className="flex flex-col md:flex-row gap-6 items-start">
-                        <div className="w-48 h-48 shrink-0 rounded-xl overflow-hidden bg-muted border-2 border-dashed border-border flex items-center justify-center relative group">
-                            {logoPreview ? (
-                                <img src={logoPreview} alt="Предпросмотр" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="text-center p-4">
-                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2 text-primary">
-                                        <Upload className="w-6 h-6" />
+                    <div className="space-y-6">
+                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                            <div className="w-48 h-48 shrink-0 rounded-xl overflow-hidden bg-muted border-2 border-dashed border-border flex items-center justify-center relative group">
+                                {logoPreview ? (
+                                    <img src={logoPreview} alt="Логотип" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="text-center p-4">
+                                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2 text-primary">
+                                            <Upload className="w-6 h-6" />
+                                        </div>
+                                        <span className="text-xs text-muted-foreground">Загрузить JPG/PNG</span>
                                     </div>
-                                    <span className="text-xs text-muted-foreground">Загрузить JPG/PNG</span>
-                                </div>
-                            )}
+                                )}
 
-                            <label htmlFor="photo-upload" className={`absolute inset-0 bg-background/80 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm`}>
-                                <Upload className="w-8 h-8 mb-2 text-primary" />
-                                <span className="text-sm font-medium">Изменить</span>
-                            </label>
-                            <input
-                                id="photo-upload"
-                                type="file"
-                                accept="image/jpeg, image/png, image/webp"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
+                                <label htmlFor="photo-upload" className={`absolute inset-0 bg-background/80 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm`}>
+                                    <Upload className="w-8 h-8 mb-2 text-primary" />
+                                    <span className="text-sm font-medium">Изменить логотип</span>
+                                </label>
+                                <input
+                                    id="photo-upload"
+                                    type="file"
+                                    accept="image/jpeg, image/png, image/webp"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
+                            </div>
+
+                            <div className="flex-1 space-y-2">
+                                <Label htmlFor="club_name">Название клуба</Label>
+                                <Input
+                                    id="club_name"
+                                    name="club_name"
+                                    value={formData.club_name}
+                                    onChange={handleChange}
+                                    placeholder="Пример: CyberX Arena"
+                                    required
+                                />
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    Логотип используется отдельно для профиля клуба в панели менеджера.
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="club_name">Название клуба</Label>
-                            <Input
-                                id="club_name"
-                                name="club_name"
-                                value={formData.club_name}
-                                onChange={handleChange}
-                                placeholder="Пример: CyberX Arena"
-                                required
-                            />
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Логотип должен быть квадратным для правильного отображения. Идеальный размер: 512x512 пикселей.
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <Label>Фотографии клуба (для cloud)</Label>
+                                <label
+                                    htmlFor="club-photo-upload"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-secondary/40 cursor-pointer"
+                                >
+                                    {isUploadingPhoto ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Upload className="w-4 h-4" />
+                                    )}
+                                    Добавить фото
+                                </label>
+                                <input
+                                    id="club-photo-upload"
+                                    type="file"
+                                    accept="image/jpeg, image/png, image/webp"
+                                    className="hidden"
+                                    onChange={handleClubPhotoUpload}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {clubPhotos.map((photoUrl) => (
+                                    <div key={photoUrl} className="relative rounded-lg overflow-hidden border border-border bg-background group">
+                                        <img src={photoUrl} alt="Фото клуба" className="w-full h-24 object-cover" />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setMainPhotoUrl(photoUrl)}
+                                                className={`text-xs rounded px-2 py-1 ${mainPhotoUrl === photoUrl ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                                            >
+                                                {mainPhotoUrl === photoUrl ? "Главное фото" : "Сделать главным"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeClubPhoto(photoUrl)}
+                                                className="text-xs rounded px-2 py-1 bg-destructive/90 text-destructive-foreground"
+                                            >
+                                                Удалить
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {clubPhotos.length === 0 && (
+                                    <div className="col-span-full rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                                        Пока нет фото клуба. Добавьте несколько изображений и выберите главное.
+                                    </div>
+                                )}
+                            </div>
+
+                            <p className="text-xs text-muted-foreground">
+                                Главное фото показывается в списке клубов на cloud.icafedash.com, остальные листаются слайдом на странице клуба.
                             </p>
                         </div>
                     </div>

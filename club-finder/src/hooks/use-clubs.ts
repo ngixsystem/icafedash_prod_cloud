@@ -17,6 +17,9 @@ export interface ClubData {
     zones?: any[];
     tariffs?: any[];
     rating_count?: number;
+    profile_logo?: string;
+    main_photo_url?: string;
+    photos?: string[];
 }
 
 export interface ClubReviewData {

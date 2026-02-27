@@ -17,7 +17,7 @@ export default function ClubCard({ club }: ClubCardProps) {
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={(club as any).logo || club.image}
+          src={(club as any).main_photo_url || (club as any).logo || club.image}
           alt={club.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />

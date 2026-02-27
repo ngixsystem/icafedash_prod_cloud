@@ -144,6 +144,8 @@ export interface ConfigData {
     configured: boolean;
     club_name: string;
     club_logo_url: string;
+    club_main_photo_url: string;
+    club_photos: string;
     address: string;
     working_hours: string;
     zones: string;
@@ -197,7 +199,7 @@ export const api = {
 
     getIcafeData: () => get<{ zones: string; tariffs: string }>("/config/icafe-data"),
 
-    saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string; address?: string; working_hours?: string; zones?: string; tariffs?: string; internet_speed?: string }) =>
+    saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string; club_main_photo_url?: string; club_photos?: string; address?: string; working_hours?: string; zones?: string; tariffs?: string; internet_speed?: string }) =>
         post<{ ok: boolean }>("/config", data),
 
     uploadLogo: async (file: File): Promise<{ url: string }> => {
@@ -205,6 +207,18 @@ export const api = {
         formData.append("file", file);
         const headers = getHeaders();
         const res = await fetch(`${BASE}/upload-logo`, {
+            method: "POST",
+            headers,
+            body: formData,
+        });
+        if (!res.ok) throw new Error("Upload failed");
+        return res.json();
+    },
+    uploadClubPhoto: async (file: File): Promise<{ url: string }> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const headers = getHeaders();
+        const res = await fetch(`${BASE}/upload-club-photo`, {
             method: "POST",
             headers,
             body: formData,

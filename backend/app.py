@@ -69,6 +69,8 @@ class Club(db.Model):
     api_key = db.Column(db.Text, nullable=True)
     cafe_id = db.Column(db.String(50), nullable=True)
     club_logo_url = db.Column(db.String(255), default="")
+    club_main_photo_url = db.Column(db.String(255), default="")
+    club_photos = db.Column(db.Text, nullable=True)
     address = db.Column(db.String(255), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
     description = db.Column(db.Text, nullable=True)
@@ -235,6 +237,12 @@ with app.app_context():
             conn.commit()
         if 'internet_speed' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN internet_speed VARCHAR(50)"))
+            conn.commit()
+        if 'club_main_photo_url' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN club_main_photo_url VARCHAR(255) DEFAULT ''"))
+            conn.commit()
+        if 'club_photos' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN club_photos TEXT"))
             conn.commit()
             
     # Create or update default admin user
@@ -598,7 +606,8 @@ def public_clubs():
             result.append({
                 "id": c.id,
                 "name": c.name,
-                "logo": c.club_logo_url,
+                "logo": c.club_main_photo_url or c.club_logo_url,
+                "profile_logo": c.club_logo_url,
                 "pcsTotal": total_pcs,
                 "pcsFree": free_pcs,
                 "rating": round(avg_rating, 1),
@@ -618,7 +627,8 @@ def public_clubs():
             result.append({
                 "id": c.id,
                 "name": c.name,
-                "logo": c.club_logo_url,
+                "logo": c.club_main_photo_url or c.club_logo_url,
+                "profile_logo": c.club_logo_url,
                 "pcsTotal": 0,
                 "pcsFree": 0,
                 "rating": round(avg_rating, 1),
@@ -832,6 +842,8 @@ def get_config():
     return jsonify({
         "club_name": user.club.name,
         "club_logo_url": user.club.club_logo_url,
+        "club_main_photo_url": user.club.club_main_photo_url or "",
+        "club_photos": user.club.club_photos or "[]",
         "api_key_masked": "***HIDDEN***",
         "cafe_id": user.club.cafe_id,
         "address": user.club.address or "",
@@ -856,6 +868,10 @@ def set_config():
         user.club.name = body["club_name"].strip()
     if "club_logo_url" in body:
         user.club.club_logo_url = body["club_logo_url"].strip()
+    if "club_main_photo_url" in body:
+        user.club.club_main_photo_url = (body["club_main_photo_url"] or "").strip()
+    if "club_photos" in body:
+        user.club.club_photos = (body["club_photos"] or "[]").strip()
     if "address" in body:
         user.club.address = body["address"].strip()
     if "working_hours" in body:
@@ -941,6 +957,7 @@ def public_club_detail(club_id):
     # Safely parse JSON arrays for zones and tariffs
     zones = []
     tariffs = []
+    photos = []
     try:
         if c.zones:
             zones = json.loads(c.zones)
@@ -952,6 +969,14 @@ def public_club_detail(club_id):
             tariffs = json.loads(c.tariffs)
     except Exception as e:
         print(f"Error parsing tariffs for club {c.id}: {e}")
+
+    try:
+        if c.club_photos:
+            photos = json.loads(c.club_photos)
+            if not isinstance(photos, list):
+                photos = []
+    except Exception as e:
+        print(f"Error parsing photos for club {c.id}: {e}")
         
     # Try fetching real-time pc counts if API key exists
     total_pcs = 0
@@ -996,7 +1021,10 @@ def public_club_detail(club_id):
     return jsonify({
         "id": c.id,
         "name": c.name,
-        "logo": c.club_logo_url,
+        "logo": c.club_main_photo_url or c.club_logo_url,
+        "profile_logo": c.club_logo_url,
+        "main_photo_url": c.club_main_photo_url or "",
+        "photos": photos,
         "address": c.address or "Адрес не указан",
         "description": c.description or "",
         "working_hours": c.working_hours or "Круглосуточно",
@@ -1106,6 +1134,22 @@ def upload_logo():
         filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(filepath)
         # Return the URL to access this file
+        return jsonify({"url": f"/api/uploads/{filename}"})
+    return jsonify({"error": "File type not allowed"}), 400
+
+
+@app.post("/api/upload-club-photo")
+@jwt_required()
+def upload_club_photo():
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+    if file and allowed_file(file.filename):
+        filename = "club_photo_" + secure_filename(file.filename)
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(filepath)
         return jsonify({"url": f"/api/uploads/{filename}"})
     return jsonify({"error": "File type not allowed"}), 400
 
