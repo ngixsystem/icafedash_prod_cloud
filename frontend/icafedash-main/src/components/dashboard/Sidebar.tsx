@@ -33,6 +33,30 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
 }
 
+function playShortSignal() {
+  if (typeof window === "undefined") return;
+  const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContextClass) return;
+  try {
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.value = 0.04;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    osc.start(now);
+    osc.stop(now + 0.12);
+  } catch {
+    // Ignore audio permission/device errors.
+  }
+}
+
 const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAdmin } = useAuth();
@@ -55,6 +79,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     const prev = prevPendingRef.current;
     if (prev !== null && pendingBookingCount > prev && typeof window !== "undefined" && "Notification" in window) {
       const newCount = pendingBookingCount - prev;
+      playShortSignal();
       const notify = () =>
         new Notification("Новая бронь", {
           body: `Новых заявок: ${newCount}`,
