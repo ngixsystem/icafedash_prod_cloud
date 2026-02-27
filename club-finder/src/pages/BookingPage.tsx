@@ -185,6 +185,17 @@ export default function BookingPage() {
       });
 
       const payload = await res.json();
+      if (res.status === 401 || res.status === 422) {
+        localStorage.removeItem("icafe_client_token");
+        localStorage.removeItem("icafe_client_user");
+        toast({
+          title: "Сессия истекла",
+          description: "Войдите заново, чтобы продолжить бронирование",
+          variant: "destructive",
+        });
+        navigate("/auth", { state: { from: { pathname: `/booking?club=${clubId}&zone=${encodeURIComponent(selectedZone)}` } } });
+        return;
+      }
       if (!res.ok) throw new Error(payload?.message || "Не удалось создать бронь");
 
       setBooked({
