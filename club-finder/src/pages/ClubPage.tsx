@@ -91,7 +91,7 @@ export default function ClubPage() {
                     <h3 className="font-sans font-black uppercase tracking-wide text-lg text-[#00bfff] group-hover:brightness-125 transition-all leading-none mb-1.5">
                       {zone.name}
                     </h3>
-                    <div className="text-[#00bfff] font-sans font-bold text-sm tracking-wide">{zone.price || 0} СУМ/ч</div>
+                    <div className="text-white font-sans font-bold text-sm tracking-wide">({zone.price || 0} СУМ/ЧАС)</div>
                   </div>
                   <span className="text-[13px] font-semibold text-white/40 whitespace-nowrap leading-none mt-0.5">
                     <span className={zFree > 0 ? "text-emerald-400 font-bold" : ""}>{zFree} свободно</span> из {zTotal} ПК
