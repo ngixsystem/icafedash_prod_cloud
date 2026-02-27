@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
+import type { TouchEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClub, useClubReviews } from "@/hooks/use-clubs";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,8 @@ export default function ClubPage() {
   const [sendingReview, setSendingReview] = useState(false);
   const [expandedReviews, setExpandedReviews] = useState<Record<number, boolean>>({});
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [heroFullScreen, setHeroFullScreen] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
   const heroPhotos = (club?.photos && club.photos.length > 0)
     ? club.photos
@@ -51,7 +54,46 @@ export default function ClubPage() {
 
   useEffect(() => {
     setActivePhotoIndex(0);
+    setHeroFullScreen(false);
   }, [id, club?.id]);
+
+  const goPrevPhoto = () => {
+    if (heroPhotos.length < 2) return;
+    setActivePhotoIndex((prev) => (prev === 0 ? heroPhotos.length - 1 : prev - 1));
+  };
+
+  const goNextPhoto = () => {
+    if (heroPhotos.length < 2) return;
+    setActivePhotoIndex((prev) => (prev === heroPhotos.length - 1 ? 0 : prev + 1));
+  };
+
+  const onHeroTouchStart = (e: TouchEvent) => {
+    const touch = e.changedTouches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+  };
+
+  const onHeroTouchEnd = (e: TouchEvent, fromFullScreen: boolean) => {
+    if (!touchStart) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStart.x;
+    const dy = touch.clientY - touchStart.y;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    const swipeX = 35;
+    const swipeY = 45;
+
+    if (absDx > absDy && absDx > swipeX) {
+      if (dx < 0) goNextPhoto();
+      else goPrevPhoto();
+    } else if (absDy > absDx && absDy > swipeY) {
+      if (dy > 0 && !fromFullScreen) {
+        setHeroFullScreen(true);
+      } else if (dy < 0 && fromFullScreen) {
+        setHeroFullScreen(false);
+      }
+    }
+    setTouchStart(null);
+  };
 
   const handleSubmitReview = async () => {
     if (!id) return;
@@ -133,7 +175,11 @@ export default function ClubPage() {
   return (
     <div className="min-h-screen pb-24">
       {/* Hero */}
-      <div className="relative h-64 overflow-hidden rounded-b-[2rem]">
+      <div
+        className="relative h-64 overflow-hidden rounded-b-[2rem]"
+        onTouchStart={onHeroTouchStart}
+        onTouchEnd={(e) => onHeroTouchEnd(e, false)}
+      >
         <img src={heroPhotos[activePhotoIndex] || club.logo || (club as any).image} alt={club.name} className="w-full h-full object-cover" />
         {/* Dark gradient for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/40 to-transparent" />
@@ -147,20 +193,6 @@ export default function ClubPage() {
 
         {heroPhotos.length > 1 && (
           <>
-            <button
-              type="button"
-              onClick={() => setActivePhotoIndex((prev) => (prev === 0 ? heroPhotos.length - 1 : prev - 1))}
-              className="absolute top-1/2 left-4 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setActivePhotoIndex((prev) => (prev === heroPhotos.length - 1 ? 0 : prev + 1))}
-              className="absolute top-1/2 right-4 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
               {heroPhotos.map((_, idx) => (
                 <button
@@ -183,6 +215,20 @@ export default function ClubPage() {
           </div>
         </div>
       </div>
+
+      {heroFullScreen && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/95"
+          onTouchStart={onHeroTouchStart}
+          onTouchEnd={(e) => onHeroTouchEnd(e, true)}
+        >
+          <img
+            src={heroPhotos[activePhotoIndex] || club.logo || (club as any).image}
+            alt={club.name}
+            className="w-full h-full object-contain"
+          />
+        </div>
+      )}
 
       {/* Info */}
       <div className="px-6 py-5 relative z-10 space-y-7">
