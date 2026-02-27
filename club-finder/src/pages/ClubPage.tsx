@@ -90,7 +90,9 @@ export default function ClubPage() {
                   <h3 className="font-sans font-black uppercase tracking-wide text-lg text-[#00bfff] group-hover:brightness-125 transition-all">
                     {zone.name}
                   </h3>
-                  <span className="text-[#00bfff] font-sans font-bold text-base">{zone.price || 0} СУМ/ч</span>
+                  <span className="text-[13px] font-semibold text-white/40 whitespace-nowrap leading-none mt-0.5">
+                    <span className={zFree > 0 ? "text-emerald-400 font-bold" : ""}>{zFree} свободно</span> из {zTotal} ПК
+                  </span>
                 </div>
                 <p className="text-[13px] text-white/50 mb-6 font-medium tracking-wide">{zone.specs}</p>
                 <div className="flex items-center gap-4">
@@ -102,9 +104,7 @@ export default function ClubPage() {
                       }}
                     />
                   </div>
-                  <span className="text-[13px] font-semibold text-white/40 whitespace-nowrap leading-none mt-0.5">
-                    <span className={zFree > 0 ? "text-emerald-400 font-bold" : ""}>{zFree} свободно</span> из {zTotal} ПК
-                  </span>
+                  <span className="text-[#00bfff] font-sans font-bold text-sm tracking-wide">{zone.price || 0} СУМ/ч</span>
                 </div>
               </div>
             );
