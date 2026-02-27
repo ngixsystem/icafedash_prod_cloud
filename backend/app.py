@@ -889,6 +889,8 @@ def public_club_detail(club_id):
     # Try fetching real-time pc counts if API key exists
     total_pcs = 0
     free_pcs = 0
+    zone_stats = {} # {"ZoneName": {"total": 0, "free": 0}}
+    
     try:
         if c.api_key:
             headers = {"Authorization": f"Bearer {c.api_key.strip()}", "Accept": "application/json"}
@@ -898,12 +900,29 @@ def public_club_detail(club_id):
                 pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
                 total_pcs = len(pcs)
                 for pc in pcs:
+                    # Find real zone name
+                    z_name = pc.get("pc_area_name") or pc.get("pc_group_name") or "Unknown"
+                    if z_name not in zone_stats:
+                        zone_stats[z_name] = {"total": 0, "free": 0}
+                    
+                    zone_stats[z_name]["total"] += 1
+                    
+                    # Logic for "free" vs "busy"
                     if not (pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account")):
                         s_str = str(pc.get("pc_status", "")).lower()
                         if s_str not in ("busy", "locked", "ordered", "using", "offline", "off"):
                             free_pcs += 1
+                            zone_stats[z_name]["free"] += 1
     except:
         pass
+        
+    # Inject real stats into the parsed zones array using name matching
+    for z in zones:
+        z_name = z.get("name", "")
+        # Try to find exactly, or loosely matching the name
+        stats = zone_stats.get(z_name, {"total": int(z.get("capacity") or 0), "free": 0})
+        z["capacity"] = str(stats["total"])
+        z["pcsFree"] = stats["free"]
 
     return jsonify({
         "id": c.id,

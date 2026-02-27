@@ -28,11 +28,11 @@ export default function ClubPage() {
     <div className="min-h-screen pb-24">
       {/* Hero */}
       <div className="relative h-56">
-        <img src={club.image} alt={club.name} className="w-full h-full object-cover" />
+        <img src={club.logo || club.image} alt={club.name} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-10 left-4 w-9 h-9 rounded-full glass flex items-center justify-center"
+          className="absolute top-10 left-4 w-9 h-9 rounded-full glass flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -72,18 +72,24 @@ export default function ClubPage() {
             <div className="text-sm text-muted-foreground">Нет информации о залах</div>
           ) : club.zones.map((zone: any, i: number) => {
             const zTotal = parseInt(zone.capacity) || 0;
-            const freePercent = zTotal > 0 ? ((zTotal - 2) / zTotal) * 100 : 0;
+            const zFree = parseInt(zone.pcsFree) || 0;
+            const freePercent = zTotal > 0 ? (zFree / zTotal) * 100 : 0;
+
             return (
-              <div key={i} className="rounded-lg glass p-4">
+              <div
+                key={i}
+                onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
+                className="rounded-lg glass p-4 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all"
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-display font-bold text-sm">{zone.name}</h3>
+                  <h3 className="font-display font-bold text-sm group-hover:text-primary transition-colors">{zone.name}</h3>
                   <span className="text-primary font-display font-bold">{zone.price || 0} СУМ/ч</span>
                 </div>
-                <p className="text-xs text-muted-foreground mb-2">{zone.specs}</p>
+                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{zone.specs}</p>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all"
+                      className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{
                         width: `${freePercent}%`,
                         background: freePercent > 30
@@ -94,8 +100,9 @@ export default function ClubPage() {
                       }}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {zone.capacity} ПК
+                  <span className="text-xs font-semibold whitespace-nowrap min-w-[3rem] text-right">
+                    <span className={zFree > 0 ? "text-emerald-400" : "text-destructive"}>{zFree}</span>
+                    <span className="text-muted-foreground"> / {zTotal} ПК</span>
                   </span>
                 </div>
               </div>
