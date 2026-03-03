@@ -3,24 +3,49 @@ import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Map } from "lucide-react";
-import { clubs } from "@/data/clubs";
+import { useClubs } from "@/hooks/use-clubs";
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
+  const markersLayer = useRef<L.LayerGroup | null>(null);
   const navigate = useNavigate();
+  const { data: clubs = [] } = useClubs();
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
     const map = L.map(mapRef.current).setView([55.7558, 37.6173], 13);
     mapInstance.current = map;
+    markersLayer.current = L.layerGroup().addTo(map);
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       attribution: '© OpenStreetMap © CARTO',
     }).addTo(map);
 
-    clubs.forEach((club) => {
+    return () => {
+      map.remove();
+      mapInstance.current = null;
+      markersLayer.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    const layer = markersLayer.current;
+    if (!map || !layer) return;
+
+    layer.clearLayers();
+
+    const clubsWithCoords = clubs.filter((club) =>
+      Number.isFinite(club.lat) && Number.isFinite(club.lng)
+    );
+
+    const bounds: L.LatLngTuple[] = [];
+
+    clubsWithCoords.forEach((club) => {
+      const lat = Number(club.lat);
+      const lng = Number(club.lng);
       const color = club.pcsFree > 10 ? "#22c55e" : club.pcsFree > 0 ? "#eab308" : "#ef4444";
 
       const icon = L.divIcon({
@@ -43,8 +68,10 @@ export default function MapPage() {
         iconAnchor: [16, 16],
       });
 
-      L.marker([club.lat, club.lng], { icon })
-        .addTo(map)
+      bounds.push([lat, lng]);
+
+      L.marker([lat, lng], { icon })
+        .addTo(layer)
         .bindPopup(
           `<div style="font-family: 'Outfit', sans-serif; background: rgba(10,15,26,0.9); color: #e5e7eb; padding: 8px; border-radius: 12px; min-width: 160px;">
             <strong style="color: #22d3ee; font-size: 14px;">${club.name}</strong><br/>
@@ -61,11 +88,12 @@ export default function MapPage() {
         .on("click", () => navigate(`/club/${club.id}`));
     });
 
-    return () => {
-      map.remove();
-      mapInstance.current = null;
-    };
-  }, [navigate]);
+    if (bounds.length === 1) {
+      map.setView(bounds[0], 14);
+    } else if (bounds.length > 1) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    }
+  }, [clubs, navigate]);
 
   return (
     <div className="min-h-screen pb-32 bg-background">

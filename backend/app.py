@@ -979,6 +979,8 @@ def get_config():
         "api_key_masked": "***HIDDEN***",
         "cafe_id": user.club.cafe_id,
         "address": user.club.address or "",
+        "lat": user.club.lat,
+        "lng": user.club.lng,
         "working_hours": user.club.working_hours or "",
         "zones": user.club.zones or "",
         "tariffs": user.club.tariffs or "",
@@ -1014,6 +1016,24 @@ def set_config():
         user.club.tariffs = body["tariffs"].strip()
     if "internet_speed" in body:
         user.club.internet_speed = body["internet_speed"].strip()
+    if "lat" in body:
+        raw_lat = body.get("lat")
+        if raw_lat is None or raw_lat == "":
+            user.club.lat = None
+        else:
+            try:
+                user.club.lat = float(raw_lat)
+            except (TypeError, ValueError):
+                return jsonify({"message": "Invalid latitude value"}), 400
+    if "lng" in body:
+        raw_lng = body.get("lng")
+        if raw_lng is None or raw_lng == "":
+            user.club.lng = None
+        else:
+            try:
+                user.club.lng = float(raw_lng)
+            except (TypeError, ValueError):
+                return jsonify({"message": "Invalid longitude value"}), 400
     
     db.session.commit()
     return jsonify({"ok": True})

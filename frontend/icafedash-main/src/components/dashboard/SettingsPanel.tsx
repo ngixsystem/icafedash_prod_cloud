@@ -23,6 +23,8 @@ const SettingsPanel = () => {
     const [formData, setFormData] = useState({
         club_name: "",
         address: "",
+        lat: "",
+        lng: "",
         working_hours: "",
         internet_speed: "",
     });
@@ -46,6 +48,8 @@ const SettingsPanel = () => {
             setFormData({
                 club_name: config.club_name || "",
                 address: config.address || "",
+                lat: config.lat != null ? String(config.lat) : "",
+                lng: config.lng != null ? String(config.lng) : "",
                 working_hours: config.working_hours || "",
                 internet_speed: config.internet_speed || "",
             });
@@ -204,6 +208,15 @@ const SettingsPanel = () => {
             const normalizedMainPhoto = normalizedPhotos.includes(mainPhotoUrl)
                 ? mainPhotoUrl
                 : (normalizedPhotos[0] || "");
+            const parsedLat = formData.lat.trim() === "" ? null : Number(formData.lat);
+            const parsedLng = formData.lng.trim() === "" ? null : Number(formData.lng);
+
+            if (!Number.isFinite(parsedLat) && parsedLat !== null) {
+                throw new Error("Invalid latitude");
+            }
+            if (!Number.isFinite(parsedLng) && parsedLng !== null) {
+                throw new Error("Invalid longitude");
+            }
 
             if (selectedFile) {
                 const uploadRes = await api.uploadLogo(selectedFile);
@@ -217,6 +230,8 @@ const SettingsPanel = () => {
                 club_photos: JSON.stringify(normalizedPhotos),
                 club_main_photo_url: normalizedMainPhoto,
                 club_logo_url: finalLogoUrl,
+                lat: parsedLat,
+                lng: parsedLng,
             });
         },
         onSuccess: () => {
@@ -384,6 +399,30 @@ const SettingsPanel = () => {
                             value={formData.working_hours}
                             onChange={handleChange}
                             placeholder="Круглосуточно (24/7)"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="lat" className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> Широта (lat)</Label>
+                        <Input
+                            id="lat"
+                            name="lat"
+                            value={formData.lat}
+                            onChange={handleChange}
+                            placeholder="55.7558"
+                            inputMode="decimal"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="lng" className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> Долгота (lng)</Label>
+                        <Input
+                            id="lng"
+                            name="lng"
+                            value={formData.lng}
+                            onChange={handleChange}
+                            placeholder="37.6173"
+                            inputMode="decimal"
                         />
                     </div>
 
