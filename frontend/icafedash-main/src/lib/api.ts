@@ -147,6 +147,7 @@ export interface ConfigData {
     club_main_photo_url: string;
     club_photos: string;
     address: string;
+    telegram_username: string;
     lat: number | null;
     lng: number | null;
     working_hours: string;
@@ -219,7 +220,7 @@ export const api = {
 
     getIcafeData: () => get<{ zones: string; tariffs: string }>("/config/icafe-data"),
 
-    saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string; club_main_photo_url?: string; club_photos?: string; address?: string; lat?: number | null; lng?: number | null; working_hours?: string; zones?: string; tariffs?: string; internet_speed?: string }) =>
+    saveConfig: (data: { api_key?: string; cafe_id?: string; club_name?: string; club_logo_url?: string; club_main_photo_url?: string; club_photos?: string; address?: string; telegram_username?: string; lat?: number | null; lng?: number | null; working_hours?: string; zones?: string; tariffs?: string; internet_speed?: string }) =>
         post<{ ok: boolean }>("/config", data),
 
     uploadLogo: async (file: File): Promise<{ url: string }> => {

@@ -73,6 +73,7 @@ class Club(db.Model):
     club_photos = db.Column(db.Text, nullable=True)
     address = db.Column(db.String(255), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
+    telegram_username = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
     lat = db.Column(db.Float(53), nullable=True)
     lng = db.Column(db.Float(53), nullable=True)
@@ -234,6 +235,9 @@ with app.app_context():
             conn.commit()
         if 'phone' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN phone VARCHAR(50)"))
+            conn.commit()
+        if 'telegram_username' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN telegram_username VARCHAR(100)"))
             conn.commit()
         if 'description' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN description TEXT"))
@@ -414,6 +418,25 @@ def to_wa_link(phone_value: str | None) -> str | None:
     if len(digits) < 9:
         return None
     return f"https://wa.me/{digits}"
+
+
+def to_tg_link(username_value: str | None) -> str | None:
+    username = str(username_value or "").strip().lstrip("@")
+    if not username:
+        return None
+    safe = "".join(ch for ch in username if ch.isalnum() or ch == "_")
+    if len(safe) < 5:
+        return None
+    return f"https://t.me/{safe}"
+
+
+def to_manager_chat_link(club: Club | None) -> str | None:
+    if not club:
+        return None
+    tg = to_tg_link(club.telegram_username)
+    if tg:
+        return tg
+    return to_wa_link(club.phone)
 
 
 def parse_booking_pc_entries(raw_value: str | None) -> list[dict]:
@@ -758,6 +781,7 @@ def public_clubs():
                 "rating_count": rating_count,
                 "address": c.address or "Адрес не указан",
                 "phone": c.phone or "",
+                "telegram_username": c.telegram_username or "",
                 "description": c.description or "",
                 "lat": c.lat or 0.0,
                 "lng": c.lng or 0.0,
@@ -779,6 +803,7 @@ def public_clubs():
                 "rating_count": rating_count,
                 "address": c.address or "Адрес не указан",
                 "phone": c.phone or "",
+                "telegram_username": c.telegram_username or "",
                 "description": c.description or "",
                 "lat": c.lat or 0.0,
                 "lng": c.lng or 0.0,
@@ -816,6 +841,7 @@ def get_clubs():
         "logo_url": c.club_logo_url,
         "address": c.address or "",
         "phone": c.phone or "",
+        "telegram_username": c.telegram_username or "",
         "instagram": c.instagram or "",
         "working_hours": c.working_hours or "",
         "lat": c.lat or 0.0,
@@ -835,6 +861,7 @@ def update_club(club_id):
     if "logo_url" in data: club.club_logo_url = data["logo_url"]
     if "address" in data: club.address = data["address"]
     if "phone" in data: club.phone = data["phone"]
+    if "telegram_username" in data: club.telegram_username = (data["telegram_username"] or "").strip().lstrip("@")
     if "instagram" in data: club.instagram = data["instagram"]
     if "working_hours" in data: club.working_hours = data["working_hours"]
     if "description" in data: club.description = data["description"]
@@ -991,6 +1018,7 @@ def get_config():
         "api_key_masked": "***HIDDEN***",
         "cafe_id": user.club.cafe_id,
         "address": user.club.address or "",
+        "telegram_username": user.club.telegram_username or "",
         "lat": user.club.lat,
         "lng": user.club.lng,
         "working_hours": user.club.working_hours or "",
@@ -1020,6 +1048,8 @@ def set_config():
         user.club.club_photos = (body["club_photos"] or "[]").strip()
     if "address" in body:
         user.club.address = body["address"].strip()
+    if "telegram_username" in body:
+        user.club.telegram_username = (body["telegram_username"] or "").strip().lstrip("@")
     if "working_hours" in body:
         user.club.working_hours = body["working_hours"].strip()
     if "zones" in body:
@@ -1191,6 +1221,7 @@ def public_club_detail(club_id):
         "photos": photos,
         "address": c.address or "Адрес не указан",
         "description": c.description or "",
+        "telegram_username": c.telegram_username or "",
         "working_hours": c.working_hours or "Круглосуточно",
         "rating": round(avg_rating, 1),
         "rating_count": rating_count,
@@ -1371,7 +1402,7 @@ def create_public_booking(club_id):
             "cancellation_reason": booking.cancellation_reason,
             "canceled_by": booking.canceled_by,
             "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
-            "chat_url": to_wa_link(club.phone),
+            "chat_url": to_manager_chat_link(club),
             "created_at": booking.created_at.isoformat() + "Z" if booking.created_at else None,
         }
     }), 201
@@ -1407,7 +1438,7 @@ def get_my_public_bookings():
             "canceled_by": b.canceled_by,
             "canceled_at": b.canceled_at.isoformat() + "Z" if b.canceled_at else None,
             "club_phone": b.club.phone if b.club else "",
-            "chat_url": to_wa_link(b.club.phone if b.club else None),
+            "chat_url": to_manager_chat_link(b.club),
             "created_at": b.created_at.isoformat() + "Z" if b.created_at else None,
         })
 

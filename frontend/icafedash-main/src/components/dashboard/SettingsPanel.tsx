@@ -23,6 +23,7 @@ const SettingsPanel = () => {
     const [formData, setFormData] = useState({
         club_name: "",
         address: "",
+        telegram_username: "",
         lat: "",
         lng: "",
         working_hours: "",
@@ -48,6 +49,7 @@ const SettingsPanel = () => {
             setFormData({
                 club_name: config.club_name || "",
                 address: config.address || "",
+                telegram_username: config.telegram_username || "",
                 lat: config.lat != null ? String(config.lat) : "",
                 lng: config.lng != null ? String(config.lng) : "",
                 working_hours: config.working_hours || "",
@@ -388,6 +390,17 @@ const SettingsPanel = () => {
                             value={formData.address}
                             onChange={handleChange}
                             placeholder="г. Москва, ул. Пушкина, 10"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="telegram_username" className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> Telegram user</Label>
+                        <Input
+                            id="telegram_username"
+                            name="telegram_username"
+                            value={formData.telegram_username}
+                            onChange={handleChange}
+                            placeholder="@manager_username"
                         />
                     </div>
 
