@@ -4,6 +4,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Map } from "lucide-react";
 import { useClubs } from "@/hooks/use-clubs";
+import { useUserLocation } from "@/hooks/use-user-location";
+import { distanceKm, formatDistance, hasValidCoords } from "@/lib/distance";
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -11,6 +13,7 @@ export default function MapPage() {
   const markersLayer = useRef<L.LayerGroup | null>(null);
   const navigate = useNavigate();
   const { data: clubs = [] } = useClubs();
+  const userLocation = useUserLocation();
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
@@ -47,6 +50,10 @@ export default function MapPage() {
       const lat = Number(club.lat);
       const lng = Number(club.lng);
       const color = club.pcsFree > 10 ? "#22c55e" : club.pcsFree > 0 ? "#eab308" : "#ef4444";
+      const clubDistance =
+        userLocation && hasValidCoords(lat, lng)
+          ? `От вас ${formatDistance(distanceKm(userLocation, { lat, lng }))}`
+          : "От вас -";
 
       const icon = L.divIcon({
         className: "custom-marker",
@@ -80,7 +87,7 @@ export default function MapPage() {
                ${club.pcsFree} / ${club.pcsTotal} ПК свободно
             </div>
             <div style="font-size: 13px; font-weight: 800; margin-top: 4px;">
-               ${club.pricePerHour} СУМ/ч
+               ${clubDistance}
             </div>
           </div>`,
           { className: "dark-popup" }
@@ -93,7 +100,7 @@ export default function MapPage() {
     } else if (bounds.length > 1) {
       map.fitBounds(bounds, { padding: [30, 30] });
     }
-  }, [clubs, navigate]);
+  }, [clubs, navigate, userLocation]);
 
   return (
     <div className="min-h-screen pb-32 bg-background">
