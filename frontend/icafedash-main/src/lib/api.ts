@@ -16,6 +16,17 @@ function getHeaders() {
     return headers;
 }
 
+async function toApiError(res: Response): Promise<Error> {
+    try {
+        const payload = await res.json();
+        const message = payload?.message || payload?.error;
+        if (message) return new Error(String(message));
+    } catch {
+        // Ignore JSON parsing errors and fallback to status text.
+    }
+    return new Error(`API error ${res.status}`);
+}
+
 async function get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
     const url = new URL(`${BASE}${path}`, window.location.origin);
     if (params) {
@@ -29,7 +40,7 @@ async function get<T>(path: string, params?: Record<string, string | number>): P
         localStorage.removeItem("icafe_user");
         window.location.href = "/login";
     }
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    if (!res.ok) throw await toApiError(res);
     return res.json();
 }
 
@@ -48,7 +59,7 @@ async function post<T>(path: string, body: object): Promise<T> {
         localStorage.removeItem("icafe_user");
         window.location.href = "/login";
     }
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    if (!res.ok) throw await toApiError(res);
     return res.json();
 }
 
@@ -66,7 +77,7 @@ async function put<T>(path: string, body: object): Promise<T> {
         localStorage.removeItem("icafe_user");
         window.location.href = "/login";
     }
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    if (!res.ok) throw await toApiError(res);
     return res.json();
 }
 
@@ -81,7 +92,7 @@ async function del<T>(path: string): Promise<T> {
         localStorage.removeItem("icafe_user");
         window.location.href = "/login";
     }
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    if (!res.ok) throw await toApiError(res);
     return res.json();
 }
 

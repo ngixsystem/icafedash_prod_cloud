@@ -61,12 +61,29 @@ const CashbackPanel = () => {
   });
 
   const accrueMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const parsedAmount = Number(amount);
-      if (!qrPayload.trim()) throw new Error("Сканируйте QR-код участника");
+      if (!qrPayload.trim()) throw new Error("Scan member QR payload");
       if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-        throw new Error("Введите корректную сумму");
+        throw new Error("Enter a valid amount");
       }
+
+      const parsedPercent = Number(percent);
+      if (!Number.isFinite(parsedPercent) || parsedPercent < 0 || parsedPercent > 100) {
+        throw new Error("Cashback percent must be between 0 and 100");
+      }
+      if (!enabled) {
+        throw new Error("Enable cashback in club settings first");
+      }
+
+      if (!config?.cashback_enabled || Number(config?.cashback_percent ?? -1) !== parsedPercent) {
+        await api.saveCashbackConfig({
+          cashback_enabled: true,
+          cashback_percent: parsedPercent,
+        });
+        await queryClient.invalidateQueries({ queryKey: ["cashback_config"] });
+      }
+
       return api.accrueCashback({
         qr_payload: qrPayload.trim(),
         amount: parsedAmount,
@@ -84,7 +101,6 @@ const CashbackPanel = () => {
       toast.error(err?.message || "Ошибка начисления кешбека");
     },
   });
-
   const cashbackPreview = useMemo(() => {
     const p = Number(percent);
     const a = Number(amount);
