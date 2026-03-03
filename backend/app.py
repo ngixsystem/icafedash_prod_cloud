@@ -762,6 +762,32 @@ def login():
 
 # РІвЂќР‚РІвЂќР‚ Client / Public API (Club-Finder) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
+@app.put("/api/auth/change-password")
+@jwt_required()
+def auth_change_password():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("manager", "admin"):
+        return jsonify({"message": "Only manager or admin can change password here"}), 403
+
+    body = request.get_json(force=True) or {}
+    current_password = str(body.get("current_password") or "")
+    new_password = str(body.get("new_password") or "")
+
+    if not current_password or not new_password:
+        return jsonify({"message": "current_password and new_password are required"}), 400
+    if len(new_password) < 6:
+        return jsonify({"message": "New password must be at least 6 characters"}), 400
+    if not user.check_password(current_password):
+        return jsonify({"message": "Current password is invalid"}), 400
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({"message": "Password changed successfully"})
+
+
 @app.post("/api/clients/register")
 def client_register():
     data = request.json or {}

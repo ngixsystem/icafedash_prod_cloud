@@ -313,6 +313,8 @@ export const api = {
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/status`, { status }),
     cancelBooking: (bookingId: number, reason: string) =>
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/cancel`, { reason }),
+    changePassword: (data: { current_password: string; new_password: string }) =>
+        put<{ message: string }>("/auth/change-password", data),
 
     cashbackConfig: () => get<CashbackConfig>("/cashback/config"),
     saveCashbackConfig: (data: { cashback_enabled?: boolean; cashback_percent?: number }) =>

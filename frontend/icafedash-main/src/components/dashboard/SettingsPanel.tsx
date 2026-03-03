@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2, Upload, MapPin, Clock, Wifi, LayoutGrid, DollarSign, Save, CloudDownload, Plus, Trash2 } from "lucide-react";
+import { Loader2, Upload, MapPin, Clock, Wifi, LayoutGrid, DollarSign, Save, CloudDownload, Plus, Trash2, KeyRound } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -38,6 +38,9 @@ const SettingsPanel = () => {
     const [clubPhotos, setClubPhotos] = useState<string[]>([]);
     const [mainPhotoUrl, setMainPhotoUrl] = useState<string>("");
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const { data: config, isLoading } = useQuery({
         queryKey: ["config"],
@@ -244,6 +247,38 @@ const SettingsPanel = () => {
         onError: (error) => {
             console.error(error);
             toast.error("Ошибка при сохранении настроек.");
+        },
+    });
+
+    const changePasswordMutation = useMutation({
+        mutationFn: async () => {
+            const current = currentPassword.trim();
+            const next = newPassword.trim();
+            const confirm = confirmPassword.trim();
+
+            if (!current || !next || !confirm) {
+                throw new Error("Fill in all password fields");
+            }
+            if (next.length < 6) {
+                throw new Error("New password must be at least 6 characters");
+            }
+            if (next !== confirm) {
+                throw new Error("New password and confirmation do not match");
+            }
+
+            return api.changePassword({
+                current_password: current,
+                new_password: next,
+            });
+        },
+        onSuccess: () => {
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            toast.success("Password changed successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error?.message || "Failed to change password");
         },
     });
 
@@ -545,6 +580,47 @@ const SettingsPanel = () => {
                     >
                         <Plus className="w-4 h-4" /> Добавить пакет
                     </button>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <KeyRound className="w-5 h-5 text-primary" /> Change Password
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <Input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Current password"
+                        />
+                        <Input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="New password"
+                        />
+                        <Input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <button
+                            type="button"
+                            onClick={() => changePasswordMutation.mutate()}
+                            disabled={changePasswordMutation.isPending}
+                            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors font-medium rounded-lg disabled:opacity-50"
+                        >
+                            {changePasswordMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <KeyRound className="w-4 h-4" />
+                            )}
+                            Update Password
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex justify-end pt-4 pb-8">
