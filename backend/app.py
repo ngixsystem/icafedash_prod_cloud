@@ -74,8 +74,8 @@ class Club(db.Model):
     address = db.Column(db.String(255), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
     description = db.Column(db.Text, nullable=True)
-    lat = db.Column(db.Float, nullable=True)
-    lng = db.Column(db.Float, nullable=True)
+    lat = db.Column(db.Float(53), nullable=True)
+    lng = db.Column(db.Float(53), nullable=True)
     instagram = db.Column(db.String(100), nullable=True)
     working_hours = db.Column(db.String(100), nullable=True)
     zones = db.Column(db.Text, nullable=True)
@@ -226,7 +226,8 @@ with app.app_context():
             print("✅ Added 'is_verified' column to users table")
             
     # Migration for clubs
-    existing_club_columns = [col['name'] for col in inspector.get_columns('clubs')]
+    existing_club_columns_info = {col['name']: col for col in inspector.get_columns('clubs')}
+    existing_club_columns = list(existing_club_columns_info.keys())
     with db.engine.connect() as conn:
         if 'address' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN address VARCHAR(255)"))
@@ -238,11 +239,22 @@ with app.app_context():
             conn.execute(text("ALTER TABLE clubs ADD COLUMN description TEXT"))
             conn.commit()
         if 'lat' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN lat FLOAT"))
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN lat DOUBLE"))
             conn.commit()
         if 'lng' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN lng FLOAT"))
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN lng DOUBLE"))
             conn.commit()
+        # Upgrade existing FLOAT columns to DOUBLE to keep geolocation precision.
+        if 'lat' in existing_club_columns:
+            lat_type = str(existing_club_columns_info['lat'].get('type', '')).upper()
+            if 'DOUBLE' not in lat_type:
+                conn.execute(text("ALTER TABLE clubs MODIFY COLUMN lat DOUBLE NULL"))
+                conn.commit()
+        if 'lng' in existing_club_columns:
+            lng_type = str(existing_club_columns_info['lng'].get('type', '')).upper()
+            if 'DOUBLE' not in lng_type:
+                conn.execute(text("ALTER TABLE clubs MODIFY COLUMN lng DOUBLE NULL"))
+                conn.commit()
         if 'instagram' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN instagram VARCHAR(100)"))
             conn.commit()
