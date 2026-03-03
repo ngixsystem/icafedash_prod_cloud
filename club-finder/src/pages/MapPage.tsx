@@ -40,8 +40,8 @@ export default function MapPage() {
 
     layer.clearLayers();
 
-    const clubsWithCoords = clubs.filter((club) =>
-      Number.isFinite(club.lat) && Number.isFinite(club.lng)
+    const clubsWithCoords = clubs.filter(
+      (club) => club.isOpen && hasValidCoords(club.lat, club.lng)
     );
 
     const bounds: L.LatLngTuple[] = [];
