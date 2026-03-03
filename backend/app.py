@@ -82,6 +82,8 @@ class Club(db.Model):
     zones = db.Column(db.Text, nullable=True)
     tariffs = db.Column(db.Text, nullable=True)
     internet_speed = db.Column(db.String(50), nullable=True)
+    cashback_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    cashback_percent = db.Column(db.Float, nullable=False, default=5.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     users = db.relationship('User', backref='club', lazy=True)
@@ -146,6 +148,24 @@ class BookingRequest(db.Model):
 
     club = db.relationship("Club", backref=db.backref("booking_requests", lazy=True))
     user = db.relationship("User", backref=db.backref("booking_requests", lazy=True))
+
+
+class CashbackTransaction(db.Model):
+    __tablename__ = "cashback_transactions"
+    id = db.Column(db.Integer, primary_key=True)
+    club_id = db.Column(db.Integer, db.ForeignKey("clubs.id"), nullable=False, index=True)
+    manager_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    member_id = db.Column(db.Integer, nullable=True, index=True)
+    member_account = db.Column(db.String(120), nullable=True, index=True)
+    amount = db.Column(db.Float, nullable=False, default=0.0)
+    cashback_percent = db.Column(db.Float, nullable=False, default=0.0)
+    cashback_amount = db.Column(db.Float, nullable=False, default=0.0)
+    qr_payload = db.Column(db.Text, nullable=True)
+    note = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    club = db.relationship("Club", backref=db.backref("cashback_transactions", lazy=True))
+    manager = db.relationship("User", backref=db.backref("cashback_transactions", lazy=True))
 
 
 def generate_verification_code():
@@ -273,6 +293,12 @@ with app.app_context():
             conn.commit()
         if 'internet_speed' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN internet_speed VARCHAR(50)"))
+            conn.commit()
+        if 'cashback_enabled' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN cashback_enabled BOOLEAN DEFAULT 0"))
+            conn.commit()
+        if 'cashback_percent' not in existing_club_columns:
+            conn.execute(text("ALTER TABLE clubs ADD COLUMN cashback_percent FLOAT DEFAULT 5"))
             conn.commit()
         if 'club_main_photo_url' not in existing_club_columns:
             conn.execute(text("ALTER TABLE clubs ADD COLUMN club_main_photo_url VARCHAR(255) DEFAULT ''"))
@@ -437,6 +463,49 @@ def to_manager_chat_link(club: Club | None) -> str | None:
     if tg:
         return tg
     return to_wa_link(club.phone)
+
+
+def parse_cashback_qr_payload(raw_value: str | None) -> dict:
+    raw = str(raw_value or "").strip()
+    if not raw:
+        return {"member_id": None, "member_account": None}
+
+    member_id = None
+    member_account = None
+
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            if parsed.get("member_id") is not None:
+                try:
+                    member_id = int(parsed.get("member_id"))
+                except Exception:
+                    member_id = None
+            acc = parsed.get("member_account") or parsed.get("account") or parsed.get("username")
+            if acc:
+                member_account = str(acc).strip()
+    except Exception:
+        pass
+
+    if raw.upper().startswith("ICAFE_MEMBER:"):
+        value = raw.split(":", 1)[1].strip()
+        try:
+            member_id = int(value)
+        except Exception:
+            member_account = value or member_account
+    elif raw.upper().startswith("ICAFE_ACCOUNT:"):
+        member_account = raw.split(":", 1)[1].strip()
+    elif raw.isdigit():
+        try:
+            member_id = int(raw)
+        except Exception:
+            pass
+    elif member_account is None:
+        member_account = raw
+
+    if member_account:
+        member_account = member_account[:120]
+    return {"member_id": member_id, "member_account": member_account}
 
 
 def parse_booking_pc_entries(raw_value: str | None) -> list[dict]:
@@ -2185,6 +2254,177 @@ def member_billings(member_id):
                 "note": log.get("billing_log_note", log.get("note", "")),
             })
     return jsonify({"logs": logs})
+
+
+def resolve_cashback_club_for_user(user: User, requested_club_id: int | None) -> Club | None:
+    if not user:
+        return None
+    if user.role == "manager":
+        if not user.club_id:
+            return None
+        return Club.query.get(user.club_id)
+    if user.role == "admin":
+        if requested_club_id:
+            return Club.query.get(requested_club_id)
+        return None
+    return None
+
+
+@app.get("/api/cashback/config")
+@jwt_required()
+def get_cashback_config():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    requested_club_id = request.args.get("club_id", type=int)
+    club = resolve_cashback_club_for_user(user, requested_club_id)
+    if not club:
+        return jsonify({"message": "Club not found or access denied"}), 404
+
+    return jsonify({
+        "club_id": club.id,
+        "cashback_enabled": bool(club.cashback_enabled),
+        "cashback_percent": float(club.cashback_percent or 0.0),
+    })
+
+
+@app.post("/api/cashback/config")
+@jwt_required()
+def set_cashback_config():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    body = request.get_json(force=True) or {}
+    requested_club_id = body.get("club_id")
+    try:
+        requested_club_id = int(requested_club_id) if requested_club_id is not None else None
+    except Exception:
+        requested_club_id = None
+
+    club = resolve_cashback_club_for_user(user, requested_club_id)
+    if not club:
+        return jsonify({"message": "Club not found or access denied"}), 404
+
+    if "cashback_enabled" in body:
+        club.cashback_enabled = bool(body.get("cashback_enabled"))
+    if "cashback_percent" in body:
+        try:
+            percent = float(body.get("cashback_percent"))
+        except Exception:
+            return jsonify({"message": "Invalid cashback_percent"}), 400
+        if percent < 0 or percent > 100:
+            return jsonify({"message": "cashback_percent must be between 0 and 100"}), 400
+        club.cashback_percent = percent
+
+    db.session.commit()
+    return jsonify({
+        "ok": True,
+        "club_id": club.id,
+        "cashback_enabled": bool(club.cashback_enabled),
+        "cashback_percent": float(club.cashback_percent or 0.0),
+    })
+
+
+@app.get("/api/cashback/transactions")
+@jwt_required()
+def cashback_transactions():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    requested_club_id = request.args.get("club_id", type=int)
+    club = resolve_cashback_club_for_user(user, requested_club_id)
+    if not club:
+        return jsonify({"transactions": []})
+
+    limit = request.args.get("limit", 50, type=int)
+    limit = max(1, min(limit, 500))
+    rows = CashbackTransaction.query.filter_by(club_id=club.id).order_by(CashbackTransaction.created_at.desc()).limit(limit).all()
+    return jsonify({
+        "transactions": [{
+            "id": row.id,
+            "club_id": row.club_id,
+            "manager_user_id": row.manager_user_id,
+            "member_id": row.member_id,
+            "member_account": row.member_account,
+            "amount": float(row.amount or 0.0),
+            "cashback_percent": float(row.cashback_percent or 0.0),
+            "cashback_amount": float(row.cashback_amount or 0.0),
+            "note": row.note or "",
+            "created_at": row.created_at.isoformat() + "Z" if row.created_at else None,
+        } for row in rows]
+    })
+
+
+@app.post("/api/cashback/accrue")
+@jwt_required()
+def cashback_accrue():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    body = request.get_json(force=True) or {}
+
+    requested_club_id = body.get("club_id")
+    try:
+        requested_club_id = int(requested_club_id) if requested_club_id is not None else None
+    except Exception:
+        requested_club_id = None
+
+    club = resolve_cashback_club_for_user(user, requested_club_id)
+    if not club:
+        return jsonify({"message": "Club not found or access denied"}), 404
+    if not club.cashback_enabled:
+        return jsonify({"message": "Cashback is disabled"}), 409
+
+    qr_payload = (body.get("qr_payload") or "").strip()
+    parsed = parse_cashback_qr_payload(qr_payload)
+
+    member_id = body.get("member_id", parsed.get("member_id"))
+    member_account = body.get("member_account", parsed.get("member_account"))
+    try:
+        member_id = int(member_id) if member_id not in (None, "") else None
+    except Exception:
+        return jsonify({"message": "Invalid member_id"}), 400
+    member_account = str(member_account or "").strip()[:120] or None
+
+    if member_id is None and not member_account:
+        return jsonify({"message": "QR payload must contain member_id or member_account"}), 400
+
+    try:
+        amount = float(body.get("amount", 0))
+    except Exception:
+        return jsonify({"message": "Invalid amount"}), 400
+    if amount <= 0:
+        return jsonify({"message": "Amount must be greater than 0"}), 400
+
+    percent = float(club.cashback_percent or 0.0)
+    cashback_amount = round(amount * percent / 100.0, 2)
+    note = str(body.get("note") or "").strip()[:255] or None
+
+    tx = CashbackTransaction(
+        club_id=club.id,
+        manager_user_id=user.id,
+        member_id=member_id,
+        member_account=member_account,
+        amount=amount,
+        cashback_percent=percent,
+        cashback_amount=cashback_amount,
+        qr_payload=qr_payload or None,
+        note=note,
+    )
+    db.session.add(tx)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Cashback accrued",
+        "transaction": {
+            "id": tx.id,
+            "club_id": tx.club_id,
+            "manager_user_id": tx.manager_user_id,
+            "member_id": tx.member_id,
+            "member_account": tx.member_account,
+            "amount": float(tx.amount or 0.0),
+            "cashback_percent": float(tx.cashback_percent or 0.0),
+            "cashback_amount": float(tx.cashback_amount or 0.0),
+            "note": tx.note or "",
+            "created_at": tx.created_at.isoformat() + "Z" if tx.created_at else None,
+        },
+    }), 201
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

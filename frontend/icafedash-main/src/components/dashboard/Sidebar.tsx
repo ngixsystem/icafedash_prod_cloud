@@ -11,6 +11,7 @@ import {
   Settings,
   MessageSquare,
   CalendarClock,
+  QrCode,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ const navItems = [
   { icon: BarChart3, label: "Аналитика" },
   { icon: Users, label: "Участники" },
   { icon: MessageSquare, label: "Отзывы" },
+  { icon: QrCode, label: "Кешбек" },
   { icon: Settings, label: "Настройки" },
 ];
 

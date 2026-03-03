@@ -197,6 +197,25 @@ export interface DashboardBooking {
     created_at: string | null;
 }
 
+export interface CashbackConfig {
+    club_id: number;
+    cashback_enabled: boolean;
+    cashback_percent: number;
+}
+
+export interface CashbackTransaction {
+    id: number;
+    club_id: number;
+    manager_user_id: number;
+    member_id: number | null;
+    member_account: string | null;
+    amount: number;
+    cashback_percent: number;
+    cashback_amount: number;
+    note: string;
+    created_at: string | null;
+}
+
 // ── API calls ──────────────────────────────────────────────────────────────
 
 export const api = {
@@ -283,6 +302,14 @@ export const api = {
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/status`, { status }),
     cancelBooking: (bookingId: number, reason: string) =>
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/cancel`, { reason }),
+
+    cashbackConfig: () => get<CashbackConfig>("/cashback/config"),
+    saveCashbackConfig: (data: { cashback_enabled?: boolean; cashback_percent?: number }) =>
+        post<CashbackConfig & { ok: boolean }>("/cashback/config", data),
+    cashbackTransactions: (limit = 50) =>
+        get<{ transactions: CashbackTransaction[] }>("/cashback/transactions", { limit }),
+    accrueCashback: (data: { qr_payload: string; amount: number; note?: string }) =>
+        post<{ message: string; transaction: CashbackTransaction }>("/cashback/accrue", data),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),

@@ -14,6 +14,7 @@ import ParticipantsList from "@/components/dashboard/ParticipantsList";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import ReviewsPanel from "@/components/dashboard/ReviewsPanel";
 import BookingPanel from "@/components/dashboard/BookingPanel";
+import CashbackPanel from "@/components/dashboard/CashbackPanel";
 
 const Index = () => {
   const { isAdmin } = useAuth();
@@ -50,6 +51,8 @@ const Index = () => {
             <ParticipantsList />
           ) : activeTab === "Отзывы" ? (
             <ReviewsPanel />
+          ) : activeTab === "Кешбек" ? (
+            <CashbackPanel />
           ) : activeTab === "Клубы" ? (
             <AdminDashboard />
           ) : activeTab === "Настройки" ? (
