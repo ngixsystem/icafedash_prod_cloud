@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi, ChevronDown, ChevronUp, Navigation } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { TouchEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -172,6 +172,21 @@ export default function ClubPage() {
     );
   }
 
+  const hasValidClubCoords =
+    Number.isFinite(club.lat) &&
+    Number.isFinite(club.lng) &&
+    Math.abs(Number(club.lat)) <= 90 &&
+    Math.abs(Number(club.lng)) <= 180 &&
+    !(Number(club.lat) === 0 && Number(club.lng) === 0);
+
+  const openYandexRoute = () => {
+    if (!hasValidClubCoords) return;
+    const lat = Number(club.lat);
+    const lng = Number(club.lng);
+    const url = `https://yandex.uz/maps/?rtext=~${encodeURIComponent(`${lat},${lng}`)}&rtt=auto`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="min-h-screen pb-24">
       {/* Hero */}
@@ -248,6 +263,15 @@ export default function ClubPage() {
           <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-white/5 text-white/60">
             <Wifi className="w-3.5 h-3.5 inline mr-1.5" />1 Гбит/с
           </span>
+          <button
+            type="button"
+            onClick={openYandexRoute}
+            disabled={!hasValidClubCoords}
+            className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#1a2436] text-white/80 border border-white/10 hover:bg-[#243247] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Navigation className="w-3.5 h-3.5 inline mr-1.5" />
+            Маршрут
+          </button>
         </div>
 
         {/* Zones */}
