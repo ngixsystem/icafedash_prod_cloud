@@ -5,12 +5,14 @@ interface ClientUser {
     username: string;
     email: string;
     role: string;
+    avatar_url?: string;
 }
 
 interface AuthContextType {
     user: ClientUser | null;
     token: string | null;
     login: (token: string, user: ClientUser) => void;
+    updateUser: (patch: Partial<ClientUser>) => void;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -33,6 +35,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('icafe_client_user', JSON.stringify(newUser));
     };
 
+    const updateUser = (patch: Partial<ClientUser>) => {
+        setUser(prev => {
+            if (!prev) return prev;
+            const next = { ...prev, ...patch };
+            localStorage.setItem('icafe_client_user', JSON.stringify(next));
+            return next;
+        });
+    };
+
     const logout = () => {
         setToken(null);
         setUser(null);
@@ -41,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+        <AuthContext.Provider value={{ user, token, login, updateUser, logout, isAuthenticated: !!token }}>
             {children}
         </AuthContext.Provider>
     );

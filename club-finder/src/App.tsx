@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import MapPage from "./pages/MapPage";
 import ClubPage from "./pages/ClubPage";
 import ProfilePage from "./pages/ProfilePage";
+import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import BookingPage from "./pages/BookingPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
 
               {/* Защищённые роуты (только для авторизованных клиентов) */}
               <Route path="/profile" element={<AuthGuard><ProfilePage /></AuthGuard>} />
+              <Route path="/profile/settings" element={<AuthGuard><ProfileSettingsPage /></AuthGuard>} />
               <Route path="/booking" element={<AuthGuard><BookingPage /></AuthGuard>} />
 
               <Route path="*" element={<NotFound />} />

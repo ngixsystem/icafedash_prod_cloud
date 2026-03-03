@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { QrCode, Wallet, Clock, ChevronRight, Settings, LogOut, Copy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -36,7 +37,12 @@ function formatDate(value: string | null): string {
   });
 }
 
+function formatSum(value: number): string {
+  return `${Math.round(value).toLocaleString("ru-RU")} СУМ`;
+}
+
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const { user, token, logout } = useAuth();
 
   const { data, isLoading, isError } = useQuery({
@@ -76,8 +82,12 @@ export default function ProfilePage() {
 
       <div className="mx-4 rounded-lg glass p-4 mb-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-display font-bold text-xl uppercase">
-            {user?.username?.[0] || "?"}
+          <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-display font-bold text-xl uppercase overflow-hidden">
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+            ) : (
+              user?.username?.[0] || "?"
+            )}
           </div>
           <div className="flex-1">
             <h2 className="font-display font-bold text-lg">{user?.username}</h2>
@@ -90,7 +100,7 @@ export default function ProfilePage() {
         <div className="rounded-lg glass p-4 text-center">
           <Wallet className="w-6 h-6 mx-auto mb-2 text-primary" />
           <p className="text-2xl font-display font-bold text-primary">
-            {isLoading ? "..." : `${(data?.total_cashback ?? 0).toFixed(2)} ₽`}
+            {isLoading ? "..." : formatSum(data?.total_cashback ?? 0)}
           </p>
           <p className="text-xs text-muted-foreground">Кешбек баланс</p>
         </div>
@@ -120,7 +130,6 @@ export default function ProfilePage() {
           <div className="flex justify-center">
             <img src={qrImageUrl} alt="cashback-qr" className="w-44 h-44 rounded-md border border-white/10 bg-white p-2" />
           </div>
-          <p className="mt-3 text-[11px] text-muted-foreground break-all">{data?.qr_payload}</p>
         </div>
       ) : null}
 
@@ -141,11 +150,11 @@ export default function ProfilePage() {
                 <div>
                   <p className="font-medium text-sm">{tx.club_name || `Клуб #${tx.club_id}`}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatDate(tx.created_at)} · чек {tx.amount.toFixed(2)} ₽ · {tx.cashback_percent.toFixed(2)}%
+                    {formatDate(tx.created_at)} · чек {formatSum(tx.amount)} · {tx.cashback_percent.toFixed(2)}%
                   </p>
                   {tx.note ? <p className="text-xs text-muted-foreground mt-1">{tx.note}</p> : null}
                 </div>
-                <span className="text-primary font-display font-bold">+{tx.cashback_amount.toFixed(2)} ₽</span>
+                <span className="text-primary font-display font-bold">+{formatSum(tx.cashback_amount)}</span>
               </div>
             ))
           )}
@@ -153,7 +162,11 @@ export default function ProfilePage() {
       </div>
 
       <div className="px-4 space-y-1">
-        <button className="w-full flex items-center gap-3 rounded-lg p-3 transition hover:bg-secondary text-foreground">
+        <button
+          type="button"
+          onClick={() => navigate("/profile/settings")}
+          className="w-full flex items-center gap-3 rounded-lg p-3 transition hover:bg-secondary text-foreground"
+        >
           <Settings className="w-5 h-5" />
           <span className="flex-1 text-left text-sm">Настройки</span>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />

@@ -97,6 +97,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="manager") # admin or manager
     is_verified = db.Column(db.Boolean, default=False)
+    avatar_url = db.Column(db.String(255), nullable=True, default="")
     club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -175,12 +176,12 @@ def generate_verification_code():
 def send_verification_email(to_email, code):
     """Send a verification code via SMTP email."""
     if not SMTP_USER or not SMTP_PASSWORD:
-        print(f"⚠️  SMTP not configured. Verification code for {to_email}: {code}")
+        print(f"РІС™В РїС‘РЏ  SMTP not configured. Verification code for {to_email}: {code}")
         return True  # Return True so registration still works (code shown in logs)
     
     try:
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = 'iCafe Dashboard — Код подтверждения'
+        msg['Subject'] = 'iCafe Dashboard РІР‚вЂќ Р С™Р С•Р Т‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ'
         msg['From'] = SMTP_FROM
         msg['To'] = to_email
 
@@ -190,13 +191,13 @@ def send_verification_email(to_email, code):
             <div style="max-width: 480px; margin: 0 auto; background: #111; border-radius: 16px; padding: 40px; border: 1px solid #222;">
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h1 style="color: #2dd4bf; font-size: 24px; margin: 0;">iCafe Dashboard</h1>
-                    <p style="color: #888; font-size: 14px; margin-top: 8px;">Подтверждение регистрации</p>
+                    <p style="color: #888; font-size: 14px; margin-top: 8px;">Р СџР С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘Р Вµ РЎР‚Р ВµР С–Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ Р С‘Р С‘</p>
                 </div>
                 <div style="text-align: center; background: #1a1a2e; border-radius: 12px; padding: 24px; margin: 20px 0;">
-                    <p style="color: #aaa; font-size: 14px; margin: 0 0 12px 0;">Ваш код подтверждения:</p>
+                    <p style="color: #aaa; font-size: 14px; margin: 0 0 12px 0;">Р вЂ™Р В°РЎв‚¬ Р С”Р С•Р Т‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ:</p>
                     <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #2dd4bf;">{code}</div>
                 </div>
-                <p style="color: #666; font-size: 12px; text-align: center; margin-top: 20px;">Код действителен 10 минут. Если вы не регистрировались, проигнорируйте это письмо.</p>
+                <p style="color: #666; font-size: 12px; text-align: center; margin-top: 20px;">Р С™Р С•Р Т‘ Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†Р С‘РЎвЂљР ВµР В»Р ВµР Р… 10 Р СР С‘Р Р…РЎС“РЎвЂљ. Р вЂўРЎРѓР В»Р С‘ Р Р†РЎвЂ№ Р Р…Р Вµ РЎР‚Р ВµР С–Р С‘РЎРѓРЎвЂљРЎР‚Р С‘РЎР‚Р С•Р Р†Р В°Р В»Р С‘РЎРѓРЎРЉ, Р С—РЎР‚Р С•Р С‘Р С–Р Р…Р С•РЎР‚Р С‘РЎР‚РЎС“Р в„–РЎвЂљР Вµ РЎРЊРЎвЂљР С• Р С—Р С‘РЎРѓРЎРЉР СР С•.</p>
             </div>
         </body>
         </html>
@@ -209,10 +210,10 @@ def send_verification_email(to_email, code):
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(SMTP_FROM, to_email, msg.as_string())
         
-        print(f"✅ Verification email sent to {to_email}")
+        print(f"РІСљвЂ¦ Verification email sent to {to_email}")
         return True
     except Exception as e:
-        print(f"❌ Failed to send email to {to_email}: {e}")
+        print(f"РІСњРЉ Failed to send email to {to_email}: {e}")
         return False
 
 # Handle persistent data paths for Docker
@@ -236,15 +237,19 @@ with app.app_context():
         if 'email' not in existing_columns:
             conn.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR(120) UNIQUE"))
             conn.commit()
-            print("✅ Added 'email' column to users table")
+            print("Added email column to users table")
         if 'phone' not in existing_columns:
             conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(20)"))
             conn.commit()
-            print("✅ Added 'phone' column to users table")
+            print("Added phone column to users table")
         if 'is_verified' not in existing_columns:
             conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
             conn.commit()
-            print("✅ Added 'is_verified' column to users table")
+            print("Added is_verified column to users table")
+        if 'avatar_url' not in existing_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) DEFAULT ''"))
+            conn.commit()
+            print("Added avatar_url column to users table")
             
     # Migration for clubs
     existing_club_columns_info = {col['name']: col for col in inspector.get_columns('clubs')}
@@ -325,20 +330,20 @@ with app.app_context():
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
     if not admin:
-        print("🌱 Creating default admin user...")
+        print("СЂСџРЉВ± Creating default admin user...")
         admin = User(username='admin', role='admin', is_verified=True)
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
-        print("✅ Default admin user created successfully.")
+        print("РІСљвЂ¦ Default admin user created successfully.")
     else:
         # Ensure admin is always verified
         if not admin.is_verified:
             admin.is_verified = True
             db.session.commit()
-            print("✅ Admin user marked as verified.")
+            print("РІСљвЂ¦ Admin user marked as verified.")
 
-# ── Config file (legacy/compatibility) ────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Config file (legacy/compatibility) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 ICAFE_BASE = "https://api.icafecloud.com/api/v2"
@@ -550,7 +555,7 @@ def booking_display_pc_names(entries: list[dict]) -> list[str]:
     return result
 
 
-# ── iCafeCloud API helper ─────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ iCafeCloud API helper РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 def icafe_get(path: str, params: dict = None) -> dict | None:
     # Get current user and their club's credentials
@@ -594,7 +599,7 @@ def icafe_post(path: str, data: dict = None) -> dict | None:
         return None
 
 
-# ── Auth Routes ───────────────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Auth Routes РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.post("/api/auth/register")
 def register():
@@ -607,19 +612,19 @@ def register():
 
     # Validation
     if not username or not email or not password:
-        return jsonify({"message": "Заполните все обязательные поля (логин, email, пароль)"}), 400
+        return jsonify({"message": "Р вЂ”Р В°Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР Вµ Р Р†РЎРѓР Вµ Р С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЏ (Р В»Р С•Р С–Р С‘Р Р…, email, Р С—Р В°РЎР‚Р С•Р В»РЎРЉ)"}), 400
     if len(username) < 3:
-        return jsonify({"message": "Логин должен быть не менее 3 символов"}), 400
+        return jsonify({"message": "Р вЂєР С•Р С–Р С‘Р Р… Р Т‘Р С•Р В»Р В¶Р ВµР Р… Р В±РЎвЂ№РЎвЂљРЎРЉ Р Р…Р Вµ Р СР ВµР Р…Р ВµР Вµ 3 РЎРѓР С‘Р СР Р†Р С•Р В»Р С•Р Р†"}), 400
     if len(password) < 6:
-        return jsonify({"message": "Пароль должен быть не менее 6 символов"}), 400
+        return jsonify({"message": "Р СџР В°РЎР‚Р С•Р В»РЎРЉ Р Т‘Р С•Р В»Р В¶Р ВµР Р… Р В±РЎвЂ№РЎвЂљРЎРЉ Р Р…Р Вµ Р СР ВµР Р…Р ВµР Вµ 6 РЎРѓР С‘Р СР Р†Р С•Р В»Р С•Р Р†"}), 400
     if "@" not in email:
-        return jsonify({"message": "Укажите корректный email"}), 400
+        return jsonify({"message": "Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ Р С”Р С•РЎР‚РЎР‚Р ВµР С”РЎвЂљР Р…РЎвЂ№Р в„– email"}), 400
 
     # Check uniqueness
     if User.query.filter_by(username=username).first():
-        return jsonify({"message": "Пользователь с таким логином уже существует"}), 409
+        return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ РЎРѓ РЎвЂљР В°Р С”Р С‘Р С Р В»Р С•Р С–Р С‘Р Р…Р С•Р С РЎС“Р В¶Р Вµ РЎРѓРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†РЎС“Р ВµРЎвЂљ"}), 409
     if User.query.filter_by(email=email).first():
-        return jsonify({"message": "Пользователь с таким email уже существует"}), 409
+        return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ РЎРѓ РЎвЂљР В°Р С”Р С‘Р С email РЎС“Р В¶Р Вµ РЎРѓРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†РЎС“Р ВµРЎвЂљ"}), 409
 
     # Create unverified user
     user = User(username=username, email=email, phone=phone, role="manager", is_verified=False)
@@ -640,7 +645,7 @@ def register():
     send_verification_email(email, code)
 
     return jsonify({
-        "message": "Код подтверждения отправлен на вашу почту",
+        "message": "Р С™Р С•Р Т‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р В»Р ВµР Р… Р Р…Р В° Р Р†Р В°РЎв‚¬РЎС“ Р С—Р С•РЎвЂЎРЎвЂљРЎС“",
         "email": email,
         "user_id": user.id
     }), 201
@@ -654,7 +659,7 @@ def verify_email():
     code = (data.get("code") or "").strip()
 
     if not email or not code:
-        return jsonify({"message": "Укажите email и код подтверждения"}), 400
+        return jsonify({"message": "Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ email Р С‘ Р С”Р С•Р Т‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ"}), 400
 
     # Find latest unused verification for this email
     verification = EmailVerification.query.filter_by(
@@ -662,10 +667,10 @@ def verify_email():
     ).order_by(EmailVerification.created_at.desc()).first()
 
     if not verification:
-        return jsonify({"message": "Неверный код подтверждения"}), 400
+        return jsonify({"message": "Р СњР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р в„– Р С”Р С•Р Т‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ"}), 400
 
     if datetime.utcnow() > verification.expires_at:
-        return jsonify({"message": "Код подтверждения истёк. Запросите новый."}), 400
+        return jsonify({"message": "Р С™Р С•Р Т‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ Р С‘РЎРѓРЎвЂљРЎвЂР С”. Р вЂ”Р В°Р С—РЎР‚Р С•РЎРѓР С‘РЎвЂљР Вµ Р Р…Р С•Р Р†РЎвЂ№Р в„–."}), 400
 
     # Mark code as used
     verification.used = True
@@ -673,7 +678,7 @@ def verify_email():
     # Activate user
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"message": "Пользователь не найден"}), 404
+        return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…"}), 404
 
     user.is_verified = True
     db.session.commit()
@@ -682,13 +687,14 @@ def verify_email():
     access_token = create_access_token(identity=str(user.id))
 
     return jsonify({
-        "message": "Email успешно подтверждён!",
+        "message": "Email РЎС“РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С• Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…!",
         "access_token": access_token,
         "user": {
             "id": user.id,
             "username": user.username,
             "role": user.role,
-            "email": user.email
+            "email": user.email,
+            "avatar_url": user.avatar_url or ""
         }
     })
 
@@ -700,20 +706,20 @@ def resend_code():
     email = (data.get("email") or "").strip().lower()
 
     if not email:
-        return jsonify({"message": "Укажите email"}), 400
+        return jsonify({"message": "Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ email"}), 400
 
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"message": "Пользователь с таким email не найден"}), 404
+        return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ РЎРѓ РЎвЂљР В°Р С”Р С‘Р С email Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…"}), 404
     if user.is_verified:
-        return jsonify({"message": "Email уже подтверждён"}), 400
+        return jsonify({"message": "Email РЎС“Р В¶Р Вµ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…"}), 400
 
     # Rate limiting: check if a code was sent in the last 60 seconds
     recent = EmailVerification.query.filter_by(email=email, used=False).order_by(
         EmailVerification.created_at.desc()
     ).first()
     if recent and (datetime.utcnow() - recent.created_at).total_seconds() < 60:
-        return jsonify({"message": "Подождите минуту перед повторной отправкой"}), 429
+        return jsonify({"message": "Р СџР С•Р Т‘Р С•Р В¶Р Т‘Р С‘РЎвЂљР Вµ Р СР С‘Р Р…РЎС“РЎвЂљРЎС“ Р С—Р ВµРЎР‚Р ВµР Т‘ Р С—Р С•Р Р†РЎвЂљР С•РЎР‚Р Р…Р С•Р в„– Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р С•Р в„–"}), 429
 
     code = generate_verification_code()
     verification = EmailVerification(
@@ -726,7 +732,7 @@ def resend_code():
 
     send_verification_email(email, code)
 
-    return jsonify({"message": "Новый код отправлен на вашу почту"})
+    return jsonify({"message": "Р СњР С•Р Р†РЎвЂ№Р в„– Р С”Р С•Р Т‘ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р В»Р ВµР Р… Р Р…Р В° Р Р†Р В°РЎв‚¬РЎС“ Р С—Р С•РЎвЂЎРЎвЂљРЎС“"})
 
 
 @app.post("/api/auth/login")
@@ -738,7 +744,7 @@ def login():
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
         if not user.is_verified:
-            return jsonify({"message": "Email не подтверждён. Проверьте почту.", "needs_verification": True, "email": user.email}), 403
+            return jsonify({"message": "Email Р Р…Р Вµ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…. Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЉРЎвЂљР Вµ Р С—Р С•РЎвЂЎРЎвЂљРЎС“.", "needs_verification": True, "email": user.email}), 403
         # Convert ID to string for best compatibility with JWT serialization
         access_token = create_access_token(identity=str(user.id))
         return jsonify({
@@ -748,12 +754,13 @@ def login():
                 "username": user.username,
                 "role": user.role,
                 "email": user.email,
-                "club_name": user.club.name if user.club else None
+                "club_name": user.club.name if user.club else None,
+                "avatar_url": user.avatar_url or ""
             }
         })
-    return jsonify({"message": "Неверный логин или пароль"}), 401
+    return jsonify({"message": "Р СњР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р в„– Р В»Р С•Р С–Р С‘Р Р… Р С‘Р В»Р С‘ Р С—Р В°РЎР‚Р С•Р В»РЎРЉ"}), 401
 
-# ── Client / Public API (Club-Finder) ─────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Client / Public API (Club-Finder) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.post("/api/clients/register")
 def client_register():
@@ -763,10 +770,10 @@ def client_register():
     password = data.get("password", "")
 
     if not username or not email or not password:
-        return jsonify({"message": "Заполните все поля"}), 400
+        return jsonify({"message": "Р вЂ”Р В°Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР Вµ Р Р†РЎРѓР Вµ Р С—Р С•Р В»РЎРЏ"}), 400
         
     if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
-        return jsonify({"message": "Пользователь уже существует"}), 409
+        return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ РЎС“Р В¶Р Вµ РЎРѓРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†РЎС“Р ВµРЎвЂљ"}), 409
 
     # Create unverified user with 'member' role
     user = User(username=username, email=email, role="member", is_verified=False)
@@ -786,7 +793,7 @@ def client_register():
 
     send_verification_email(email, code)
 
-    return jsonify({"message": "Код подтверждения отправлен на вашу почту"}), 201
+    return jsonify({"message": "Р С™Р С•Р Т‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р В»Р ВµР Р… Р Р…Р В° Р Р†Р В°РЎв‚¬РЎС“ Р С—Р С•РЎвЂЎРЎвЂљРЎС“"}), 201
 
 
 @app.post("/api/clients/login")
@@ -799,7 +806,7 @@ def client_login():
     user = User.query.filter(User.username == username, User.role.in_(["client", "member"])).first()
     if user and user.check_password(password):
         if not user.is_verified:
-            return jsonify({"message": "Email не подтверждён. Проверьте почту."}), 403
+            return jsonify({"message": "Email Р Р…Р Вµ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘РЎвЂР Р…. Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЉРЎвЂљР Вµ Р С—Р С•РЎвЂЎРЎвЂљРЎС“."}), 403
         access_token = create_access_token(identity=str(user.id))
         return jsonify({
             "access_token": access_token,
@@ -807,10 +814,11 @@ def client_login():
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
-                "role": user.role
+                "role": user.role,
+                "avatar_url": user.avatar_url or ""
             }
         })
-    return jsonify({"message": "Неверный логин или пароль"}), 401
+    return jsonify({"message": "Р СњР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р в„– Р В»Р С•Р С–Р С‘Р Р… Р С‘Р В»Р С‘ Р С—Р В°РЎР‚Р С•Р В»РЎРЉ"}), 401
 
 
 @app.get("/api/public/clubs")
@@ -848,14 +856,14 @@ def public_clubs():
                 "pcsFree": free_pcs,
                 "rating": round(avg_rating, 1),
                 "rating_count": rating_count,
-                "address": c.address or "Адрес не указан",
+                "address": c.address or "Р С’Р Т‘РЎР‚Р ВµРЎРѓ Р Р…Р Вµ РЎС“Р С”Р В°Р В·Р В°Р Р…",
                 "phone": c.phone or "",
                 "telegram_username": c.telegram_username or "",
                 "description": c.description or "",
                 "lat": c.lat or 0.0,
                 "lng": c.lng or 0.0,
                 "instagram": c.instagram or "",
-                "working_hours": c.working_hours or "Круглосуточно",
+                "working_hours": c.working_hours or "Р С™РЎР‚РЎС“Р С–Р В»Р С•РЎРѓРЎС“РЎвЂљР С•РЎвЂЎР Р…Р С•",
                 "isOpen": True,
                 "pricePerHour": 100
             })
@@ -870,14 +878,14 @@ def public_clubs():
                 "pcsFree": 0,
                 "rating": round(avg_rating, 1),
                 "rating_count": rating_count,
-                "address": c.address or "Адрес не указан",
+                "address": c.address or "Р С’Р Т‘РЎР‚Р ВµРЎРѓ Р Р…Р Вµ РЎС“Р С”Р В°Р В·Р В°Р Р…",
                 "phone": c.phone or "",
                 "telegram_username": c.telegram_username or "",
                 "description": c.description or "",
                 "lat": c.lat or 0.0,
                 "lng": c.lng or 0.0,
                 "instagram": c.instagram or "",
-                "working_hours": c.working_hours or "Круглосуточно",
+                "working_hours": c.working_hours or "Р С™РЎР‚РЎС“Р С–Р В»Р С•РЎРѓРЎС“РЎвЂљР С•РЎвЂЎР Р…Р С•",
                 "isOpen": False,
                 "pricePerHour": 0
             })
@@ -885,7 +893,7 @@ def public_clubs():
     return jsonify(result)
 
 
-# ── Admin Routes (Clubs Management) ───────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Admin Routes (Clubs Management) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 def admin_required(fn):
     @wraps(fn)
@@ -1001,7 +1009,7 @@ def update_user(user_id):
     """Update user role, club assignment, or verification status."""
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"message": "Пользователь не найден"}), 404
+        return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…"}), 404
     
     data = request.json or {}
     if "role" in data:
@@ -1012,7 +1020,7 @@ def update_user(user_id):
         user.is_verified = data["is_verified"]
     
     db.session.commit()
-    return jsonify({"message": "Пользователь обновлён"})
+    return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ Р С•Р В±Р Р…Р С•Р Р†Р В»РЎвЂР Р…"})
 
 @app.delete("/api/admin/users/<int:user_id>")
 @admin_required
@@ -1020,15 +1028,15 @@ def delete_user(user_id):
     """Delete a user (cannot delete yourself)."""
     current_user_id = int(get_jwt_identity())
     if current_user_id == user_id:
-        return jsonify({"message": "Нельзя удалить самого себя"}), 400
+        return jsonify({"message": "Р СњР ВµР В»РЎРЉР В·РЎРЏ РЎС“Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ РЎРѓР В°Р СР С•Р С–Р С• РЎРѓР ВµР В±РЎРЏ"}), 400
     
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"message": "Пользователь не найден"}), 404
+        return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…"}), 404
     
     db.session.delete(user)
     db.session.commit()
-    return jsonify({"message": "Пользователь удалён"})
+    return jsonify({"message": "Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ РЎС“Р Т‘Р В°Р В»РЎвЂР Р…"})
 
 
 @app.get("/api/reviews")
@@ -1069,7 +1077,7 @@ def get_reviews_for_dashboard():
         }
     })
 
-# ── Config endpoints ──────────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Config endpoints РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/config")
 @jwt_required()
@@ -1288,10 +1296,10 @@ def public_club_detail(club_id):
         "profile_logo": c.club_logo_url,
         "main_photo_url": c.club_main_photo_url or "",
         "photos": photos,
-        "address": c.address or "Адрес не указан",
+        "address": c.address or "Р С’Р Т‘РЎР‚Р ВµРЎРѓ Р Р…Р Вµ РЎС“Р С”Р В°Р В·Р В°Р Р…",
         "description": c.description or "",
         "telegram_username": c.telegram_username or "",
-        "working_hours": c.working_hours or "Круглосуточно",
+        "working_hours": c.working_hours or "Р С™РЎР‚РЎС“Р С–Р В»Р С•РЎРѓРЎС“РЎвЂљР С•РЎвЂЎР Р…Р С•",
         "rating": round(avg_rating, 1),
         "rating_count": rating_count,
         "lat": c.lat or 0.0,
@@ -1563,6 +1571,90 @@ def get_my_public_cashback():
             "created_at": r.created_at.isoformat() + "Z" if r.created_at else None,
         } for r in rows]
     })
+
+
+@app.get("/api/public/profile/me")
+@jwt_required()
+def public_profile_me():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can view profile"}), 403
+
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "avatar_url": user.avatar_url or "",
+    })
+
+
+@app.post("/api/public/profile/avatar")
+@jwt_required()
+def public_profile_avatar_upload():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can update avatar"}), 403
+
+    if "file" not in request.files:
+        return jsonify({"message": "No file uploaded"}), 400
+    file = request.files["file"]
+    if not file or file.filename == "":
+        return jsonify({"message": "No selected file"}), 400
+    if not allowed_file(file.filename):
+        return jsonify({"message": "File type not allowed"}), 400
+
+    ext = file.filename.rsplit(".", 1)[1].lower()
+    filename = f"avatar_{user.id}_{int(datetime.utcnow().timestamp())}_{random.randint(1000, 9999)}.{ext}"
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(filepath)
+
+    user.avatar_url = f"/api/uploads/{filename}"
+    db.session.commit()
+
+    return jsonify({
+        "message": "Avatar updated",
+        "avatar_url": user.avatar_url,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "avatar_url": user.avatar_url,
+        }
+    })
+
+
+@app.put("/api/public/profile/password")
+@jwt_required()
+def public_profile_change_password():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can change password"}), 403
+
+    body = request.get_json(force=True) or {}
+    current_password = str(body.get("current_password") or "")
+    new_password = str(body.get("new_password") or "")
+
+    if not current_password or not new_password:
+        return jsonify({"message": "current_password and new_password are required"}), 400
+    if len(new_password) < 6:
+        return jsonify({"message": "New password must be at least 6 characters"}), 400
+    if not user.check_password(current_password):
+        return jsonify({"message": "Current password is invalid"}), 400
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({"message": "Password changed successfully"})
 
 
 @app.put("/api/public/bookings/<int:booking_id>/cancel")
@@ -1877,7 +1969,7 @@ def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
-# ── Overview / Stats ──────────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Overview / Stats РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/overview")
 @jwt_required()
@@ -1967,7 +2059,7 @@ def overview():
     })
 
 
-# ── Daily income chart (last 7 days) ─────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Daily income chart (last 7 days) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/charts/daily")
 @jwt_required()
@@ -1981,7 +2073,7 @@ def daily_chart():
     
     days = []
     total = 0
-    ru_days = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
+    ru_days = ["Р С—Р Р…", "Р Р†РЎвЂљ", "РЎРѓРЎР‚", "РЎвЂЎРЎвЂљ", "Р С—РЎвЂљ", "РЎРѓР В±", "Р Р†РЎРѓ"]
     
     if result and result.get("code") == 200:
         data = result.get("data", {})
@@ -2010,7 +2102,7 @@ def daily_chart():
     return jsonify({"days": days, "total": total})
 
 
-# ── 30-day income chart (cash vs balance) ────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ 30-day income chart (cash vs balance) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/charts/monthly")
 @jwt_required()
@@ -2060,7 +2152,7 @@ def monthly_chart():
     })
 
 
-# ── Payment methods breakdown (last 7 days) ───────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Payment methods breakdown (last 7 days) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/charts/payments")
 @jwt_required()
@@ -2085,11 +2177,11 @@ def payment_methods_chart():
             s_name = s.get("name", "Unknown")
             # Translate common names to RU for better UI
             label = s_name
-            if s_name.lower() == "cash": label = "Наличные"
-            elif "balance" in s_name.lower(): label = "Баланс"
-            elif "card" in s_name.lower(): label = "Карта"
-            elif "qr" in s_name.lower(): label = "QR-код"
-            elif "coin" in s_name.lower(): label = "Монеты"
+            if s_name.lower() == "cash": label = "Р СњР В°Р В»Р С‘РЎвЂЎР Р…РЎвЂ№Р Вµ"
+            elif "balance" in s_name.lower(): label = "Р вЂР В°Р В»Р В°Р Р…РЎРѓ"
+            elif "card" in s_name.lower(): label = "Р С™Р В°РЎР‚РЎвЂљР В°"
+            elif "qr" in s_name.lower(): label = "QR-Р С”Р С•Р Т‘"
+            elif "coin" in s_name.lower(): label = "Р СљР С•Р Р…Р ВµРЎвЂљРЎвЂ№"
             
             s_sum = sum(float(v or 0) for v in s.get("data", []))
             if s_sum > 0:
@@ -2111,7 +2203,7 @@ def payment_methods_chart():
     return jsonify({"methods": methods})
 
 
-# ── Monthly aggregated income (last 7 months) ─────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Monthly aggregated income (last 7 months) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/charts/income-monthly")
 @jwt_required()
@@ -2127,8 +2219,8 @@ def income_monthly_chart():
 
     months_data = {}
     ru_months = {
-        1: "Янв", 2: "Фев", 3: "Мар", 4: "Апр", 5: "Май", 6: "Июн",
-        7: "Июл", 8: "Авг", 9: "Сен", 10: "Окт", 11: "Ноя", 12: "Дек"
+        1: "Р Р‡Р Р…Р Р†", 2: "Р В¤Р ВµР Р†", 3: "Р СљР В°РЎР‚", 4: "Р С’Р С—РЎР‚", 5: "Р СљР В°Р в„–", 6: "Р ВРЎР‹Р Р…",
+        7: "Р ВРЎР‹Р В»", 8: "Р С’Р Р†Р С–", 9: "Р РЋР ВµР Р…", 10: "Р С›Р С”РЎвЂљ", 11: "Р СњР С•РЎРЏ", 12: "Р вЂќР ВµР С”"
     }
 
     if result and result.get("code") == 200:
@@ -2163,7 +2255,7 @@ def income_monthly_chart():
     return jsonify({"data": output})
 
 
-# ── PCs monitoring ────────────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ PCs monitoring РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/pcs")
 @jwt_required()
@@ -2204,7 +2296,7 @@ def get_pcs():
     return jsonify({"pcs": pcs, "total": len(pcs)})
 
 
-# ── Members ───────────────────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Members РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/members")
 @jwt_required()
@@ -2247,7 +2339,7 @@ def get_members():
     return jsonify({"members": members, "paging": paging})
 
 
-# ── Billing logs ──────────────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Billing logs РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/billing-logs")
 @jwt_required()
@@ -2472,7 +2564,7 @@ def cashback_accrue():
     }), 201
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Health check РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.get("/api/health")
 def health():
@@ -2484,7 +2576,7 @@ def health():
     })
 
 
-# ── Serve Frontend (Non-Docker mode) ──────────────────────────────────────────
+# РІвЂќР‚РІвЂќР‚ Serve Frontend (Non-Docker mode) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
 
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
@@ -2496,5 +2588,5 @@ def serve(path):
 
 
 if __name__ == "__main__":
-    print("🚀 iCafe Dashboard running at http://localhost:5000")
+    print("СЂСџС™Р‚ iCafe Dashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)
