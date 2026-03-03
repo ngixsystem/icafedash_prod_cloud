@@ -25,7 +25,7 @@ const Index = () => {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="lg:ml-60">
-        <TopBar />
+        <TopBar onOpenSettings={() => setActiveTab("РќР°СЃС‚СЂРѕР№РєРё")} />
 
         <main className="px-4 pb-8 lg:px-6">
           {activeTab === "Обзор" ? (
