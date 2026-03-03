@@ -18,7 +18,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
-    const map = L.map(mapRef.current).setView([41.2995, 69.2401], 13);
+    const map = L.map(mapRef.current, { attributionControl: false }).setView([41.2995, 69.2401], 13);
     mapInstance.current = map;
     markersLayer.current = L.layerGroup().addTo(map);
 
