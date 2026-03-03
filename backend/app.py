@@ -15,7 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 # Initialize Flask with static folder pointing to frontend build
 app = Flask(__name__, 
@@ -1517,6 +1517,51 @@ def get_my_public_bookings():
             "count": len(payload),
             "pending_count": sum(1 for b in payload if b["status"] == "pending"),
         }
+    })
+
+
+@app.get("/api/public/cashback/me")
+@jwt_required()
+def get_my_public_cashback():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("client", "member"):
+        return jsonify({"message": "Only authorized clients can view cashback"}), 403
+
+    member_id = user.id
+    member_account = (user.username or "").strip() or None
+    qr_payload = json.dumps({
+        "v": 1,
+        "member_id": member_id,
+        "member_account": member_account,
+    }, ensure_ascii=False)
+
+    filters = [CashbackTransaction.member_id == member_id]
+    if member_account:
+        filters.append(CashbackTransaction.member_account == member_account)
+
+    query = CashbackTransaction.query.filter(or_(*filters))
+    rows = query.order_by(CashbackTransaction.created_at.desc()).limit(200).all()
+    total_cashback = round(sum(float(r.cashback_amount or 0.0) for r in rows), 2)
+
+    return jsonify({
+        "cashback_enabled": True,
+        "member_id": member_id,
+        "member_account": member_account,
+        "qr_payload": qr_payload,
+        "total_cashback": total_cashback,
+        "transactions": [{
+            "id": r.id,
+            "club_id": r.club_id,
+            "club_name": r.club.name if r.club else "",
+            "amount": float(r.amount or 0.0),
+            "cashback_percent": float(r.cashback_percent or 0.0),
+            "cashback_amount": float(r.cashback_amount or 0.0),
+            "note": r.note or "",
+            "created_at": r.created_at.isoformat() + "Z" if r.created_at else None,
+        } for r in rows]
     })
 
 
