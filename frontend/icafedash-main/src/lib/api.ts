@@ -342,6 +342,8 @@ export const api = {
                 fallback_from_enabled_objects_result?: { code?: number | string; message?: string };
                 fallback_from_full_names_result?: { code?: number | string; message?: string };
                 fallback_from_ids_str_result?: { code?: number | string; message?: string };
+                fallback_from_put_pc_enabled_result?: { code?: number | string; message?: string };
+                fallback_from_put_edit_pc_enabled_result?: { code?: number | string; message?: string };
             };
         }>(`/bookings/${bookingId}/status`, { status }),
     cancelBooking: (bookingId: number, reason: string) =>

@@ -648,6 +648,24 @@ def icafe_post_for_club(club: Club, path: str, data: dict = None, timeout: int =
         return None
 
 
+def icafe_put_for_club(club: Club, path: str, data: dict = None, timeout: int = 12) -> dict | None:
+    if not club or not club.api_key or not club.cafe_id:
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {club.api_key.strip()}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    url = f"{ICAFE_BASE}/cafe/{club.cafe_id}{path}"
+    try:
+        resp = requests.put(url, headers=headers, json=data or {}, timeout=timeout)
+        return resp.json()
+    except Exception as e:
+        print(f"Club API PUT Error ({path}): {e}")
+        return None
+
+
 def _icafe_result_ok(result: dict | None) -> bool:
     if not result:
         return False
@@ -820,19 +838,32 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
         result_by_ids = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list_int}, timeout=12)
         if _icafe_result_ok(result_by_ids):
             return {"requested": True, "success": True, "mode": "ids", "result": result_by_ids}
-        return {
-            "requested": True,
-            "success": False,
-            "mode": "ids",
-            "result": result_by_ids,
-            "fallback_from_names_result": result_by_names,
-            "fallback_from_name_objects_result": result_by_name_objects,
-            "fallback_from_rich_objects_result": result_by_rich_objects,
-            "fallback_from_enabled_objects_result": result_by_enabled_objects,
-            "fallback_from_single_names_result": single_results,
-            "fallback_from_full_names_result": result_by_full_names,
-            "fallback_from_ids_str_result": result_by_ids_str if id_list_str else None,
-        }
+
+    # Last fallback for installations where setOutOfOrder is unavailable:
+    # try generic PCs update endpoint with enabled flags.
+    result_put_pc_enabled = icafe_put_for_club(club, "/pcs", {"pcs": exact_names, "pc_enabled": 0}, timeout=12)
+    if _icafe_result_ok(result_put_pc_enabled):
+        return {"requested": True, "success": True, "mode": "put_pc_enabled", "result": result_put_pc_enabled}
+
+    result_put_edit_pc_enabled = icafe_put_for_club(club, "/pcs", {"pcs": exact_names, "edit_pc_enabled": 0}, timeout=12)
+    if _icafe_result_ok(result_put_edit_pc_enabled):
+        return {"requested": True, "success": True, "mode": "put_edit_pc_enabled", "result": result_put_edit_pc_enabled}
+
+    return {
+        "requested": True,
+        "success": False,
+        "mode": "ids",
+        "result": result_by_ids if id_list_int else result_by_names,
+        "fallback_from_names_result": result_by_names,
+        "fallback_from_name_objects_result": result_by_name_objects,
+        "fallback_from_rich_objects_result": result_by_rich_objects,
+        "fallback_from_enabled_objects_result": result_by_enabled_objects,
+        "fallback_from_single_names_result": single_results,
+        "fallback_from_full_names_result": result_by_full_names,
+        "fallback_from_ids_str_result": result_by_ids_str if id_list_str else None,
+        "fallback_from_put_pc_enabled_result": result_put_pc_enabled,
+        "fallback_from_put_edit_pc_enabled_result": result_put_edit_pc_enabled,
+    }
 
     print(
         "WARN: setOutOfOrder failed",

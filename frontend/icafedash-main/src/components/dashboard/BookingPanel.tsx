@@ -338,6 +338,8 @@ const BookingPanel = ({ searchQuery = "" }: BookingPanelProps) => {
           m?.fallback_from_enabled_objects_result?.message ? `Fallback(enabled_objects): ${m.fallback_from_enabled_objects_result.message}` : "",
           m?.fallback_from_full_names_result?.message ? `Fallback(full_names): ${m.fallback_from_full_names_result.message}` : "",
           m?.fallback_from_ids_str_result?.message ? `Fallback(ids): ${m.fallback_from_ids_str_result.message}` : "",
+          m?.fallback_from_put_pc_enabled_result?.message ? `Fallback(put_pc_enabled): ${m.fallback_from_put_pc_enabled_result.message}` : "",
+          m?.fallback_from_put_edit_pc_enabled_result?.message ? `Fallback(put_edit_pc_enabled): ${m.fallback_from_put_edit_pc_enabled_result.message}` : "",
         ]
           .filter(Boolean)
           .join("\n");
