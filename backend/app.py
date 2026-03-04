@@ -648,6 +648,65 @@ def icafe_post_for_club(club: Club, path: str, data: dict = None, timeout: int =
         return None
 
 
+def _icafe_result_ok(result: dict | None) -> bool:
+    if not result:
+        return False
+    try:
+        if int(result.get("code")) == 200:
+            return True
+    except Exception:
+        pass
+    return bool(result.get("success"))
+
+
+def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> dict:
+    pc_names = []
+    for entry in pc_entries:
+        pc_name = str(entry.get("pc_name") or "").strip()
+        if pc_name and pc_name not in pc_names:
+            pc_names.append(pc_name)
+
+    if not pc_names:
+        return {"requested": False, "success": False, "message": "No PCs found in booking"}
+    if not club or not club.api_key or not club.cafe_id:
+        return {"requested": True, "success": False, "message": "Club iCafe credentials are not configured"}
+
+    # First attempt: send PC names directly.
+    result_by_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_names}, timeout=12)
+    if _icafe_result_ok(result_by_names):
+        return {"requested": True, "success": True, "mode": "names", "result": result_by_names}
+
+    # Fallback: resolve to PC IDs and try again if API expects IDs.
+    pc_raw = icafe_get_for_club(club, "/pcList", timeout=10)
+    all_pcs = parse_icafe_pcs(pc_raw)
+    id_list = []
+    for pc in all_pcs:
+        pc_name = str(pc.get("pc_name") or "").strip()
+        if pc_name and pc_name in pc_names:
+            pc_id = pc.get("pc_icafe_id")
+            if pc_id is not None and pc_id not in id_list:
+                id_list.append(pc_id)
+
+    if id_list:
+        result_by_ids = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list}, timeout=12)
+        if _icafe_result_ok(result_by_ids):
+            return {"requested": True, "success": True, "mode": "ids", "result": result_by_ids}
+        return {
+            "requested": True,
+            "success": False,
+            "mode": "ids",
+            "result": result_by_ids,
+            "fallback_from_names_result": result_by_names,
+        }
+
+    return {
+        "requested": True,
+        "success": False,
+        "mode": "names",
+        "result": result_by_names,
+    }
+
+
 # Auth Routes
 
 @app.post("/api/auth/register")
@@ -1982,37 +2041,9 @@ def update_booking_status(booking_id):
     if next_status == "completed" and current_status != "approved":
         return jsonify({"message": "Only approved booking can be completed"}), 409
 
-    # When booking becomes active, immediately move selected PCs to maintenance mode.
+    maintenance = {"requested": False, "success": None}
     if next_status == "approved" and current_status != "approved":
-        pc_entries = parse_booking_pc_entries(booking.pc_names)
-        pc_names_for_action = []
-        for entry in pc_entries:
-            pc_name = str(entry.get("pc_name") or "").strip()
-            if pc_name and pc_name not in pc_names_for_action:
-                pc_names_for_action.append(pc_name)
-
-        if not pc_names_for_action:
-            return jsonify({"message": "No PCs found in booking for maintenance action"}), 400
-
-        club = booking.club
-        if not club or not club.api_key or not club.cafe_id:
-            return jsonify({"message": "Club iCafe credentials are not configured"}), 409
-
-        repair_result = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_names_for_action}, timeout=12)
-        if not repair_result:
-            return jsonify({"message": "Failed to set PCs to maintenance mode"}), 502
-
-        result_code = repair_result.get("code")
-        try:
-            ok = int(result_code) == 200
-        except Exception:
-            ok = bool(repair_result.get("success"))
-
-        if not ok:
-            return jsonify({
-                "message": "iCafeCloud rejected maintenance action",
-                "icafe_result": repair_result,
-            }), 409
+        maintenance = set_booking_pcs_out_of_order(booking.club, parse_booking_pc_entries(booking.pc_names))
 
     booking.status = next_status
     db.session.commit()
@@ -2022,6 +2053,7 @@ def update_booking_status(booking_id):
 
     return jsonify({
         "message": "Booking status updated",
+        "maintenance": maintenance,
         "booking": {
             "id": booking.id,
             "club_id": booking.club_id,
