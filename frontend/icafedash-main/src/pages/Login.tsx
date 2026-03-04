@@ -30,13 +30,13 @@ const Login = () => {
 
             if (response.ok) {
                 login(data.access_token, data.user);
-                toast.success("Добро пожаловать в игру, " + data.user.username);
+                toast.success("Добро пожаловать");
                 navigate("/");
             } else {
-                toast.error(data.message || "Доступ запрещен");
+                toast.error(data.message || "Ð”Ð¾ÑÑ‚ÑƒÐ¿ Ð·Ð°Ð¿Ñ€ÐµÑ‰ÐµÐ½");
             }
         } catch (error) {
-            toast.error("Связь с сервером потеряна");
+            toast.error("Ð¡Ð²ÑÐ·ÑŒ Ñ ÑÐµÑ€Ð²ÐµÑ€Ð¾Ð¼ Ð¿Ð¾Ñ‚ÐµÑ€ÑÐ½Ð°");
         } finally {
             setIsLoading(false);
         }
@@ -62,20 +62,20 @@ const Login = () => {
                             iCafe<span className="text-primary">Dash</span>
                         </h1>
                         <div className="h-1 w-12 bg-primary mx-auto mt-1 rounded-full shadow-[0_0_10px_#00ffa3]" />
-                        <p className="text-gray-500 text-sm font-medium mt-4 tracking-widest uppercase">Система управления кибер-ареной</p>
+                        <p className="text-gray-500 text-sm font-medium mt-4 tracking-widest uppercase">Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð° ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ñ ÐºÐ¸Ð±ÐµÑ€-Ð°Ñ€ÐµÐ½Ð¾Ð¹</p>
                     </div>
                 </div>
 
                 <Card className="border-white/5 bg-black/40 backdrop-blur-xl shadow-2xl overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
                     <CardHeader className="space-y-1 pt-8">
-                        <CardTitle className="text-2xl font-bold text-white text-center">АВТОРИЗАЦИЯ</CardTitle>
-                        <CardDescription className="text-center text-gray-500">Введите данные для входа в панель</CardDescription>
+                        <CardTitle className="text-2xl font-bold text-white text-center">ÐÐ’Ð¢ÐžÐ Ð˜Ð—ÐÐ¦Ð˜Ð¯</CardTitle>
+                        <CardDescription className="text-center text-gray-500">Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð´Ð»Ñ Ð²Ñ…Ð¾Ð´Ð° Ð² Ð¿Ð°Ð½ÐµÐ»ÑŒ</CardDescription>
                     </CardHeader>
                     <form onSubmit={handleSubmit} className="relative z-10">
                         <CardContent className="space-y-6 pt-2">
                             <div className="space-y-2 group/field">
-                                <Label htmlFor="username" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">Логин оператора</Label>
+                                <Label htmlFor="username" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">Ð›Ð¾Ð³Ð¸Ð½ Ð¾Ð¿ÐµÑ€Ð°Ñ‚Ð¾Ñ€Ð°</Label>
                                 <div className="relative">
                                     <div className="absolute left-3 top-3.5 h-4 w-4 text-gray-500 group-focus-within/field:text-primary transition-colors">
                                         <User className="h-4 w-4" />
@@ -91,7 +91,7 @@ const Login = () => {
                                 </div>
                             </div>
                             <div className="space-y-2 group/field">
-                                <Label htmlFor="password" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">Код доступа</Label>
+                                <Label htmlFor="password" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">ÐšÐ¾Ð´ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð°</Label>
                                 <div className="relative">
                                     <div className="absolute left-3 top-3.5 h-4 w-4 text-gray-500 group-focus-within/field:text-primary transition-colors">
                                         <Lock className="h-4 w-4" />
@@ -99,7 +99,7 @@ const Login = () => {
                                     <Input
                                         id="password"
                                         type="password"
-                                        placeholder="••••••••"
+                                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                                         className="pl-10 h-12 bg-white/5 border-white/10 hover:border-white/20 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-gray-600 rounded-xl transition-all"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -117,9 +117,9 @@ const Login = () => {
                                 {isLoading ? (
                                     <div className="flex items-center gap-2">
                                         <div className="h-4 w-4 border-2 border-black/30 border-t-black animate-spin rounded-full" />
-                                        <span>Загрузка</span>
+                                        <span>Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°</span>
                                     </div>
-                                ) : "ПОДКЛЮЧИТЬСЯ"}
+                                ) : "ÐŸÐžÐ”ÐšÐ›Ð®Ð§Ð˜Ð¢Ð¬Ð¡Ð¯"}
                             </Button>
                         </CardFooter>
                     </form>

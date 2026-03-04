@@ -138,7 +138,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     <>
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-[60] lg:hidden rounded-xl bg-white/5 border border-white/10 p-2 text-slate-200"
+        className="fixed top-3 left-3 z-[60] lg:hidden rounded-xl bg-white/5 border border-white/10 p-2 text-slate-200"
       >
         <Menu className="h-5 w-5" />
       </button>
