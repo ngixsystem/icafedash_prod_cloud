@@ -53,7 +53,7 @@ const TopBar = ({ onOpenSettings }: TopBarProps) => {
           </button>
 
           <div className="hidden md:flex flex-col items-end">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">Server AP-1</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">Сервер AP-1</span>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00FF94] shadow-[0_0_5px_#00FF94]" />
               <span className="text-xs font-mono font-bold text-[#00FF94]">12ms</span>

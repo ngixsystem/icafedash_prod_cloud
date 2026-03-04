@@ -173,12 +173,12 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-8 px-3 space-y-1.5">
-          <div className="px-5 mb-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Main Menu</div>
+          <div className="px-5 mb-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Главное меню</div>
           {mainItems.map(renderNavItem)}
 
           {opsItems.length > 0 && (
             <>
-              <div className="px-5 mt-8 mb-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Operations</div>
+              <div className="px-5 mt-8 mb-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Операции</div>
               {opsItems.map(renderNavItem)}
             </>
           )}
@@ -200,7 +200,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
             </div>
             <div className="text-left overflow-hidden">
               <p className="text-sm font-bold text-white truncate group-hover:text-[#00F0FF] transition-colors">{user?.username ?? "TeamPro Admin"}</p>
-              <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wide">{user?.role ?? "manager"}</p>
+              <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wide">{user?.role ?? "менеджер"}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-600 ml-auto group-hover:translate-x-1 transition-transform" />
           </button>
