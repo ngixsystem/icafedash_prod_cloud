@@ -335,6 +335,7 @@ const BookingPanel = ({ searchQuery = "" }: BookingPanelProps) => {
           m?.fallback_from_names_result?.message ? `Fallback(names): ${m.fallback_from_names_result.message}` : "",
           m?.fallback_from_name_objects_result?.message ? `Fallback(name_objects): ${m.fallback_from_name_objects_result.message}` : "",
           m?.fallback_from_rich_objects_result?.message ? `Fallback(rich_objects): ${m.fallback_from_rich_objects_result.message}` : "",
+          m?.fallback_from_enabled_objects_result?.message ? `Fallback(enabled_objects): ${m.fallback_from_enabled_objects_result.message}` : "",
           m?.fallback_from_full_names_result?.message ? `Fallback(full_names): ${m.fallback_from_full_names_result.message}` : "",
           m?.fallback_from_ids_str_result?.message ? `Fallback(ids): ${m.fallback_from_ids_str_result.message}` : "",
         ]

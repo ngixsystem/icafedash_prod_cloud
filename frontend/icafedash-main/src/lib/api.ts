@@ -339,6 +339,7 @@ export const api = {
                 fallback_from_names_result?: { code?: number | string; message?: string };
                 fallback_from_name_objects_result?: { code?: number | string; message?: string };
                 fallback_from_rich_objects_result?: { code?: number | string; message?: string };
+                fallback_from_enabled_objects_result?: { code?: number | string; message?: string };
                 fallback_from_full_names_result?: { code?: number | string; message?: string };
                 fallback_from_ids_str_result?: { code?: number | string; message?: string };
             };

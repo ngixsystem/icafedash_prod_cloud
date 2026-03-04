@@ -756,6 +756,30 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
         if _icafe_result_ok(result_by_rich_objects):
             return {"requested": True, "success": True, "mode": "rich_objects", "result": result_by_rich_objects}
 
+    # Some iCafe deployments expect pc_enabled flag when setting Out Of Order.
+    pcs_with_enabled_flag = []
+    for entry in pc_entries:
+        zone_name = str(entry.get("zone_name") or "").strip()
+        pc_name_raw = str(entry.get("pc_name") or "").strip()
+        pc_name = pc_name_raw.split("/")[-1].strip() if "/" in pc_name_raw else pc_name_raw
+        if not pc_name:
+            continue
+        item = {"pc_name": pc_name, "pc_enabled": 0}
+        if zone_name:
+            item["pc_area_name"] = zone_name
+        pcs_with_enabled_flag.append(item)
+
+    result_by_enabled_objects = None
+    if pcs_with_enabled_flag:
+        result_by_enabled_objects = icafe_post_for_club(
+            club,
+            "/pcs/action/setOutOfOrder",
+            {"pcs": pcs_with_enabled_flag},
+            timeout=12,
+        )
+        if _icafe_result_ok(result_by_enabled_objects):
+            return {"requested": True, "success": True, "mode": "enabled_objects", "result": result_by_enabled_objects}
+
     # Third attempt: one-by-one by PC name (some environments fail on batch payload).
     single_results = []
     single_all_ok = True
@@ -793,6 +817,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
             "fallback_from_names_result": result_by_names,
             "fallback_from_name_objects_result": result_by_name_objects,
             "fallback_from_rich_objects_result": result_by_rich_objects,
+            "fallback_from_enabled_objects_result": result_by_enabled_objects,
             "fallback_from_single_names_result": single_results,
             "fallback_from_full_names_result": result_by_full_names,
             "fallback_from_ids_str_result": result_by_ids_str if id_list_str else None,
@@ -809,6 +834,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
                 "result_by_names": result_by_names,
                 "result_by_name_objects": result_by_name_objects,
                 "result_by_rich_objects": result_by_rich_objects,
+                "result_by_enabled_objects": result_by_enabled_objects,
                 "result_by_single_names": single_results,
                 "result_by_full_names": result_by_full_names,
             },
@@ -822,6 +848,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
         "result": result_by_names,
         "fallback_from_name_objects_result": result_by_name_objects,
         "fallback_from_rich_objects_result": result_by_rich_objects,
+        "fallback_from_enabled_objects_result": result_by_enabled_objects,
         "fallback_from_single_names_result": single_results,
         "fallback_from_full_names_result": result_by_full_names,
     }
