@@ -136,12 +136,14 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
   return (
     <>
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="fixed top-3 left-3 z-[60] lg:hidden rounded-xl bg-white/5 border border-white/10 p-2 text-slate-200"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
+      {!mobileOpen && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="fixed top-3 left-3 z-[60] lg:hidden rounded-xl bg-white/5 border border-white/10 p-2 text-slate-200"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
 
       {mobileOpen && <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
 
@@ -163,7 +165,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
               <h1 className="font-bold text-2xl text-white tracking-tight leading-none truncate">{clubName}</h1>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00F0FF] animate-pulse" />
-                <span className="text-[10px] font-mono font-bold text-[#00F0FF] tracking-[0.2em] uppercase">Sergeli</span>
+                <span className="text-[10px] font-mono font-bold text-[#00F0FF] tracking-[0.2em] uppercase">Manager</span>
               </div>
             </div>
           </div>
