@@ -664,7 +664,8 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
     pc_full_names = []
     for entry in pc_entries:
         zone_name = str(entry.get("zone_name") or "").strip()
-        pc_name = str(entry.get("pc_name") or "").strip()
+        pc_name_raw = str(entry.get("pc_name") or "").strip()
+        pc_name = pc_name_raw.split("/")[-1].strip() if "/" in pc_name_raw else pc_name_raw
         if pc_name and pc_name not in pc_names:
             pc_names.append(pc_name)
         if zone_name and pc_name:
@@ -677,10 +678,22 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
     if not club or not club.api_key or not club.cafe_id:
         return {"requested": True, "success": False, "message": "Club iCafe credentials are not configured"}
 
-    # First attempt: send raw PC names directly.
+    # First attempt: send raw PC names directly (batch).
     result_by_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_names}, timeout=12)
     if _icafe_result_ok(result_by_names):
         return {"requested": True, "success": True, "mode": "names", "result": result_by_names}
+
+    # Second attempt: one-by-one by PC name (some environments fail on batch payload).
+    single_results = []
+    single_all_ok = True
+    for name in pc_names:
+        r = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": [name]}, timeout=12)
+        ok = _icafe_result_ok(r)
+        single_results.append({"pc": name, "ok": ok, "result": r})
+        if not ok:
+            single_all_ok = False
+    if single_results and single_all_ok:
+        return {"requested": True, "success": True, "mode": "single_names", "result": single_results}
 
     # Second attempt: send "zone/pc" names for environments where names are stored with area prefix.
     if pc_full_names:
@@ -718,6 +731,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
             "mode": "ids",
             "result": result_by_ids,
             "fallback_from_names_result": result_by_names,
+            "fallback_from_single_names_result": single_results,
             "fallback_from_full_names_result": result_by_full_names,
             "fallback_from_ids_str_result": result_by_ids_str if id_list_str else None,
         }
@@ -730,6 +744,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
                 "pc_names": pc_names,
                 "pc_full_names": pc_full_names,
                 "result_by_names": result_by_names,
+                "result_by_single_names": single_results,
                 "result_by_full_names": result_by_full_names,
             },
             ensure_ascii=False,
@@ -740,6 +755,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
         "success": False,
         "mode": "names",
         "result": result_by_names,
+        "fallback_from_single_names_result": single_results,
         "fallback_from_full_names_result": result_by_full_names,
     }
 
