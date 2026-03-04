@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -23,7 +23,19 @@ import {
 } from "recharts";
 import { api, formatMoney } from "@/lib/api";
 
+function formatTooltipDate(value: string | number | undefined): string {
+  if (!value) return "Дата неизвестна";
+  const raw = String(value);
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString("ru-RU", { day: "2-digit", month: "long" });
+  }
+  return raw;
+}
+
 const ManagerHyperOverview = () => {
+  const [hoveredDayKey, setHoveredDayKey] = useState<string | null>(null);
+  const [hoveredWeekKey, setHoveredWeekKey] = useState<string | null>(null);
   const { data: overview } = useQuery({
     queryKey: ["overview"],
     queryFn: api.overview,
@@ -63,6 +75,7 @@ const ManagerHyperOverview = () => {
 
   const dailyBars = dailyChart?.days ?? [];
   const maxDaily = Math.max(...dailyBars.map((d) => d.value), 1);
+  const maxWeeklyMini = Math.max(...dailyBars.map((d) => d.value), 1);
   const monthBars = (incomeByMonth?.data ?? []).slice(-6);
   const monthTotal = monthBars.reduce((sum, item) => sum + item.amount, 0);
 
@@ -137,12 +150,28 @@ const ManagerHyperOverview = () => {
             <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{(weekRevenue / 1_000_000).toFixed(1)}M</span>
             <span className="text-sm text-slate-500 font-bold">UZS</span>
           </div>
-          <div className="h-10">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyBars}>
-                <Bar dataKey="value" fill="#2B59F9" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-10 flex items-end justify-between gap-2">
+            {dailyBars.map((day) => {
+              const weekKey = `week-${day.day}-${day.date}`;
+              const miniHeight = Math.max(6, Math.round((day.value / maxWeeklyMini) * 26));
+              const isHovered = hoveredWeekKey === weekKey;
+              return (
+                <div
+                  key={weekKey}
+                  className="relative flex-1 h-full flex items-end"
+                  onMouseEnter={() => setHoveredWeekKey(weekKey)}
+                  onMouseLeave={() => setHoveredWeekKey((prev) => (prev === weekKey ? null : prev))}
+                >
+                  <div className={`absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-2 py-1 rounded-lg border border-white/10 bg-[#0A0A0F]/95 text-[10px] font-bold text-white whitespace-nowrap transition-all duration-150 ${isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"}`}>
+                    {day.day}: {formatMoney(day.value)} UZS
+                  </div>
+                  <div
+                    className="w-full bg-[#2B59F9] rounded-sm shadow-[0_0_10px_rgba(43,89,249,0.35)] transition-all duration-200 hover:bg-[#3E6AFB]"
+                    style={{ height: `${miniHeight}px` }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -181,8 +210,18 @@ const ManagerHyperOverview = () => {
           <div className="flex-1 flex items-end justify-between gap-2 px-1">
             {dailyBars.map((day) => {
               const h = Math.max(12, Math.round((day.value / maxDaily) * 100));
+              const dayKey = `${day.day}-${day.date}`;
+              const isHovered = hoveredDayKey === dayKey;
               return (
-                <div key={`${day.day}-${day.date}`} className="flex flex-col items-center gap-3 flex-1 h-full justify-end">
+                <div
+                  key={dayKey}
+                  className="relative flex flex-col items-center gap-3 flex-1 h-full justify-end"
+                  onMouseEnter={() => setHoveredDayKey(dayKey)}
+                  onMouseLeave={() => setHoveredDayKey((prev) => (prev === dayKey ? null : prev))}
+                >
+                  <div className={`absolute -top-2 -translate-y-full px-2 py-1 rounded-lg border border-white/10 bg-[#0A0A0F]/95 text-[10px] font-bold text-white whitespace-nowrap transition-all duration-150 ${isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"}`}>
+                    {formatMoney(day.value)} UZS
+                  </div>
                   <div className="w-full bg-white/5 rounded-t-lg h-full flex items-end overflow-hidden">
                     <div className="w-full bg-gradient-to-t from-[#00F0FF]/20 to-[#00F0FF] rounded-t-lg transition-all duration-500" style={{ height: `${h}%` }} />
                   </div>
@@ -225,7 +264,7 @@ const ManagerHyperOverview = () => {
                 <Tooltip
                   contentStyle={{ background: "#0A0A0F", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
                   formatter={(v: number) => `${formatMoney(v)} UZS`}
-                  labelFormatter={(label) => `Точка ${label}`}
+                  labelFormatter={(_, payload) => formatTooltipDate(payload?.[0]?.payload?.date)}
                 />
                 <Area type="monotone" dataKey="cash" stroke="#BD00FF" fill="url(#cashGrad)" strokeWidth={3} />
               </AreaChart>
@@ -249,7 +288,7 @@ const ManagerHyperOverview = () => {
                 <YAxis hide />
                 <Tooltip
                   contentStyle={{ background: "#0A0A0F", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
-                  formatter={(v: number) => `${formatMoney(v)} UZS`}
+                  formatter={(v: number) => [`${formatMoney(v)} UZS`, "доход"]}
                 />
                 <Bar dataKey="amount" fill="#00F0FF" radius={[4, 4, 0, 0]} />
               </BarChart>
