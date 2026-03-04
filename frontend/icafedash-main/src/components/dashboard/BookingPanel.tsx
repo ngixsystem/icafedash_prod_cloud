@@ -328,6 +328,8 @@ const BookingPanel = ({ searchQuery = "" }: BookingPanelProps) => {
       await refetch();
     } catch (err) {
       console.error(err);
+      const message = err instanceof Error ? err.message : "Не удалось обновить статус заявки";
+      window.alert(message);
     } finally {
       setUpdatingId(null);
     }

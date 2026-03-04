@@ -630,6 +630,24 @@ def icafe_post(path: str, data: dict = None) -> dict | None:
         return None
 
 
+def icafe_post_for_club(club: Club, path: str, data: dict = None, timeout: int = 12) -> dict | None:
+    if not club or not club.api_key or not club.cafe_id:
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {club.api_key.strip()}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    url = f"{ICAFE_BASE}/cafe/{club.cafe_id}{path}"
+    try:
+        resp = requests.post(url, headers=headers, json=data or {}, timeout=timeout)
+        return resp.json()
+    except Exception as e:
+        print(f"Club API Error ({path}): {e}")
+        return None
+
+
 # Auth Routes
 
 @app.post("/api/auth/register")
@@ -1963,6 +1981,38 @@ def update_booking_status(booking_id):
 
     if next_status == "completed" and current_status != "approved":
         return jsonify({"message": "Only approved booking can be completed"}), 409
+
+    # When booking becomes active, immediately move selected PCs to maintenance mode.
+    if next_status == "approved" and current_status != "approved":
+        pc_entries = parse_booking_pc_entries(booking.pc_names)
+        pc_names_for_action = []
+        for entry in pc_entries:
+            pc_name = str(entry.get("pc_name") or "").strip()
+            if pc_name and pc_name not in pc_names_for_action:
+                pc_names_for_action.append(pc_name)
+
+        if not pc_names_for_action:
+            return jsonify({"message": "No PCs found in booking for maintenance action"}), 400
+
+        club = booking.club
+        if not club or not club.api_key or not club.cafe_id:
+            return jsonify({"message": "Club iCafe credentials are not configured"}), 409
+
+        repair_result = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_names_for_action}, timeout=12)
+        if not repair_result:
+            return jsonify({"message": "Failed to set PCs to maintenance mode"}), 502
+
+        result_code = repair_result.get("code")
+        try:
+            ok = int(result_code) == 200
+        except Exception:
+            ok = bool(repair_result.get("success"))
+
+        if not ok:
+            return jsonify({
+                "message": "iCafeCloud rejected maintenance action",
+                "icafe_result": repair_result,
+            }), 409
 
     booking.status = next_status
     db.session.commit()
