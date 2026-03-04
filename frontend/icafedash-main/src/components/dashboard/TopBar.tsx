@@ -1,4 +1,4 @@
-import { Bell, LogOut, Search, Settings } from "lucide-react";
+﻿import { Bell, LogOut, Search, Settings } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
   DropdownMenu,
@@ -11,17 +11,18 @@ import {
 
 interface TopBarProps {
   onOpenSettings: () => void;
+  searchQuery?: string;
+  onSearchChange?: (value: string) => void;
+  searchEnabled?: boolean;
 }
 
-const TopBar = ({ onOpenSettings }: TopBarProps) => {
+const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnabled = false }: TopBarProps) => {
   const { user, logout, isAdmin } = useAuth();
 
   return (
     <header className="h-20 lg:h-24 px-4 lg:px-8 flex items-center justify-between shrink-0 z-20 relative">
       <div className="pl-12 lg:pl-0">
-        <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-          Панель управления
-        </h2>
+        <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight flex items-center gap-3">Панель управления</h2>
         <div className="hidden sm:flex items-center gap-2 mt-1.5">
           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00FF94]" />
           <p className="text-sm text-slate-400 font-medium">Все системы работают в штатном режиме</p>
@@ -36,7 +37,10 @@ const TopBar = ({ onOpenSettings }: TopBarProps) => {
               <input
                 type="text"
                 placeholder="Поиск по системе..."
-                className="bg-transparent border-none outline-none text-sm text-white placeholder-slate-600 w-full font-medium"
+                className="bg-transparent border-none outline-none text-sm text-white placeholder-slate-600 w-full font-medium disabled:opacity-40"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                disabled={!searchEnabled}
               />
               <kbd className="hidden 2xl:inline-flex h-5 px-1.5 text-[10px] font-mono text-slate-500 bg-white/5 border border-white/10 rounded items-center justify-center">
                 Ctrl+K

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -20,6 +20,7 @@ import ManagerHyperOverview from "@/components/dashboard/ManagerHyperOverview";
 const Index = () => {
   const { isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState(isAdmin ? "Клубы" : "Обзор");
+  const [bookingSearch, setBookingSearch] = useState("");
 
   return (
     <div className="min-h-screen text-gray-300 relative overflow-hidden">
@@ -37,7 +38,12 @@ const Index = () => {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="relative lg:ml-64 min-h-screen overflow-hidden">
-        <TopBar onOpenSettings={() => setActiveTab("Настройки")} />
+        <TopBar
+          onOpenSettings={() => setActiveTab("Настройки")}
+          searchQuery={bookingSearch}
+          onSearchChange={setBookingSearch}
+          searchEnabled={activeTab === "Бронирование"}
+        />
 
         <main className="px-4 pb-8 lg:px-8 lg:pt-2 relative z-10">
           {activeTab === "Обзор" ? (
@@ -62,7 +68,7 @@ const Index = () => {
           ) : activeTab === "Мониторинг" ? (
             <Monitoring />
           ) : activeTab === "Бронирование" ? (
-            <BookingPanel />
+            <BookingPanel searchQuery={bookingSearch} />
           ) : activeTab === "Участники" ? (
             <ParticipantsList />
           ) : activeTab === "Отзывы" ? (

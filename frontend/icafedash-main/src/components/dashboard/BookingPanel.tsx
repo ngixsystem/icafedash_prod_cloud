@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   CalendarClock,
   Clock3,
@@ -13,7 +13,11 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api, type BookingPcOption, type DashboardBooking } from "@/lib/api";
 
-type FilterKey = "all" | "active" | "pending" | "cancelled";
+type FilterKey = "all" | "active" | "pending" | "cancelled" | "completed";
+
+interface BookingPanelProps {
+  searchQuery?: string;
+}
 
 function formatDateTime(value: string | null): string {
   if (!value) return "-";
@@ -113,8 +117,10 @@ function trend(nowValue: number, prevValue: number) {
   };
 }
 
-const BookingPanel = () => {
+const BookingPanel = ({ searchQuery = "" }: BookingPanelProps) => {
+  const ITEMS_PER_PAGE = 8;
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [clientName, setClientName] = useState("");
@@ -223,14 +229,48 @@ const BookingPanel = () => {
     { key: "active", label: "Активные", dot: "bg-emerald-500" },
     { key: "pending", label: "В ожидании", dot: "bg-amber-400" },
     { key: "cancelled", label: "Отмененные", dot: "bg-rose-500" },
+    { key: "completed", label: "Завершенные", dot: "bg-cyan-400" },
   ];
 
   const filteredBookings = useMemo(() => {
-    if (activeFilter === "active") return bookings.filter((x) => x.status === "approved");
-    if (activeFilter === "pending") return bookings.filter((x) => x.status === "pending");
-    if (activeFilter === "cancelled") return bookings.filter((x) => x.status === "cancelled" || x.status === "rejected");
-    return bookings;
-  }, [activeFilter, bookings]);
+    let byStatus = bookings;
+    if (activeFilter === "active") byStatus = bookings.filter((x) => x.status === "approved");
+    if (activeFilter === "pending") byStatus = bookings.filter((x) => x.status === "pending");
+    if (activeFilter === "cancelled") byStatus = bookings.filter((x) => x.status === "cancelled" || x.status === "rejected");
+    if (activeFilter === "completed") byStatus = bookings.filter((x) => x.status === "completed");
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return byStatus;
+
+    const qDigits = q.replace(/\D/g, "");
+    return byStatus.filter((b) => {
+      const idText = String(b.id);
+      const nameText = String(b.client_name || b.username || "").toLowerCase();
+      const phoneText = String(b.phone || "");
+      const phoneDigits = phoneText.replace(/\D/g, "");
+
+      const byId = idText.includes(q) || (qDigits ? idText.includes(qDigits) : false);
+      const byName = nameText.includes(q);
+      const byPhone = phoneText.toLowerCase().includes(q) || (qDigits ? phoneDigits.includes(qDigits) : false);
+      return byId || byName || byPhone;
+    });
+  }, [activeFilter, bookings, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const pagedBookings = useMemo(() => {
+    const start = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+    return filteredBookings.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredBookings, safeCurrentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, searchQuery]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   const groupedPcs = useMemo(() => {
     const pcs = pcsData?.pcs ?? [];
@@ -611,8 +651,9 @@ const BookingPanel = () => {
           По выбранному фильтру заявок нет.
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredBookings.map((booking) => {
+          {pagedBookings.map((booking) => {
             const current = statusUi(booking.status);
             const isPending = booking.status === "pending";
             const canCancel = booking.status === "pending" || booking.status === "approved";
@@ -742,11 +783,38 @@ const BookingPanel = () => {
               </div>
             );
           })}
-
         </div>
+
+        {totalPages > 1 ? (
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              disabled={safeCurrentPage <= 1}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              className="rounded-md border border-[#2A2E45] bg-[#1F2235] px-3 py-1.5 text-xs text-slate-300 disabled:opacity-50"
+            >
+              Назад
+            </button>
+            <span className="text-xs text-slate-400">
+              Страница {safeCurrentPage} из {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              className="rounded-md border border-[#2A2E45] bg-[#1F2235] px-3 py-1.5 text-xs text-slate-300 disabled:opacity-50"
+            >
+              Вперед
+            </button>
+          </div>
+        ) : null}
+        </>
       )}
     </section>
   );
 };
 
 export default BookingPanel;
+
+
+
