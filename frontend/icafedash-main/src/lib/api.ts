@@ -102,6 +102,7 @@ export interface OverviewData {
     today_revenue: number;
     week_revenue: number;
     total_members: number;
+    new_members_week?: number;
     active_pcs: number;
     total_pcs: number;
     pc_load_percent: number;

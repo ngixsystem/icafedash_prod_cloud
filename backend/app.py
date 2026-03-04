@@ -406,6 +406,37 @@ def parse_icafe_pcs(raw_result: dict | None) -> list:
         return data_field.get("pcs", [])
     return []
 
+def parse_icafe_datetime(value: str | None):
+    if not value:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+
+    normalized = raw.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(normalized)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone().replace(tzinfo=None)
+        return dt
+    except Exception:
+        pass
+
+    patterns = [
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d",
+        "%d.%m.%Y %H:%M:%S",
+        "%d.%m.%Y %H:%M",
+        "%d.%m.%Y",
+    ]
+    for fmt in patterns:
+        try:
+            return datetime.strptime(raw, fmt)
+        except Exception:
+            continue
+    return None
+
 
 def detect_pc_status(pc: dict) -> str:
     if pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account"):
@@ -2012,6 +2043,7 @@ def overview():
 
     today_revenue = 0
     week_revenue = 0
+    new_members_week = 0
     payment_methods = []
 
     # PC list for active count
@@ -2070,12 +2102,48 @@ def overview():
     total_members = 0
     if member_data and member_data.get("code") == 200:
         total_members = member_data.get("data", {}).get("paging_info", {}).get("total_records", 0)
+    
+    # New members for the last 7 days (by member creation date)
+    week_start_dt = datetime.utcnow() - timedelta(days=7)
+    page = 1
+    max_scan_pages = 20
+    while page <= max_scan_pages:
+        members_page = icafe_get("/members", {
+            "page": page,
+            "sort_field": "member_create",
+            "sort_dir": "desc",
+        })
+        if not members_page or members_page.get("code") != 200:
+            break
+
+        data = members_page.get("data", {})
+        rows = data.get("members", []) or []
+        if not rows:
+            break
+
+        reached_older_rows = False
+        for m in rows:
+            created_raw = m.get("member_create_local", m.get("member_create", ""))
+            created_dt = parse_icafe_datetime(created_raw)
+            if not created_dt:
+                continue
+            if created_dt >= week_start_dt:
+                new_members_week += 1
+            else:
+                reached_older_rows = True
+
+        paging = data.get("paging_info", {}) or {}
+        total_pages = int(paging.get("total_pages", 0) or 0)
+        if reached_older_rows or (total_pages and page >= total_pages):
+            break
+        page += 1
 
     print(f"DEBUG: Active={active_pcs}, Total={total_pcs}, Today={today_revenue}")
     return jsonify({
         "today_revenue": today_revenue,
         "week_revenue": week_revenue,
         "total_members": total_members,
+        "new_members_week": new_members_week,
         "active_pcs": active_pcs,
         "total_pcs": total_pcs,
         "pc_load_percent": round(active_pcs / total_pcs * 100) if total_pcs else 0,

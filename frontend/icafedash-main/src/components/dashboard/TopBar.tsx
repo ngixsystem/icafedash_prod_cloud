@@ -21,7 +21,6 @@ const TopBar = ({ onOpenSettings }: TopBarProps) => {
       <div className="pl-12 lg:pl-0">
         <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
           Панель управления
-          <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-slate-400 font-mono tracking-normal">v2.4.0</span>
         </h2>
         <div className="hidden sm:flex items-center gap-2 mt-1.5">
           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00FF94]" />

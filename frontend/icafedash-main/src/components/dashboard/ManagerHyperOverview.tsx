@@ -44,6 +44,7 @@ function toIsoDay(value: string | undefined): string {
 const ManagerHyperOverview = () => {
   const [hoveredDayKey, setHoveredDayKey] = useState<string | null>(null);
   const [hoveredWeekKey, setHoveredWeekKey] = useState<string | null>(null);
+
   const { data: overview } = useQuery({
     queryKey: ["overview"],
     queryFn: api.overview,
@@ -77,6 +78,7 @@ const ManagerHyperOverview = () => {
         card.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
       });
     };
+
     document.addEventListener("mousemove", handleMouseMove);
     return () => document.removeEventListener("mousemove", handleMouseMove);
   }, []);
@@ -100,10 +102,12 @@ const ManagerHyperOverview = () => {
   const todayRevenue = overview?.today_revenue ?? 0;
   const weekRevenue = overview?.week_revenue ?? 0;
   const members = overview?.total_members ?? 0;
+  const newMembersWeek = overview?.new_members_week ?? 0;
   const activePcs = overview?.active_pcs ?? 0;
   const totalPcs = overview?.total_pcs ?? 0;
   const pcLoad = overview?.pc_load_percent ?? 0;
   const latencyMs = 12;
+
   const todayIso = new Date().toISOString().slice(0, 10);
   const todayIdx = dailyBars.findIndex((d) => toIsoDay(d.date) === todayIso);
   const safeTodayIdx = todayIdx >= 0 ? todayIdx : dailyBars.length - 1;
@@ -122,10 +126,13 @@ const ManagerHyperOverview = () => {
             <div className="w-12 h-12 rounded-2xl bg-[#00F0FF]/10 border border-[#00F0FF]/20 flex items-center justify-center text-[#00F0FF]">
               <Wallet className="w-6 h-6" />
             </div>
-            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 ${isTrendUp
-              ? "bg-[#00FF94]/10 border border-[#00FF94]/20 text-[#00FF94]"
-              : "bg-[#FF0055]/10 border border-[#FF0055]/20 text-[#FF0055]"
-              }`}>
+            <span
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 ${
+                isTrendUp
+                  ? "bg-[#00FF94]/10 border border-[#00FF94]/20 text-[#00FF94]"
+                  : "bg-[#FF0055]/10 border border-[#FF0055]/20 text-[#FF0055]"
+              }`}
+            >
               {isTrendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />} {trendLabel}
             </span>
           </div>
@@ -135,7 +142,10 @@ const ManagerHyperOverview = () => {
             <span className="text-sm text-slate-500 font-bold">сум</span>
           </div>
           <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#00F0FF] to-[#2B59F9] rounded-full shimmer-bar" style={{ width: `${Math.min(100, pcLoad + 54)}%` }} />
+            <div
+              className="h-full bg-gradient-to-r from-[#00F0FF] to-[#2B59F9] rounded-full shimmer-bar"
+              style={{ width: `${Math.min(100, pcLoad + 54)}%` }}
+            />
           </div>
         </div>
 
@@ -152,7 +162,7 @@ const ManagerHyperOverview = () => {
           </div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#BD00FF]/10 text-[10px] font-bold text-[#BD00FF] border border-[#BD00FF]/10">
             <span className="w-1.5 h-1.5 rounded-full bg-[#BD00FF] animate-pulse" />
-            +12 новых за неделю
+            +{newMembersWeek} новых за неделю
           </div>
         </div>
 
@@ -182,7 +192,11 @@ const ManagerHyperOverview = () => {
                   onMouseEnter={() => setHoveredWeekKey(weekKey)}
                   onMouseLeave={() => setHoveredWeekKey((prev) => (prev === weekKey ? null : prev))}
                 >
-                  <div className={`absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-2 py-1 rounded-lg border border-white/10 bg-[#0A0A0F]/95 text-[10px] font-bold text-white whitespace-nowrap transition-all duration-150 ${isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"}`}>
+                  <div
+                    className={`absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-2 py-1 rounded-lg border border-white/10 bg-[#0A0A0F]/95 text-[10px] font-bold text-white whitespace-nowrap transition-all duration-150 ${
+                      isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"
+                    }`}
+                  >
                     {day.day}: {formatMoney(day.value)} сум
                   </div>
                   <div
@@ -214,7 +228,10 @@ const ManagerHyperOverview = () => {
             <span className="text-white">{pcLoad}%</span>
           </div>
           <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#00FF94] to-emerald-400 rounded-full shadow-[0_0_10px_rgba(0,255,148,0.6)]" style={{ width: `${pcLoad}%` }} />
+            <div
+              className="h-full bg-gradient-to-r from-[#00FF94] to-emerald-400 rounded-full shadow-[0_0_10px_rgba(0,255,148,0.6)]"
+              style={{ width: `${pcLoad}%` }}
+            />
           </div>
         </div>
       </div>
@@ -239,7 +256,11 @@ const ManagerHyperOverview = () => {
                   onMouseEnter={() => setHoveredDayKey(dayKey)}
                   onMouseLeave={() => setHoveredDayKey((prev) => (prev === dayKey ? null : prev))}
                 >
-                  <div className={`absolute -top-2 -translate-y-full px-2 py-1 rounded-lg border border-white/10 bg-[#0A0A0F]/95 text-[10px] font-bold text-white whitespace-nowrap transition-all duration-150 ${isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"}`}>
+                  <div
+                    className={`absolute -top-2 -translate-y-full px-2 py-1 rounded-lg border border-white/10 bg-[#0A0A0F]/95 text-[10px] font-bold text-white whitespace-nowrap transition-all duration-150 ${
+                      isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"
+                    }`}
+                  >
                     {formatMoney(day.value)} сум
                   </div>
                   <div className="w-full bg-white/5 rounded-t-lg h-full flex items-end overflow-hidden">
