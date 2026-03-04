@@ -659,6 +659,18 @@ def _icafe_result_ok(result: dict | None) -> bool:
     return bool(result.get("success"))
 
 
+def _get_club_pcs_for_actions(club: Club | None) -> list[dict]:
+    if not club:
+        return []
+    # Prefer /pcs (new API), fallback to /pcList (legacy API)
+    raw = icafe_get_for_club(club, "/pcs", timeout=10)
+    pcs = parse_icafe_pcs(raw)
+    if pcs:
+        return pcs
+    raw = icafe_get_for_club(club, "/pcList", timeout=10)
+    return parse_icafe_pcs(raw)
+
+
 def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> dict:
     pc_names = []
     pc_full_names = []
@@ -678,15 +690,53 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
     if not club or not club.api_key or not club.cafe_id:
         return {"requested": True, "success": False, "message": "Club iCafe credentials are not configured"}
 
+    # Resolve exact names/ids from iCafe to avoid casing/format mismatches.
+    available_pcs = _get_club_pcs_for_actions(club)
+    by_name = {}
+    by_zone_and_name = {}
+    for pc in available_pcs:
+        name = str(pc.get("pc_name") or "").strip()
+        zone = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
+        if name:
+            by_name[name.casefold()] = pc
+        if name and zone:
+            by_zone_and_name[(zone.casefold(), name.casefold())] = pc
+
+    exact_names = []
+    id_list_int = []
+    for entry in pc_entries:
+        zone_name = str(entry.get("zone_name") or "").strip()
+        pc_name_raw = str(entry.get("pc_name") or "").strip()
+        pc_name = pc_name_raw.split("/")[-1].strip() if "/" in pc_name_raw else pc_name_raw
+        if not pc_name:
+            continue
+        found = None
+        if zone_name:
+            found = by_zone_and_name.get((zone_name.casefold(), pc_name.casefold()))
+        if not found:
+            found = by_name.get(pc_name.casefold())
+        if found:
+            exact_name = str(found.get("pc_name") or "").strip()
+            if exact_name and exact_name not in exact_names:
+                exact_names.append(exact_name)
+            pc_id = found.get("pc_icafe_id")
+            if pc_id is not None and pc_id not in id_list_int:
+                id_list_int.append(pc_id)
+
+    # If couldn't resolve from API, use normalized names from booking as fallback.
+    if not exact_names:
+        exact_names = list(pc_names)
+    id_list_str = [str(x) for x in id_list_int]
+
     # First attempt: send raw PC names directly (batch).
-    result_by_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_names}, timeout=12)
+    result_by_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": exact_names}, timeout=12)
     if _icafe_result_ok(result_by_names):
         return {"requested": True, "success": True, "mode": "names", "result": result_by_names}
 
     # Second attempt: one-by-one by PC name (some environments fail on batch payload).
     single_results = []
     single_all_ok = True
-    for name in pc_names:
+    for name in exact_names:
         r = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": [name]}, timeout=12)
         ok = _icafe_result_ok(r)
         single_results.append({"pc": name, "ok": ok, "result": r})
@@ -702,19 +752,6 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
             return {"requested": True, "success": True, "mode": "full_names", "result": result_by_full_names}
     else:
         result_by_full_names = None
-
-    # Fallback: resolve to PC IDs and try again if API expects IDs.
-    pc_raw = icafe_get_for_club(club, "/pcList", timeout=10)
-    all_pcs = parse_icafe_pcs(pc_raw)
-    id_list_int = []
-    id_list_str = []
-    for pc in all_pcs:
-        pc_name = str(pc.get("pc_name") or "").strip()
-        if pc_name and pc_name in pc_names:
-            pc_id = pc.get("pc_icafe_id")
-            if pc_id is not None and pc_id not in id_list_int:
-                id_list_int.append(pc_id)
-                id_list_str.append(str(pc_id))
 
     if id_list_str:
         result_by_ids_str = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list_str}, timeout=12)
@@ -742,6 +779,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
             {
                 "club_id": club.id if club else None,
                 "pc_names": pc_names,
+                "exact_names": exact_names,
                 "pc_full_names": pc_full_names,
                 "result_by_names": result_by_names,
                 "result_by_single_names": single_results,
