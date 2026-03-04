@@ -1,0 +1,305 @@
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Activity,
+  BarChart3,
+  Cloud,
+  MonitorPlay,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  Wallet,
+} from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { api, formatMoney } from "@/lib/api";
+
+const ManagerHyperOverview = () => {
+  const { data: overview } = useQuery({
+    queryKey: ["overview"],
+    queryFn: api.overview,
+    refetchInterval: 30_000,
+  });
+
+  const { data: dailyChart } = useQuery({
+    queryKey: ["dailyChart"],
+    queryFn: api.dailyChart,
+    refetchInterval: 60_000,
+  });
+
+  const { data: monthlyChart } = useQuery({
+    queryKey: ["monthlyChart"],
+    queryFn: api.monthlyChart,
+    refetchInterval: 120_000,
+  });
+
+  const { data: incomeByMonth } = useQuery({
+    queryKey: ["monthlyAggregatedIncome"],
+    queryFn: api.getMonthlyAggregatedIncome,
+    refetchInterval: 600_000,
+  });
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const cards = document.querySelectorAll<HTMLElement>(".glass-card");
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty("--mouse-x", `${event.clientX - rect.left}px`);
+        card.style.setProperty("--mouse-y", `${event.clientY - rect.top}px`);
+      });
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    return () => document.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const dailyBars = dailyChart?.days ?? [];
+  const maxDaily = Math.max(...dailyBars.map((d) => d.value), 1);
+  const monthBars = (incomeByMonth?.data ?? []).slice(-6);
+  const monthTotal = monthBars.reduce((sum, item) => sum + item.amount, 0);
+
+  const lineData =
+    monthlyChart?.points.map((point, i) => ({
+      x: i + 1,
+      cash: point.cash,
+      balance: point.balance,
+      date: point.date,
+    })) ?? [];
+
+  const totalCash = monthlyChart?.total_cash ?? 0;
+  const totalBalance = monthlyChart?.total_balance ?? 0;
+  const todayRevenue = overview?.today_revenue ?? 0;
+  const weekRevenue = overview?.week_revenue ?? 0;
+  const members = overview?.total_members ?? 0;
+  const activePcs = overview?.active_pcs ?? 0;
+  const totalPcs = overview?.total_pcs ?? 0;
+  const pcLoad = overview?.pc_load_percent ?? 0;
+  const latencyMs = 12;
+
+  return (
+    <div className="max-w-[1920px] mx-auto space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
+        <div className="glass-card rounded-3xl p-6 group">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-[#00F0FF]/10 border border-[#00F0FF]/20 flex items-center justify-center text-[#00F0FF]">
+              <Wallet className="w-6 h-6" />
+            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-[#00FF94]/10 border border-[#00FF94]/20 text-[#00FF94] text-xs font-bold inline-flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" /> +12.5%
+            </span>
+          </div>
+          <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 font-mono">Выручка сегодня</h3>
+          <div className="flex items-baseline gap-2 mb-4">
+            <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{formatMoney(todayRevenue)}</span>
+            <span className="text-sm text-slate-500 font-bold">UZS</span>
+          </div>
+          <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-[#00F0FF] to-[#2B59F9] rounded-full shimmer-bar" style={{ width: `${Math.min(100, pcLoad + 54)}%` }} />
+          </div>
+        </div>
+
+        <div className="glass-card rounded-3xl p-6 group">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-[#BD00FF]/10 border border-[#BD00FF]/20 flex items-center justify-center text-[#BD00FF]">
+              <Users className="w-6 h-6" />
+            </div>
+          </div>
+          <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 font-mono">Участники клуба</h3>
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{formatMoney(members)}</span>
+            <span className="text-sm text-slate-500 font-bold">PERS</span>
+          </div>
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#BD00FF]/10 text-[10px] font-bold text-[#BD00FF] border border-[#BD00FF]/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#BD00FF] animate-pulse" />
+            +12 новых за неделю
+          </div>
+        </div>
+
+        <div className="glass-card rounded-3xl p-6 group">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-[#2B59F9]/10 border border-[#2B59F9]/20 flex items-center justify-center text-[#2B59F9]">
+              <BarChart3 className="w-6 h-6" />
+            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">
+              Weekly
+            </span>
+          </div>
+          <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 font-mono">Доход за неделю</h3>
+          <div className="flex items-baseline gap-2 mb-4">
+            <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{(weekRevenue / 1_000_000).toFixed(1)}M</span>
+            <span className="text-sm text-slate-500 font-bold">UZS</span>
+          </div>
+          <div className="h-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dailyBars}>
+                <Bar dataKey="value" fill="#2B59F9" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-3xl p-6 group">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-[#00FF94]/10 border border-[#00FF94]/20 flex items-center justify-center text-[#00FF94]">
+              <MonitorPlay className="w-6 h-6" />
+            </div>
+            <span className="relative w-2.5 h-2.5 bg-[#00FF94] rounded-full shadow-[0_0_10px_#00FF94]">
+              <span className="status-ping bg-[#00FF94]" />
+            </span>
+          </div>
+          <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 font-mono">Активные ПК</h3>
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{activePcs}</span>
+            <span className="text-xl text-slate-500 font-medium">/ {totalPcs}</span>
+          </div>
+          <div className="flex justify-between text-xs mb-2 font-medium">
+            <span className="text-[#00FF94]">Загрузка</span>
+            <span className="text-white">{pcLoad}%</span>
+          </div>
+          <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-[#00FF94] to-emerald-400 rounded-full shadow-[0_0_10px_rgba(0,255,148,0.6)]" style={{ width: `${pcLoad}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="xl:col-span-3 glass-card rounded-3xl p-6 flex flex-col min-h-[320px]">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h3 className="font-bold text-lg text-white">Доход по дням</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Текущая неделя</p>
+            </div>
+          </div>
+          <div className="flex-1 flex items-end justify-between gap-2 px-1">
+            {dailyBars.map((day) => {
+              const h = Math.max(12, Math.round((day.value / maxDaily) * 100));
+              return (
+                <div key={`${day.day}-${day.date}`} className="flex flex-col items-center gap-3 flex-1 h-full justify-end">
+                  <div className="w-full bg-white/5 rounded-t-lg h-full flex items-end overflow-hidden">
+                    <div className="w-full bg-gradient-to-t from-[#00F0FF]/20 to-[#00F0FF] rounded-t-lg transition-all duration-500" style={{ height: `${h}%` }} />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-500 font-mono uppercase">{day.day}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="xl:col-span-6 glass-card rounded-3xl p-0 overflow-hidden flex flex-col min-h-[320px]">
+          <div className="p-6 lg:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-2xl font-bold text-white">Общий доход</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Динамика за 30 дней</p>
+            </div>
+            <div className="flex gap-8">
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 font-mono">TOTAL CASH</p>
+                <p className="text-2xl font-bold text-white">{(totalCash / 1_000_000).toFixed(1)}M</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 font-mono">BALANCE</p>
+                <p className="text-2xl font-bold text-[#00FF94]">{formatMoney(totalBalance)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 min-h-[220px] px-3 pb-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={lineData}>
+                <defs>
+                  <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#BD00FF" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#BD00FF" stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                <XAxis dataKey="x" tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{ background: "#0A0A0F", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
+                  formatter={(v: number) => `${formatMoney(v)} UZS`}
+                  labelFormatter={(label) => `Точка ${label}`}
+                />
+                <Area type="monotone" dataKey="cash" stroke="#BD00FF" fill="url(#cashGrad)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="xl:col-span-3 glass-card rounded-3xl p-6 flex flex-col min-h-[320px]">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-white text-lg">По месяцам</h3>
+            <span className="text-[10px] font-bold bg-[#2B59F9]/10 text-[#2B59F9] px-2 py-1 rounded border border-[#2B59F9]/20 uppercase tracking-wider font-mono">TOTAL</span>
+          </div>
+          <div className="mb-6">
+            <h2 className="text-4xl font-bold text-white tracking-tight">{(monthTotal / 1_000_000).toFixed(1)}M</h2>
+            <p className="text-[10px] text-[#00F0FF] mt-1 font-bold uppercase tracking-wider font-mono">Total Revenue</p>
+          </div>
+          <div className="flex-1 h-[180px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthBars}>
+                <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{ background: "#0A0A0F", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12 }}
+                  formatter={(v: number) => `${formatMoney(v)} UZS`}
+                />
+                <Bar dataKey="amount" fill="#00F0FF" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="glass-card rounded-2xl p-5 flex items-center justify-between border-l-4 border-[#00FF94]">
+          <div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 font-mono">System Status</div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#00FF94]" />
+              <span className="text-sm font-bold text-white">All Systems Operational</span>
+            </div>
+          </div>
+          <Activity className="w-5 h-5 text-[#00FF94]" />
+        </div>
+
+        <div className="glass-card rounded-2xl p-5 flex items-center justify-between border-l-4 border-[#00F0FF]">
+          <div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 font-mono">iCafe Cloud</div>
+            <div className="flex items-center gap-2">
+              <Cloud className="w-4 h-4 text-[#00F0FF]" />
+              <span className="text-sm font-bold text-white">Synchronized</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="block text-[10px] text-slate-500 font-bold font-mono">PING</span>
+            <span className="text-xs font-mono font-bold text-[#00F0FF]">{latencyMs}ms</span>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-5 flex items-center justify-between border-l-4 border-[#BD00FF]">
+          <div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 font-mono">API Gateway</div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#BD00FF]" />
+              <span className="text-sm font-bold text-white">Secure Connection</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="block text-[10px] text-slate-500 font-bold font-mono">UPTIME</span>
+            <span className="text-xs font-mono font-bold text-[#BD00FF]">99.9%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ManagerHyperOverview;
