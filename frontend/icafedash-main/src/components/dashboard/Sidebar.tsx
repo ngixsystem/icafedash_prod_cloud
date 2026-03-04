@@ -12,6 +12,7 @@ import {
   MessageSquare,
   CalendarClock,
   QrCode,
+  Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -111,7 +112,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     <>
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 lg:hidden rounded-lg bg-card p-2 text-muted-foreground"
+        className="fixed top-4 left-4 z-50 lg:hidden rounded-lg glass-panel p-2 text-muted-foreground"
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -124,27 +125,25 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       )}
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-60 border-r border-border bg-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 left-0 z-50 h-full w-[85vw] max-w-xs glass-panel border-r border-white/5 flex flex-col transition-transform duration-300 lg:w-64 lg:max-w-none lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-border/50 mb-2">
+        <div className="h-20 flex items-center gap-3 px-6 border-b border-white/5">
           {clubLogo ? (
-            <img src={clubLogo} alt="Logo" className="h-8 w-8 rounded-lg object-contain" />
+            <img src={clubLogo} alt="Logo" className="h-10 w-10 rounded-lg object-contain" />
           ) : (
-            <img src="/logo.png" alt="iCafeDash" className="h-8 object-contain drop-shadow-[0_0_10px_rgba(45,212,191,0.5)]" />
+            <img src="/logo.png" alt="iCafeDash" className="h-10 object-contain drop-shadow-[0_0_10px_rgba(45,212,191,0.5)]" />
           )}
-          {clubLogo && (
-            <span className="text-lg font-bold text-foreground truncate">{clubName}</span>
-          )}
+          <span className="text-base font-semibold text-white truncate">{clubName}</span>
           <button
             onClick={() => setMobileOpen(false)}
-            className="ml-auto lg:hidden text-muted-foreground"
+            className="ml-auto lg:hidden text-gray-400"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
           {displayNavItems.map((item) => (
             <button
               key={item.label}
@@ -152,9 +151,9 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 onTabChange(item.label);
                 setMobileOpen(false);
               }}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === item.label
-                ? "bg-primary/20 text-primary"
-                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className={`group relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${activeTab === item.label
+                ? "bg-gradient-to-r from-primary/15 to-transparent text-primary border-l-2 border-primary"
+                : "text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
                 }`}
             >
               <item.icon className="h-5 w-5" />
@@ -167,6 +166,25 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
             </button>
           ))}
         </nav>
+
+        {!isAdmin && (
+          <div className="p-6 border-t border-white/5">
+            <div className="glass-panel p-4 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <span className="w-2 h-2 absolute top-0 right-0 bg-emerald-400 rounded-full animate-pulse" />
+                  <div className="w-8 h-8 rounded-full bg-slate-700/70 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">System</p>
+                  <p className="text-sm font-semibold text-emerald-400">Online</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );

@@ -21,13 +21,13 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState(isAdmin ? "Клубы" : "Обзор");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen text-gray-300">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="lg:ml-60">
+      <div className="relative lg:ml-64 min-h-screen overflow-hidden">
         <TopBar onOpenSettings={() => setActiveTab("Настройки")} />
 
-        <main className="px-4 pb-8 lg:px-6">
+        <main className="px-4 pb-8 lg:px-8 lg:pt-2">
           {activeTab === "Обзор" ? (
             <div className="flex flex-col xl:flex-row gap-6">
               <div className="flex-1 space-y-6">

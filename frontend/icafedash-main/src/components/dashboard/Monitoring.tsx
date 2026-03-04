@@ -22,7 +22,7 @@ const Monitoring = () => {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Мониторинг</h2>
                     <p className="text-muted-foreground">Интерактивная карта клуба</p>
@@ -30,25 +30,25 @@ const Monitoring = () => {
                 <button
                     onClick={() => refetch()}
                     disabled={isFetching}
-                    className="inline-flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
+                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
                 >
                     <RefreshCcw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                     Обновить
                 </button>
             </div>
 
-            <div className="relative rounded-xl border border-border bg-card p-6 min-h-[600px] overflow-auto">
+            <div className="relative rounded-xl border border-border bg-card p-3 sm:p-6 min-h-[420px] sm:min-h-[600px] overflow-auto">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
                         <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                         <p className="text-sm text-muted-foreground">Загрузка карты...</p>
                     </div>
                 ) : (
-                    <div className="relative w-fit h-fit min-w-full min-h-[500px]">
+                    <div className="relative w-fit h-fit min-w-full min-h-[380px] sm:min-h-[500px]">
                         {pcs.map((pc) => (
                             <div
                                 key={pc.id}
-                                className={`absolute w-16 h-16 rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-all hover:scale-110 cursor-pointer shadow-lg
+                                className={`absolute w-14 h-14 sm:w-16 sm:h-16 rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-all hover:scale-110 cursor-pointer shadow-lg
                   ${pc.status === "busy"
                                         ? "border-orange-500/50 bg-orange-500/10 text-orange-500"
                                         : pc.status === "offline"
@@ -79,8 +79,8 @@ const Monitoring = () => {
                                         <UserRound className="h-2.5 w-2.5" />
                                     </span>
                                 )}
-                                <Monitor className="h-4 w-4 mb-1" />
-                                <span className="text-[10px] font-bold truncate w-full text-center">
+                                <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4 mb-1" />
+                                <span className="text-[9px] sm:text-[10px] font-bold truncate w-full text-center">
                                     {pc.name}
                                 </span>
                                 {pc.time_left && (
