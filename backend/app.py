@@ -656,7 +656,18 @@ def _icafe_result_ok(result: dict | None) -> bool:
             return True
     except Exception:
         pass
-    return bool(result.get("success"))
+    success_value = result.get("success")
+    if isinstance(success_value, bool):
+        return success_value
+    if isinstance(success_value, (int, float)):
+        return success_value == 1
+    if isinstance(success_value, str):
+        normalized = success_value.strip().lower()
+        if normalized in ("true", "1", "ok", "success", "yes"):
+            return True
+        if normalized in ("false", "0", "fail", "error", "no"):
+            return False
+    return False
 
 
 def _get_club_pcs_for_actions(club: Club | None) -> list[dict]:

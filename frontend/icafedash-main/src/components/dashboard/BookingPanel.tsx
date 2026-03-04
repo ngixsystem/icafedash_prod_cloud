@@ -325,7 +325,7 @@ const BookingPanel = ({ searchQuery = "" }: BookingPanelProps) => {
     setUpdatingId(bookingId);
     try {
       const response = await api.updateBookingStatus(bookingId, status);
-      if (status === "approved" && response.maintenance?.requested && response.maintenance?.success === false) {
+      if (status === "approved" && response.maintenance?.requested && response.maintenance?.success !== true) {
         const m = response.maintenance;
         const details = [
           m?.message ? `Причина: ${m.message}` : "",
@@ -344,6 +344,8 @@ const BookingPanel = ({ searchQuery = "" }: BookingPanelProps) => {
         window.alert(
           `Заявка активирована, но ПК не удалось перевести в ремонт.\n${details || "Проверьте ключ iCafeCloud и права на управление ПК."}`,
         );
+      } else if (status === "approved") {
+        window.alert("Заявка успешно активирована.");
       }
       await refetch();
     } catch (err) {
