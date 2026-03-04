@@ -1,9 +1,21 @@
-import { useState } from "react";
-import { CalendarClock, Phone, User, Monitor, MapPin, RefreshCw } from "lucide-react";
+﻿import { useMemo, useState } from "react";
+import {
+  CalendarClock,
+  Clock3,
+  MapPin,
+  Monitor,
+  Phone,
+  Plus,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, type DashboardBooking } from "@/lib/api";
 
-function formatDate(value: string | null): string {
+type FilterKey = "all" | "active" | "pending" | "cancelled";
+
+function formatDateTime(value: string | null): string {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
@@ -16,21 +28,86 @@ function formatDate(value: string | null): string {
   });
 }
 
-function statusUi(status: string) {
+function formatCardTime(value: string | null): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "U";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+}
+
+function statusUi(status: string): {
+  label: string;
+  chipClass: string;
+  borderClass: string;
+  accentClass: string;
+  isActive: boolean;
+} {
   if (status === "approved") {
-    return { label: "Подтверждено", className: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" };
+    return {
+      label: "Активен",
+      chipClass: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30",
+      borderClass: "group-hover:border-emerald-500/50",
+      accentClass: "bg-emerald-500/80 group-hover:bg-emerald-500",
+      isActive: true,
+    };
   }
   if (status === "rejected") {
-    return { label: "Отказано", className: "bg-rose-500/20 text-rose-300 border border-rose-500/40" };
+    return {
+      label: "Отклонено",
+      chipClass: "bg-rose-500/10 text-rose-300 border border-rose-500/30",
+      borderClass: "group-hover:border-rose-500/50",
+      accentClass: "bg-rose-500/50 group-hover:bg-rose-500",
+      isActive: false,
+    };
   }
   if (status === "cancelled") {
-    return { label: "Отменено", className: "bg-slate-500/20 text-slate-300 border border-slate-500/40" };
+    return {
+      label: "Отменено",
+      chipClass: "bg-rose-500/10 text-rose-300 border border-rose-500/30",
+      borderClass: "group-hover:border-rose-500/50",
+      accentClass: "bg-rose-500/50 group-hover:bg-rose-500",
+      isActive: false,
+    };
   }
-  return { label: "Ожидание", className: "bg-amber-500/20 text-amber-300 border border-amber-500/40" };
+  return {
+    label: "Ожидание",
+    chipClass: "bg-amber-500/10 text-amber-300 border border-amber-500/30",
+    borderClass: "group-hover:border-amber-500/50",
+    accentClass: "bg-amber-500/60 group-hover:bg-amber-400",
+    isActive: false,
+  };
+}
+
+function trend(nowValue: number, prevValue: number) {
+  if (prevValue <= 0) {
+    return {
+      value: nowValue > 0 ? 100 : 0,
+      up: nowValue >= prevValue,
+    };
+  }
+  const raw = ((nowValue - prevValue) / prevValue) * 100;
+  return {
+    value: Math.abs(raw),
+    up: raw >= 0,
+  };
 }
 
 const BookingPanel = () => {
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["manager_bookings"],
     queryFn: api.managerBookings,
@@ -38,8 +115,100 @@ const BookingPanel = () => {
     refetchOnWindowFocus: true,
   });
 
-  const bookings = data?.bookings || [];
-  const summary = data?.summary || { count: 0, pending_count: 0, cancelled_count: 0 };
+  const bookings = useMemo(() => {
+    return [...(data?.bookings ?? [])].sort((a, b) => {
+      const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bDate - aDate;
+    });
+  }, [data?.bookings]);
+
+  const summary = useMemo(() => {
+    const count = bookings.length;
+    const pending = bookings.filter((x) => x.status === "pending").length;
+    const cancelled = bookings.filter((x) => x.status === "cancelled" || x.status === "rejected").length;
+    const active = bookings.filter((x) => x.status === "approved").length;
+    return {
+      count,
+      pending,
+      cancelled,
+      active,
+    };
+  }, [bookings]);
+
+  const trendStats = useMemo(() => {
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const nowStart = now - day;
+    const prevStart = now - 2 * day;
+
+    const inRange = (booking: DashboardBooking, from: number, to: number) => {
+      if (!booking.created_at) return false;
+      const t = new Date(booking.created_at).getTime();
+      if (Number.isNaN(t)) return false;
+      return t >= from && t < to;
+    };
+
+    const nowAll = bookings.filter((x) => inRange(x, nowStart, now)).length;
+    const prevAll = bookings.filter((x) => inRange(x, prevStart, nowStart)).length;
+
+    const nowPending = bookings.filter((x) => x.status === "pending" && inRange(x, nowStart, now)).length;
+    const prevPending = bookings.filter((x) => x.status === "pending" && inRange(x, prevStart, nowStart)).length;
+
+    const nowCancelled = bookings.filter(
+      (x) => (x.status === "cancelled" || x.status === "rejected") && inRange(x, nowStart, now),
+    ).length;
+    const prevCancelled = bookings.filter(
+      (x) => (x.status === "cancelled" || x.status === "rejected") && inRange(x, prevStart, nowStart),
+    ).length;
+
+    return {
+      all: trend(nowAll, prevAll),
+      pending: trend(nowPending, prevPending),
+      cancelled: trend(nowCancelled, prevCancelled),
+    };
+  }, [bookings]);
+
+  const activity24h = useMemo(() => {
+    const bucketCount = 8;
+    const buckets = Array.from({ length: bucketCount }, () => ({ blue: 0, rose: 0 }));
+    const now = Date.now();
+    const from = now - 24 * 60 * 60 * 1000;
+    const bucketMs = (24 * 60 * 60 * 1000) / bucketCount;
+
+    bookings.forEach((booking) => {
+      if (!booking.created_at) return;
+      const t = new Date(booking.created_at).getTime();
+      if (Number.isNaN(t) || t < from || t > now) return;
+      const idx = Math.min(bucketCount - 1, Math.floor((t - from) / bucketMs));
+      if (booking.status === "cancelled" || booking.status === "rejected") {
+        buckets[idx].rose += 1;
+      } else {
+        buckets[idx].blue += 1;
+      }
+    });
+
+    const maxTotal = Math.max(1, ...buckets.map((x) => x.blue + x.rose));
+    return buckets.map((x) => ({
+      bluePercent: Math.max(10, Math.round((x.blue / maxTotal) * 100)),
+      rosePercent: Math.round((x.rose / maxTotal) * 100),
+      totalPercent: Math.max(16, Math.round(((x.blue + x.rose) / maxTotal) * 100)),
+    }));
+  }, [bookings]);
+
+  const filterButtons: Array<{ key: FilterKey; label: string; dot: string | null }> = [
+    { key: "all", label: "Все заявки", dot: null },
+    { key: "active", label: "Активные", dot: "bg-emerald-500" },
+    { key: "pending", label: "В ожидании", dot: "bg-amber-400" },
+    { key: "cancelled", label: "Отмененные", dot: "bg-rose-500" },
+  ];
+
+  const filteredBookings = useMemo(() => {
+    if (activeFilter === "active") return bookings.filter((x) => x.status === "approved");
+    if (activeFilter === "pending") return bookings.filter((x) => x.status === "pending");
+    if (activeFilter === "cancelled") return bookings.filter((x) => x.status === "cancelled" || x.status === "rejected");
+    return bookings;
+  }, [activeFilter, bookings]);
 
   const handleStatusUpdate = async (bookingId: number, status: "approved" | "rejected") => {
     setUpdatingId(bookingId);
@@ -68,143 +237,290 @@ const BookingPanel = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <section className="space-y-6 md:space-y-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarClock className="h-6 w-6 text-primary" />
-            Бронирование
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Менеджер подтверждает или отклоняет входящие бронирования клиентов
+          <div className="mb-2 flex items-center gap-3">
+            <span className="rounded-lg bg-blue-500/10 p-2 text-blue-400">
+              <CalendarClock className="h-6 w-6" />
+            </span>
+            <h2 className="text-2xl font-bold tracking-tight text-white">Бронирование</h2>
+          </div>
+          <p className="max-w-xl text-sm text-slate-400">
+            Менеджер подтверждает или отклоняет входящие бронирования клиентов в реальном времени.
           </p>
         </div>
         <button
           type="button"
           onClick={() => refetch()}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-accent transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#2A2E45] bg-[#1F2235] px-4 py-2 text-sm text-slate-300 transition-all hover:border-[#3a4060] hover:bg-[#2A2E45]"
         >
-          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-4 w-4 transition-transform ${isFetching ? "animate-spin" : ""}`} />
           Обновить
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="text-sm text-muted-foreground">Всего заявок</div>
-          <div className="mt-1 text-2xl font-bold">{summary.count}</div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:col-span-8">
+          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] p-5 backdrop-blur-xl">
+            <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full bg-blue-500/10 blur-3xl" />
+            <div className="relative z-10">
+              <div className="text-sm font-medium text-slate-400">Всего заявок</div>
+              <div className="mt-1 text-4xl font-bold text-white">{summary.count}</div>
+              <div className="mt-4 flex h-10 items-end gap-1 opacity-70">
+                {activity24h.slice(0, 6).map((item, idx) => (
+                  <div key={`all-${idx}`} className="h-full flex-1 rounded-t-sm bg-blue-500/20">
+                    <div className="h-full rounded-t-sm bg-blue-500" style={{ height: `${item.totalPercent}%` }} />
+                  </div>
+                ))}
+              </div>
+              <div
+                className={`absolute bottom-0 right-0 inline-flex items-center gap-1 text-xs font-mono ${trendStats.all.up ? "text-blue-400" : "text-rose-400"}`}
+              >
+                {trendStats.all.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {trendStats.all.up ? "+" : "-"}
+                {trendStats.all.value.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] p-5 backdrop-blur-xl">
+            <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full bg-amber-400/10 blur-3xl" />
+            <div className="relative z-10">
+              <div className="text-sm font-medium text-slate-400">Ожидают решения</div>
+              <div className="mt-1 text-4xl font-bold text-white">{summary.pending}</div>
+              <div className="mt-4 h-10">
+                <svg className="h-full w-full text-amber-300/70" viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <path d="M0 35 Q 25 35 50 35 T 100 35" fill="none" stroke="currentColor" strokeDasharray="4 2" strokeWidth="2" />
+                </svg>
+              </div>
+              <div
+                className={`absolute bottom-0 right-0 inline-flex items-center gap-1 text-xs font-mono ${
+                  trendStats.pending.up ? "text-amber-300" : "text-rose-400"
+                }`}
+              >
+                {trendStats.pending.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {trendStats.pending.up ? "+" : "-"}
+                {trendStats.pending.value.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] p-5 shadow-[0_0_20px_rgba(244,63,94,0.15)] backdrop-blur-xl">
+            <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full bg-rose-500/10 blur-3xl" />
+            <div className="relative z-10">
+              <div className="text-sm font-medium text-slate-400">Отменено</div>
+              <div className="mt-1 text-4xl font-bold text-white">{summary.cancelled}</div>
+              <div className="mt-4 flex h-10 items-end gap-1">
+                {activity24h.slice(0, 6).map((item, idx) => (
+                  <div key={`cancel-${idx}`} className="h-full flex-1 rounded-t-sm bg-rose-500/20">
+                    <div className="rounded-t-sm bg-rose-500" style={{ height: `${Math.max(18, item.rosePercent)}%` }} />
+                  </div>
+                ))}
+              </div>
+              <div
+                className={`absolute bottom-0 right-0 inline-flex items-center gap-1 text-xs font-mono ${
+                  trendStats.cancelled.up ? "text-rose-300" : "text-emerald-400"
+                }`}
+              >
+                {trendStats.cancelled.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {trendStats.cancelled.up ? "+" : "-"}
+                {trendStats.cancelled.value.toFixed(1)}%
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
-          <div className="text-sm text-amber-300">Ожидают решения</div>
-          <div className="mt-1 text-2xl font-bold text-amber-200">{summary.pending_count}</div>
-        </div>
-        <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4">
-          <div className="text-sm text-rose-300">Отменено</div>
-          <div className="mt-1 text-2xl font-bold text-rose-200">{summary.cancelled_count}</div>
+
+        <div className="rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] p-5 backdrop-blur-xl lg:col-span-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Активность за 24ч</h3>
+            <div className="flex gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-500" />
+              <span className="h-2 w-2 rounded-full bg-rose-500" />
+            </div>
+          </div>
+          <div className="flex h-40 items-end gap-2 px-1">
+            {activity24h.map((bucket, idx) => (
+              <div key={idx} className="relative h-full flex-1 overflow-hidden rounded-t bg-[#1F2235]">
+                <div className="absolute bottom-0 w-full rounded-t bg-blue-500/80" style={{ height: `${bucket.bluePercent}%` }} />
+                {bucket.rosePercent > 0 ? (
+                  <div
+                    className="absolute w-full rounded-t border-b border-[#151725] bg-rose-500/80"
+                    style={{ height: `${bucket.rosePercent}%`, bottom: `${bucket.bluePercent}%` }}
+                  />
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex justify-between border-t border-white/10 pt-2 text-[10px] font-mono text-slate-500">
+            <span>00:00</span>
+            <span>06:00</span>
+            <span>12:00</span>
+            <span>18:00</span>
+          </div>
         </div>
       </div>
 
+      <div className="flex items-center gap-4 overflow-x-auto pb-2">
+        {filterButtons.map((button) => {
+          const active = activeFilter === button.key;
+          return (
+            <button
+              key={button.key}
+              type="button"
+              onClick={() => setActiveFilter(button.key)}
+              className={
+                active
+                  ? "whitespace-nowrap rounded-full bg-white px-4 py-1.5 text-sm font-medium text-[#0B0C15] shadow-lg shadow-white/10"
+                  : "inline-flex whitespace-nowrap rounded-full border border-[#2A2E45] bg-[#1F2235] px-4 py-1.5 text-sm font-medium text-slate-400 transition-all hover:border-[#3a4060] hover:bg-[#2A2E45] hover:text-white"
+              }
+            >
+              {button.dot ? <span className={`mr-2 mt-1 h-1.5 w-1.5 rounded-full ${button.dot}`} /> : null}
+              {button.label}
+            </button>
+          );
+        })}
+      </div>
+
       {isLoading ? (
-        <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+        <div className="rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] p-5 text-sm text-slate-400">
           Загрузка бронирований...
         </div>
-      ) : bookings.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
-          Пока нет заявок на бронирование
+      ) : filteredBookings.length === 0 ? (
+        <div className="rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] p-5 text-sm text-slate-400">
+          По выбранному фильтру заявок нет.
         </div>
       ) : (
-        <div className="space-y-3">
-          {bookings.map((booking) => {
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredBookings.map((booking) => {
             const current = statusUi(booking.status);
             const isPending = booking.status === "pending";
+            const canCancel = booking.status === "pending" || booking.status === "approved";
+            const equipmentText = booking.pc_names.length > 1 ? `Multi (${booking.pc_names.length})` : booking.pc_names[0] ?? "PC";
+
             return (
-              <div key={booking.id} className="rounded-xl border border-border bg-card p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-foreground">Заявка #{booking.id}</div>
-                  <div className="text-xs text-muted-foreground">{formatDate(booking.created_at)}</div>
-                </div>
+              <div
+                key={booking.id}
+                className={`group relative overflow-hidden rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] transition-all duration-300 ${current.borderClass}`}
+              >
+                <div className={`absolute left-0 top-0 h-full w-1 ${current.accentClass}`} />
 
-                <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                  <div className="inline-flex items-center gap-2 text-foreground">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    {booking.client_name}
+                <div className="p-4">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-slate-400 transition-colors group-hover:text-white">#{booking.id}</span>
+                      <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${current.chipClass}`}>
+                        {current.label}
+                      </span>
+                    </div>
+                    <span className="font-mono text-xs text-slate-500">{formatCardTime(booking.created_at)}</span>
                   </div>
-                  <div className="inline-flex items-center gap-2 text-foreground">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    {booking.phone}
-                  </div>
-                  <div className="inline-flex items-center gap-2 text-foreground">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    {booking.zone_name}
-                  </div>
-                  <div className="inline-flex items-center gap-2 text-foreground">
-                    <Monitor className="h-4 w-4 text-muted-foreground" />
-                    {booking.pc_names.join(", ")}
-                  </div>
-                </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {booking.duration ? (
-                    <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
-                      {booking.duration}
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-600 bg-gradient-to-b from-slate-700 to-slate-800 text-sm font-bold text-white shadow-lg">
+                      {getInitials(booking.client_name || booking.username || "U")}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-bold text-white">{booking.client_name || booking.username || "Без имени"}</div>
+                      <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
+                        <Phone className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{booking.phone || "-"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-3 grid grid-cols-2 gap-2">
+                    <div className="rounded border border-white/10 bg-[#151725]/70 p-2">
+                      <div className="text-[10px] uppercase text-slate-500">Локация</div>
+                      <div className="flex items-center gap-1 text-xs font-medium text-slate-300">
+                        <MapPin className="h-3 w-3 text-cyan-400" />
+                        <span className="truncate">{booking.zone_name || "-"}</span>
+                      </div>
+                    </div>
+                    <div className="rounded border border-white/10 bg-[#151725]/70 p-2">
+                      <div className="text-[10px] uppercase text-slate-500">Оборудование</div>
+                      <div className="flex items-center gap-1 text-xs font-medium text-slate-300" title={booking.pc_names.join(", ")}>
+                        <Monitor className="h-3 w-3 text-violet-400" />
+                        <span className="truncate">{equipmentText}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-white/10 pt-3 text-xs">
+                    <span className="text-slate-500">
+                      Длительность: <span className="text-white">{booking.duration || "1 час"}</span>
                     </span>
+                    {current.isActive ? (
+                      <div className="flex items-end gap-0.5">
+                        <div className="h-1.5 w-1 bg-emerald-500/30" />
+                        <div className="h-2.5 w-1 bg-emerald-500/50" />
+                        <div className="h-3.5 w-1 animate-pulse bg-emerald-500" />
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-slate-500">
+                        <Clock3 className="h-3 w-3" />
+                        {formatDateTime(booking.created_at)}
+                      </span>
+                    )}
+                  </div>
+
+                  {booking.status === "cancelled" && booking.cancellation_reason ? (
+                    <div className="mt-3 rounded border border-rose-500/20 bg-rose-500/5 px-2 py-1.5">
+                      <div className="mb-0.5 text-[10px] text-rose-300/70">Причина отмены</div>
+                      <div className="text-xs text-slate-300">{booking.cancellation_reason}</div>
+                    </div>
                   ) : null}
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${current.className}`}>
-                    {current.label}
-                  </span>
+
+                  {isPending ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={updatingId === booking.id}
+                        onClick={() => handleStatusUpdate(booking.id, "approved")}
+                        className="rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/30 disabled:opacity-60"
+                      >
+                        Подтвердить
+                      </button>
+                      <button
+                        type="button"
+                        disabled={updatingId === booking.id}
+                        onClick={() => handleStatusUpdate(booking.id, "rejected")}
+                        className="rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-200 transition-colors hover:bg-rose-500/30 disabled:opacity-60"
+                      >
+                        Отказать
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {canCancel ? (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        disabled={updatingId === booking.id}
+                        onClick={() => handleCancel(booking.id)}
+                        className="rounded-lg border border-[#2A2E45] bg-[#1F2235] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-[#2A2E45] disabled:opacity-60"
+                      >
+                        Отменить с причиной
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-
-                {booking.status === "cancelled" && booking.cancellation_reason ? (
-                  <div className="mt-3 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
-                    Причина отмены: {booking.cancellation_reason}
-                  </div>
-                ) : null}
-
-                {isPending ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={updatingId === booking.id}
-                      onClick={() => handleStatusUpdate(booking.id, "approved")}
-                      className="rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-60"
-                    >
-                      Подтвердить
-                    </button>
-                    <button
-                      type="button"
-                      disabled={updatingId === booking.id}
-                      onClick={() => handleStatusUpdate(booking.id, "rejected")}
-                      className="rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-500/30 disabled:opacity-60"
-                    >
-                      Отказать
-                    </button>
-                    <button
-                      type="button"
-                      disabled={updatingId === booking.id}
-                      onClick={() => handleCancel(booking.id)}
-                      className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/60 disabled:opacity-60"
-                    >
-                      Отменить
-                    </button>
-                  </div>
-                ) : booking.status === "approved" ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={updatingId === booking.id}
-                      onClick={() => handleCancel(booking.id)}
-                      className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/60 disabled:opacity-60"
-                    >
-                      Отменить с причиной
-                    </button>
-                  </div>
-                ) : null}
               </div>
             );
           })}
+
+          <button
+            type="button"
+            className="group flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-[rgba(21,23,37,0.5)] p-4 text-slate-500 transition-all hover:border-white/20 hover:bg-white/5"
+          >
+            <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#151725] transition-transform group-hover:scale-110">
+              <Plus className="h-6 w-6" />
+            </span>
+            <span className="text-sm font-medium">Создать заявку</span>
+          </button>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
