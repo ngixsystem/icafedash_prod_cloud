@@ -324,7 +324,10 @@ const BookingPanel = ({ searchQuery = "" }: BookingPanelProps) => {
   const handleStatusUpdate = async (bookingId: number, status: "approved" | "rejected" | "completed") => {
     setUpdatingId(bookingId);
     try {
-      await api.updateBookingStatus(bookingId, status);
+      const response = await api.updateBookingStatus(bookingId, status);
+      if (status === "approved" && response.maintenance?.requested && response.maintenance?.success === false) {
+        window.alert("Заявка активирована, но ПК не удалось перевести в ремонт. Проверьте настройки iCafeCloud/API.");
+      }
       await refetch();
     } catch (err) {
       console.error(err);

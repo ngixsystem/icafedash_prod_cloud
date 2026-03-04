@@ -661,34 +661,55 @@ def _icafe_result_ok(result: dict | None) -> bool:
 
 def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> dict:
     pc_names = []
+    pc_full_names = []
     for entry in pc_entries:
+        zone_name = str(entry.get("zone_name") or "").strip()
         pc_name = str(entry.get("pc_name") or "").strip()
         if pc_name and pc_name not in pc_names:
             pc_names.append(pc_name)
+        if zone_name and pc_name:
+            full_name = f"{zone_name}/{pc_name}"
+            if full_name not in pc_full_names:
+                pc_full_names.append(full_name)
 
     if not pc_names:
         return {"requested": False, "success": False, "message": "No PCs found in booking"}
     if not club or not club.api_key or not club.cafe_id:
         return {"requested": True, "success": False, "message": "Club iCafe credentials are not configured"}
 
-    # First attempt: send PC names directly.
+    # First attempt: send raw PC names directly.
     result_by_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_names}, timeout=12)
     if _icafe_result_ok(result_by_names):
         return {"requested": True, "success": True, "mode": "names", "result": result_by_names}
 
+    # Second attempt: send "zone/pc" names for environments where names are stored with area prefix.
+    if pc_full_names:
+        result_by_full_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_full_names}, timeout=12)
+        if _icafe_result_ok(result_by_full_names):
+            return {"requested": True, "success": True, "mode": "full_names", "result": result_by_full_names}
+    else:
+        result_by_full_names = None
+
     # Fallback: resolve to PC IDs and try again if API expects IDs.
     pc_raw = icafe_get_for_club(club, "/pcList", timeout=10)
     all_pcs = parse_icafe_pcs(pc_raw)
-    id_list = []
+    id_list_int = []
+    id_list_str = []
     for pc in all_pcs:
         pc_name = str(pc.get("pc_name") or "").strip()
         if pc_name and pc_name in pc_names:
             pc_id = pc.get("pc_icafe_id")
-            if pc_id is not None and pc_id not in id_list:
-                id_list.append(pc_id)
+            if pc_id is not None and pc_id not in id_list_int:
+                id_list_int.append(pc_id)
+                id_list_str.append(str(pc_id))
 
-    if id_list:
-        result_by_ids = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list}, timeout=12)
+    if id_list_str:
+        result_by_ids_str = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list_str}, timeout=12)
+        if _icafe_result_ok(result_by_ids_str):
+            return {"requested": True, "success": True, "mode": "ids_str", "result": result_by_ids_str}
+
+    if id_list_int:
+        result_by_ids = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list_int}, timeout=12)
         if _icafe_result_ok(result_by_ids):
             return {"requested": True, "success": True, "mode": "ids", "result": result_by_ids}
         return {
@@ -697,13 +718,29 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
             "mode": "ids",
             "result": result_by_ids,
             "fallback_from_names_result": result_by_names,
+            "fallback_from_full_names_result": result_by_full_names,
+            "fallback_from_ids_str_result": result_by_ids_str if id_list_str else None,
         }
 
+    print(
+        "WARN: setOutOfOrder failed",
+        json.dumps(
+            {
+                "club_id": club.id if club else None,
+                "pc_names": pc_names,
+                "pc_full_names": pc_full_names,
+                "result_by_names": result_by_names,
+                "result_by_full_names": result_by_full_names,
+            },
+            ensure_ascii=False,
+        ),
+    )
     return {
         "requested": True,
         "success": False,
         "mode": "names",
         "result": result_by_names,
+        "fallback_from_full_names_result": result_by_full_names,
     }
 
 

@@ -327,7 +327,7 @@ export const api = {
         selected_pcs: Array<{ zone_name: string; pc_name: string }>;
     }) => post<{ message: string; booking: DashboardBooking }>("/bookings", data),
     updateBookingStatus: (bookingId: number, status: "approved" | "rejected" | "completed") =>
-        put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/status`, { status }),
+        put<{ message: string; booking: DashboardBooking; maintenance?: { requested?: boolean; success?: boolean | null; mode?: string; message?: string } }>(`/bookings/${bookingId}/status`, { status }),
     cancelBooking: (bookingId: number, reason: string) =>
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/cancel`, { reason }),
     changePassword: (data: { current_password: string; new_password: string }) =>
