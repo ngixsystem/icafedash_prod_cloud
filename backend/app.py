@@ -470,7 +470,7 @@ def normalize_booking_status(raw_status: str | None) -> str:
     status = (raw_status or "").strip().lower()
     if status in ("new", "", "pending"):
         return "pending"
-    if status in ("approved", "rejected", "cancelled"):
+    if status in ("approved", "rejected", "cancelled", "completed"):
         return status
     return "pending"
 
@@ -1729,7 +1729,7 @@ def cancel_public_booking(booking_id):
         return jsonify({"message": "Booking not found"}), 404
 
     current_status = normalize_booking_status(booking.status)
-    if current_status in ("rejected", "cancelled"):
+    if current_status in ("rejected", "cancelled", "completed"):
         return jsonify({"message": "This booking is already closed"}), 409
 
     body = request.json or {}
@@ -1753,6 +1753,132 @@ def cancel_public_booking(booking_id):
             "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
         }
     })
+
+
+@app.post("/api/bookings")
+@jwt_required()
+def create_booking_by_manager():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if user.role not in ("manager", "admin"):
+        return jsonify({"message": "Access denied"}), 403
+
+    target_club = None
+    if user.role == "manager":
+        if not user.club_id:
+            return jsonify({"message": "Manager is not assigned to a club"}), 400
+        target_club = user.club
+    else:
+        body_for_admin = request.json or {}
+        club_id = body_for_admin.get("club_id")
+        if club_id is not None:
+            try:
+                club_id = int(club_id)
+            except Exception:
+                return jsonify({"message": "club_id must be a number"}), 400
+            target_club = Club.query.get(club_id)
+        if not target_club:
+            target_club = user.club
+        if not target_club:
+            return jsonify({"message": "Admin must specify club_id or be assigned to a club"}), 400
+
+    data = request.json or {}
+    client_name = (data.get("client_name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    duration = (data.get("duration") or "").strip() or None
+    selected_pcs = data.get("selected_pcs") or []
+
+    if not client_name:
+        return jsonify({"message": "client_name is required"}), 400
+    if not phone:
+        return jsonify({"message": "phone is required"}), 400
+    if not isinstance(selected_pcs, list) or len(selected_pcs) == 0:
+        return jsonify({"message": "selected_pcs is required"}), 400
+
+    normalized_entries = []
+    for item in selected_pcs:
+        if not isinstance(item, dict):
+            continue
+        z = str(item.get("zone_name") or "").strip()
+        p = str(item.get("pc_name") or "").strip()
+        if z and p:
+            normalized_entries.append({"zone_name": z, "pc_name": p})
+
+    unique_entries = list({(entry["zone_name"], entry["pc_name"]): entry for entry in normalized_entries}.values())
+    if not unique_entries:
+        return jsonify({"message": "No valid PCs selected"}), 400
+    if len(unique_entries) > 10:
+        return jsonify({"message": "Maximum 10 PCs per booking"}), 400
+
+    if user.role == "manager":
+        pc_raw = icafe_get("/pcList")
+    else:
+        pc_raw = icafe_get_for_club(target_club, "/pcList", timeout=8)
+
+    all_pcs = parse_icafe_pcs(pc_raw)
+    pc_map = {}
+    for pc in all_pcs:
+        z = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
+        p = str(pc.get("pc_name") or "").strip()
+        if z and p:
+            pc_map[(z.casefold(), p.casefold())] = pc
+
+    missing = []
+    unavailable = []
+    for entry in unique_entries:
+        z = entry["zone_name"]
+        p = entry["pc_name"]
+        found = pc_map.get((z.casefold(), p.casefold()))
+        if not found:
+            missing.append(entry)
+            continue
+        if detect_pc_status(found) != "free":
+            unavailable.append(entry)
+
+    if missing:
+        return jsonify({"message": "Some PCs are invalid for selected zones", "invalid_pcs": missing}), 400
+    if unavailable:
+        return jsonify({"message": "Some selected PCs are busy or offline", "unavailable_pcs": unavailable}), 409
+
+    selected_zones = sorted(list({entry["zone_name"] for entry in unique_entries}))
+    zone_label = selected_zones[0] if len(selected_zones) == 1 else ", ".join(selected_zones[:3]) + ("..." if len(selected_zones) > 3 else "")
+
+    booking = BookingRequest(
+        club_id=target_club.id,
+        user_id=user.id,
+        client_name=client_name,
+        phone=phone,
+        zone_name=zone_label,
+        duration=duration,
+        pc_names=json.dumps(unique_entries, ensure_ascii=False),
+        status="pending",
+    )
+    db.session.add(booking)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Booking created",
+        "booking": {
+            "id": booking.id,
+            "club_id": booking.club_id,
+            "club_name": booking.club.name if booking.club else "",
+            "user_id": booking.user_id,
+            "username": booking.user.username if booking.user else "",
+            "client_name": booking.client_name,
+            "phone": booking.phone,
+            "zone_name": booking.zone_name,
+            "duration": booking.duration,
+            "pc_names": booking_display_pc_names(unique_entries),
+            "pc_entries": unique_entries,
+            "status": normalize_booking_status(booking.status),
+            "cancellation_reason": booking.cancellation_reason,
+            "canceled_by": booking.canceled_by,
+            "canceled_at": booking.canceled_at.isoformat() + "Z" if booking.canceled_at else None,
+            "created_at": booking.created_at.isoformat() + "Z" if booking.created_at else None,
+        },
+    }), 201
 
 
 @app.get("/api/bookings")
@@ -1828,11 +1954,15 @@ def update_booking_status(booking_id):
 
     body = request.json or {}
     next_status = (body.get("status") or "").strip().lower()
-    if next_status not in ("approved", "rejected"):
-        return jsonify({"message": "status must be approved or rejected"}), 400
+    if next_status not in ("approved", "rejected", "completed"):
+        return jsonify({"message": "status must be approved, rejected or completed"}), 400
 
-    if normalize_booking_status(booking.status) == "cancelled":
-        return jsonify({"message": "Cannot change status of cancelled booking"}), 409
+    current_status = normalize_booking_status(booking.status)
+    if current_status in ("cancelled", "rejected", "completed"):
+        return jsonify({"message": "Cannot change status of closed booking"}), 409
+
+    if next_status == "completed" and current_status != "approved":
+        return jsonify({"message": "Only approved booking can be completed"}), 409
 
     booking.status = next_status
     db.session.commit()
@@ -1880,7 +2010,7 @@ def cancel_booking_by_manager(booking_id):
             return jsonify({"message": "Access denied"}), 403
 
     current_status = normalize_booking_status(booking.status)
-    if current_status in ("rejected", "cancelled"):
+    if current_status in ("rejected", "cancelled", "completed"):
         return jsonify({"message": "This booking is already closed"}), 409
 
     body = request.json or {}

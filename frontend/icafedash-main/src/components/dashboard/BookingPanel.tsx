@@ -5,13 +5,13 @@ import {
   MapPin,
   Monitor,
   Phone,
-  Plus,
   RefreshCw,
   TrendingDown,
   TrendingUp,
+  X,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { api, type DashboardBooking } from "@/lib/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { api, type BookingPcOption, type DashboardBooking } from "@/lib/api";
 
 type FilterKey = "all" | "active" | "pending" | "cancelled";
 
@@ -54,6 +54,15 @@ function statusUi(status: string): {
   accentClass: string;
   isActive: boolean;
 } {
+  if (status === "completed") {
+    return {
+      label: "Завершено",
+      chipClass: "bg-cyan-500/10 text-cyan-300 border border-cyan-500/30",
+      borderClass: "group-hover:border-cyan-500/50",
+      accentClass: "bg-cyan-500/60 group-hover:bg-cyan-400",
+      isActive: false,
+    };
+  }
   if (status === "approved") {
     return {
       label: "Активен",
@@ -107,12 +116,25 @@ function trend(nowValue: number, prevValue: number) {
 const BookingPanel = () => {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [duration, setDuration] = useState("1 час");
+  const [selectedPcKeys, setSelectedPcKeys] = useState<string[]>([]);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["manager_bookings"],
     queryFn: api.managerBookings,
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: pcsData, isFetching: isFetchingPcs, refetch: refetchPcs } = useQuery({
+    queryKey: ["manager_booking_pcs"],
+    queryFn: api.bookingPcOptions,
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    enabled: showCreateForm,
   });
 
   const bookings = useMemo(() => {
@@ -210,7 +232,56 @@ const BookingPanel = () => {
     return bookings;
   }, [activeFilter, bookings]);
 
-  const handleStatusUpdate = async (bookingId: number, status: "approved" | "rejected") => {
+  const groupedPcs = useMemo(() => {
+    const pcs = pcsData?.pcs ?? [];
+    const map = new Map<string, BookingPcOption[]>();
+    pcs.forEach((pc) => {
+      const room = (pc.room || "Без зоны").trim() || "Без зоны";
+      const existing = map.get(room) ?? [];
+      existing.push(pc);
+      map.set(room, existing);
+    });
+    const entries = Array.from(map.entries()).map(([room, list]) => {
+      const sorted = [...list].sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
+      return {
+        room,
+        pcs: sorted,
+        freeCount: sorted.filter((pc) => pc.status === "free").length,
+      };
+    });
+    return entries.sort((a, b) => a.room.localeCompare(b.room, "ru"));
+  }, [pcsData?.pcs]);
+
+  const selectedPcEntries = useMemo(() => {
+    return selectedPcKeys
+      .map((key) => {
+        const [zoneName, pcName] = key.split("::");
+        if (!zoneName || !pcName) return null;
+        return { zone_name: zoneName, pc_name: pcName };
+      })
+      .filter((item): item is { zone_name: string; pc_name: string } => item !== null);
+  }, [selectedPcKeys]);
+
+  const createBookingMutation = useMutation({
+    mutationFn: () =>
+      api.createManagerBooking({
+        client_name: clientName.trim(),
+        phone: clientPhone.trim(),
+        duration: duration.trim() || undefined,
+        selected_pcs: selectedPcEntries,
+      }),
+    onSuccess: async () => {
+      setClientName("");
+      setClientPhone("");
+      setDuration("1 час");
+      setSelectedPcKeys([]);
+      setShowCreateForm(false);
+      await refetch();
+      await refetchPcs();
+    },
+  });
+
+  const handleStatusUpdate = async (bookingId: number, status: "approved" | "rejected" | "completed") => {
     setUpdatingId(bookingId);
     try {
       await api.updateBookingStatus(bookingId, status);
@@ -233,6 +304,32 @@ const BookingPanel = () => {
       console.error(err);
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const togglePcSelection = (room: string, name: string) => {
+    const key = `${room}::${name}`;
+    setSelectedPcKeys((prev) => (prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]));
+  };
+
+  const handleCreateBooking = async () => {
+    if (!clientName.trim()) {
+      window.alert("Введите имя клиента");
+      return;
+    }
+    if (!clientPhone.trim()) {
+      window.alert("Введите телефон клиента");
+      return;
+    }
+    if (selectedPcEntries.length === 0) {
+      window.alert("Выберите минимум один свободный ПК");
+      return;
+    }
+    try {
+      await createBookingMutation.mutateAsync();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Не удалось создать заявку";
+      window.alert(message);
     }
   };
 
@@ -380,7 +477,130 @@ const BookingPanel = () => {
             </button>
           );
         })}
+
+        <button
+          type="button"
+          onClick={() => setShowCreateForm((prev) => !prev)}
+          className="ml-auto inline-flex whitespace-nowrap rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-sm font-medium text-cyan-200 transition-all hover:bg-cyan-500/20"
+        >
+          {showCreateForm ? "Скрыть форму" : "Создать заявку"}
+        </button>
       </div>
+
+      {showCreateForm ? (
+        <div className="rounded-xl border border-white/10 bg-[rgba(21,23,37,0.9)] p-4 backdrop-blur-xl md:p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-white">Новая заявка</h3>
+            <button
+              type="button"
+              onClick={() => setShowCreateForm(false)}
+              className="rounded-md border border-[#2A2E45] bg-[#1F2235] p-1.5 text-slate-300 hover:bg-[#2A2E45]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <label className="text-xs text-slate-400">
+              Имя клиента
+              <input
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="Введите имя"
+                className="mt-1 w-full rounded-lg border border-[#2A2E45] bg-[#151725] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-cyan-500/50"
+              />
+            </label>
+            <label className="text-xs text-slate-400">
+              Телефон
+              <input
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="998..."
+                className="mt-1 w-full rounded-lg border border-[#2A2E45] bg-[#151725] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-cyan-500/50"
+              />
+            </label>
+            <label className="text-xs text-slate-400">
+              Длительность
+              <input
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="1 час"
+                className="mt-1 w-full rounded-lg border border-[#2A2E45] bg-[#151725] px-3 py-2 text-sm text-white outline-none transition-colors focus:border-cyan-500/50"
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-white/10 bg-[#151725]/70 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-medium text-white">Выбор свободных ПК</p>
+              <button
+                type="button"
+                onClick={() => refetchPcs()}
+                className="inline-flex items-center gap-1 rounded-md border border-[#2A2E45] bg-[#1F2235] px-2 py-1 text-xs text-slate-300 hover:bg-[#2A2E45]"
+              >
+                <RefreshCw className={`h-3 w-3 ${isFetchingPcs ? "animate-spin" : ""}`} />
+                Обновить ПК
+              </button>
+            </div>
+
+            <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+              {groupedPcs.length === 0 ? (
+                <p className="text-xs text-slate-500">Список ПК пуст или API недоступен.</p>
+              ) : (
+                groupedPcs.map((group) => (
+                  <div key={group.room} className="rounded-lg border border-white/10 bg-[#101321] p-2.5">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-300">{group.room}</span>
+                      <span className="text-[11px] text-emerald-300">Свободно: {group.freeCount}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                      {group.pcs.map((pc) => {
+                        const key = `${group.room}::${pc.name}`;
+                        const checked = selectedPcKeys.includes(key);
+                        const isFree = pc.status === "free";
+                        return (
+                          <label
+                            key={key}
+                            className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs ${
+                              isFree
+                                ? checked
+                                  ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-100"
+                                  : "border-white/10 bg-[#151725] text-slate-300"
+                                : "cursor-not-allowed border-rose-500/20 bg-rose-500/5 text-slate-500"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={!isFree}
+                              onChange={() => togglePcSelection(group.room, String(pc.name))}
+                              className="accent-cyan-400"
+                            />
+                            <span className="truncate">{pc.name}</span>
+                            {!isFree ? <span className="ml-auto text-[10px] uppercase">{pc.status}</span> : null}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCreateBooking}
+              disabled={createBookingMutation.isPending}
+              className="rounded-lg border border-cyan-500/40 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-500/30 disabled:opacity-60"
+            >
+              {createBookingMutation.isPending ? "Создание..." : "Создать заявку"}
+            </button>
+            <span className="text-xs text-slate-500">Выбрано ПК: {selectedPcEntries.length}</span>
+          </div>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="rounded-xl border border-white/10 bg-[rgba(21,23,37,0.78)] p-5 text-sm text-slate-400">
@@ -396,7 +616,8 @@ const BookingPanel = () => {
             const current = statusUi(booking.status);
             const isPending = booking.status === "pending";
             const canCancel = booking.status === "pending" || booking.status === "approved";
-            const equipmentText = booking.pc_names.length > 1 ? `Multi (${booking.pc_names.length})` : booking.pc_names[0] ?? "PC";
+            const canComplete = booking.status === "approved";
+            const equipmentText = booking.pc_names.length > 0 ? booking.pc_names.join(", ") : "-";
 
             return (
               <div
@@ -439,9 +660,9 @@ const BookingPanel = () => {
                     </div>
                     <div className="rounded border border-white/10 bg-[#151725]/70 p-2">
                       <div className="text-[10px] uppercase text-slate-500">Оборудование</div>
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-300" title={booking.pc_names.join(", ")}>
+                      <div className="flex items-start gap-1 text-xs font-medium text-slate-300" title={equipmentText}>
                         <Monitor className="h-3 w-3 text-violet-400" />
-                        <span className="truncate">{equipmentText}</span>
+                        <span className="leading-tight break-words">{equipmentText}</span>
                       </div>
                     </div>
                   </div>
@@ -492,6 +713,19 @@ const BookingPanel = () => {
                     </div>
                   ) : null}
 
+                  {canComplete ? (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        disabled={updatingId === booking.id}
+                        onClick={() => handleStatusUpdate(booking.id, "completed")}
+                        className="rounded-lg border border-cyan-500/40 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/30 disabled:opacity-60"
+                      >
+                        Завершить успешно
+                      </button>
+                    </div>
+                  ) : null}
+
                   {canCancel ? (
                     <div className="mt-2">
                       <button
@@ -509,15 +743,6 @@ const BookingPanel = () => {
             );
           })}
 
-          <button
-            type="button"
-            className="group flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-[rgba(21,23,37,0.5)] p-4 text-slate-500 transition-all hover:border-white/20 hover:bg-white/5"
-          >
-            <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#151725] transition-transform group-hover:scale-110">
-              <Plus className="h-6 w-6" />
-            </span>
-            <span className="text-sm font-medium">Создать заявку</span>
-          </button>
         </div>
       )}
     </section>

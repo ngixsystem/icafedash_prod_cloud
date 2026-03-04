@@ -209,6 +209,15 @@ export interface DashboardBooking {
     created_at: string | null;
 }
 
+export interface BookingPcOption {
+    id: number | string;
+    name: string;
+    status: "free" | "busy" | "offline";
+    member: string;
+    time_left: string;
+    room: string;
+}
+
 export interface CashbackConfig {
     club_id: number;
     cashback_enabled: boolean;
@@ -310,7 +319,14 @@ export const api = {
     deleteUser: (userId: number) => del<{ message: string }>(`/admin/users/${userId}`),
     managerReviews: () => get<{ reviews: DashboardReview[]; summary: { count: number; average_rating: number } }>("/reviews"),
     managerBookings: () => get<{ bookings: DashboardBooking[]; summary: { count: number; pending_count: number; cancelled_count: number } }>("/bookings"),
-    updateBookingStatus: (bookingId: number, status: "approved" | "rejected") =>
+    bookingPcOptions: () => get<{ pcs: BookingPcOption[]; total: number }>("/pcs"),
+    createManagerBooking: (data: {
+        client_name: string;
+        phone: string;
+        duration?: string;
+        selected_pcs: Array<{ zone_name: string; pc_name: string }>;
+    }) => post<{ message: string; booking: DashboardBooking }>("/bookings", data),
+    updateBookingStatus: (bookingId: number, status: "approved" | "rejected" | "completed") =>
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/status`, { status }),
     cancelBooking: (bookingId: number, reason: string) =>
         put<{ message: string; booking: DashboardBooking }>(`/bookings/${bookingId}/cancel`, { reason }),
