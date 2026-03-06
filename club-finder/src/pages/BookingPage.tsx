@@ -28,7 +28,7 @@ interface MyBooking {
   zone_name: string;
   duration: string | null;
   pc_names: string[];
-  status: "pending" | "approved" | "rejected" | "cancelled";
+  status: "pending" | "approved" | "rejected" | "cancelled" | "completed";
   cancellation_reason?: string | null;
   canceled_by?: string | null;
   canceled_at?: string | null;
@@ -61,6 +61,9 @@ function bookingStatusUi(status: string) {
   if (status === "cancelled") {
     return { label: "Отменено", className: "bg-slate-500/20 text-slate-300 border border-slate-500/40" };
   }
+  if (status === "completed") {
+    return { label: "Завершено", className: "bg-sky-500/20 text-sky-300 border border-sky-500/40" };
+  }
   return { label: "Ожидание", className: "bg-amber-500/20 text-amber-300 border border-amber-500/40" };
 }
 
@@ -89,6 +92,7 @@ export default function BookingPage() {
   const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
   const [loadingMyBookings, setLoadingMyBookings] = useState(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [bookingsUpdatedAt, setBookingsUpdatedAt] = useState<Date | null>(null);
 
   const token = localStorage.getItem("icafe_client_token");
 
@@ -107,6 +111,7 @@ export default function BookingPage() {
     }
     try {
       const res = await fetch("/api/public/bookings/my", {
+        cache: "no-store",
         headers: { Authorization: `Bearer ${token}` },
       });
       const payload = await res.json();
@@ -122,6 +127,7 @@ export default function BookingPage() {
         if (JSON.stringify(prev) === JSON.stringify(nextBookings)) return prev;
         return nextBookings;
       });
+      setBookingsUpdatedAt(new Date());
     } catch {
       if (!opts?.silent) {
         setMyBookings([]);
@@ -404,6 +410,15 @@ export default function BookingPage() {
           <Button onClick={() => navigate("/")} variant="outline" className="w-full">
             Выбрать клуб для новой брони
           </Button>
+        </div>
+
+        <div className="px-4 mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+            {bookingsUpdatedAt
+              ? `Обновлено: ${bookingsUpdatedAt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+              : "Обновление..."}
+          </span>
         </div>
 
         <div className="px-4 space-y-3">

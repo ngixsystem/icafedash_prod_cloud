@@ -439,6 +439,10 @@ def parse_icafe_datetime(value: str | None):
 
 
 def detect_pc_status(pc: dict) -> str:
+    # iCafe may keep session fields empty for disabled/out-of-order PCs.
+    if _pc_enabled_is_zero(pc.get("pc_enabled")):
+        return "offline"
+
     if pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account"):
         return "busy"
 
@@ -586,6 +590,26 @@ def booking_display_pc_names(entries: list[dict]) -> list[str]:
     return result
 
 
+def get_approved_booking_pc_keys(club_id: int | None) -> set[tuple[str, str]]:
+    keys: set[tuple[str, str]] = set()
+    if not club_id:
+        return keys
+
+    bookings = BookingRequest.query.filter(BookingRequest.club_id == club_id).all()
+    for booking in bookings:
+        if normalize_booking_status(booking.status) != "approved":
+            continue
+        fallback_zone = str(booking.zone_name or "").strip()
+        entries = parse_booking_pc_entries(booking.pc_names)
+        for entry in entries:
+            zone_name = str(entry.get("zone_name") or fallback_zone).strip()
+            pc_name_raw = str(entry.get("pc_name") or "").strip()
+            pc_name = pc_name_raw.split("/")[-1].strip() if "/" in pc_name_raw else pc_name_raw
+            if zone_name and pc_name:
+                keys.add((zone_name.casefold(), pc_name.casefold()))
+    return keys
+
+
 # iCafeCloud API helper
 
 def icafe_get(path: str, params: dict = None) -> dict | None:
@@ -700,6 +724,42 @@ def _get_club_pcs_for_actions(club: Club | None) -> list[dict]:
     return parse_icafe_pcs(raw)
 
 
+def _pc_enabled_is_zero(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value is False
+    if isinstance(value, (int, float)):
+        return int(value) == 0
+    if isinstance(value, str):
+        s = value.strip().lower()
+        return s in ("0", "false", "off", "disabled")
+    return False
+
+
+def _verify_pcs_in_maintenance(club: Club | None, target_names: list[str]) -> bool:
+    if not club or not target_names:
+        return False
+    pcs = _get_club_pcs_for_actions(club)
+    if not pcs:
+        return False
+
+    by_name = {}
+    for pc in pcs:
+        name = str(pc.get("pc_name") or "").strip()
+        if name:
+            by_name[name.casefold()] = pc
+
+    for raw_name in target_names:
+        name = str(raw_name or "").strip()
+        if not name:
+            continue
+        pc = by_name.get(name.casefold())
+        if not pc:
+            return False
+        if not _pc_enabled_is_zero(pc.get("pc_enabled")):
+            return False
+    return True
+
+
 def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> dict:
     pc_names = []
     pc_full_names = []
@@ -757,35 +817,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
         exact_names = list(pc_names)
     id_list_str = [str(x) for x in id_list_int]
 
-    # First attempt: send raw PC names directly (batch).
-    result_by_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": exact_names}, timeout=12)
-    if _icafe_result_ok(result_by_names):
-        return {"requested": True, "success": True, "mode": "names", "result": result_by_names}
-
-    # Second attempt: API may expect objects instead of primitive strings.
-    pcs_as_name_objects = [{"pc_name": name} for name in exact_names]
-    result_by_name_objects = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pcs_as_name_objects}, timeout=12)
-    if _icafe_result_ok(result_by_name_objects):
-        return {"requested": True, "success": True, "mode": "name_objects", "result": result_by_name_objects}
-
-    pcs_as_rich_objects = []
-    for entry in pc_entries:
-        zone_name = str(entry.get("zone_name") or "").strip()
-        pc_name_raw = str(entry.get("pc_name") or "").strip()
-        pc_name = pc_name_raw.split("/")[-1].strip() if "/" in pc_name_raw else pc_name_raw
-        if pc_name:
-            item = {"pc_name": pc_name}
-            if zone_name:
-                item["pc_area_name"] = zone_name
-            pcs_as_rich_objects.append(item)
-
-    result_by_rich_objects = None
-    if pcs_as_rich_objects:
-        result_by_rich_objects = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pcs_as_rich_objects}, timeout=12)
-        if _icafe_result_ok(result_by_rich_objects):
-            return {"requested": True, "success": True, "mode": "rich_objects", "result": result_by_rich_objects}
-
-    # Some iCafe deployments expect pc_enabled flag when setting Out Of Order.
+    # First attempt (priority for your iCafe setup): objects with pc_enabled=0.
     pcs_with_enabled_flag = []
     for entry in pc_entries:
         zone_name = str(entry.get("zone_name") or "").strip()
@@ -807,9 +839,40 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
             timeout=12,
         )
         if _icafe_result_ok(result_by_enabled_objects):
-            return {"requested": True, "success": True, "mode": "enabled_objects", "result": result_by_enabled_objects}
+            # Confirm state actually changed in iCafe.
+            if _verify_pcs_in_maintenance(club, exact_names):
+                return {"requested": True, "success": True, "mode": "enabled_objects", "result": result_by_enabled_objects}
+            # API returned success but state didn't change yet; continue fallbacks.
 
-    # Third attempt: one-by-one by PC name (some environments fail on batch payload).
+    # Second attempt: send raw PC names directly (batch).
+    result_by_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": exact_names}, timeout=12)
+    if _icafe_result_ok(result_by_names) and _verify_pcs_in_maintenance(club, exact_names):
+        return {"requested": True, "success": True, "mode": "names", "result": result_by_names}
+
+    # Third attempt: API may expect objects instead of primitive strings.
+    pcs_as_name_objects = [{"pc_name": name} for name in exact_names]
+    result_by_name_objects = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pcs_as_name_objects}, timeout=12)
+    if _icafe_result_ok(result_by_name_objects) and _verify_pcs_in_maintenance(club, exact_names):
+        return {"requested": True, "success": True, "mode": "name_objects", "result": result_by_name_objects}
+
+    pcs_as_rich_objects = []
+    for entry in pc_entries:
+        zone_name = str(entry.get("zone_name") or "").strip()
+        pc_name_raw = str(entry.get("pc_name") or "").strip()
+        pc_name = pc_name_raw.split("/")[-1].strip() if "/" in pc_name_raw else pc_name_raw
+        if pc_name:
+            item = {"pc_name": pc_name}
+            if zone_name:
+                item["pc_area_name"] = zone_name
+            pcs_as_rich_objects.append(item)
+
+    result_by_rich_objects = None
+    if pcs_as_rich_objects:
+        result_by_rich_objects = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pcs_as_rich_objects}, timeout=12)
+        if _icafe_result_ok(result_by_rich_objects) and _verify_pcs_in_maintenance(club, exact_names):
+            return {"requested": True, "success": True, "mode": "rich_objects", "result": result_by_rich_objects}
+
+    # Fourth attempt: one-by-one by PC name (some environments fail on batch payload).
     single_results = []
     single_all_ok = True
     for name in exact_names:
@@ -818,25 +881,25 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
         single_results.append({"pc": name, "ok": ok, "result": r})
         if not ok:
             single_all_ok = False
-    if single_results and single_all_ok:
+    if single_results and single_all_ok and _verify_pcs_in_maintenance(club, exact_names):
         return {"requested": True, "success": True, "mode": "single_names", "result": single_results}
 
     # Second attempt: send "zone/pc" names for environments where names are stored with area prefix.
     if pc_full_names:
         result_by_full_names = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": pc_full_names}, timeout=12)
-        if _icafe_result_ok(result_by_full_names):
+        if _icafe_result_ok(result_by_full_names) and _verify_pcs_in_maintenance(club, exact_names):
             return {"requested": True, "success": True, "mode": "full_names", "result": result_by_full_names}
     else:
         result_by_full_names = None
 
     if id_list_str:
         result_by_ids_str = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list_str}, timeout=12)
-        if _icafe_result_ok(result_by_ids_str):
+        if _icafe_result_ok(result_by_ids_str) and _verify_pcs_in_maintenance(club, exact_names):
             return {"requested": True, "success": True, "mode": "ids_str", "result": result_by_ids_str}
 
     if id_list_int:
         result_by_ids = icafe_post_for_club(club, "/pcs/action/setOutOfOrder", {"pcs": id_list_int}, timeout=12)
-        if _icafe_result_ok(result_by_ids):
+        if _icafe_result_ok(result_by_ids) and _verify_pcs_in_maintenance(club, exact_names):
             return {"requested": True, "success": True, "mode": "ids", "result": result_by_ids}
 
     # Last fallback for installations where setOutOfOrder is unavailable:
@@ -851,7 +914,7 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
 
     return {
         "requested": True,
-        "success": False,
+        "success": _verify_pcs_in_maintenance(club, exact_names),
         "mode": "ids",
         "result": result_by_ids if id_list_int else result_by_names,
         "fallback_from_names_result": result_by_names,
@@ -863,36 +926,6 @@ def set_booking_pcs_out_of_order(club: Club | None, pc_entries: list[dict]) -> d
         "fallback_from_ids_str_result": result_by_ids_str if id_list_str else None,
         "fallback_from_put_pc_enabled_result": result_put_pc_enabled,
         "fallback_from_put_edit_pc_enabled_result": result_put_edit_pc_enabled,
-    }
-
-    print(
-        "WARN: setOutOfOrder failed",
-        json.dumps(
-            {
-                "club_id": club.id if club else None,
-                "pc_names": pc_names,
-                "exact_names": exact_names,
-                "pc_full_names": pc_full_names,
-                "result_by_names": result_by_names,
-                "result_by_name_objects": result_by_name_objects,
-                "result_by_rich_objects": result_by_rich_objects,
-                "result_by_enabled_objects": result_by_enabled_objects,
-                "result_by_single_names": single_results,
-                "result_by_full_names": result_by_full_names,
-            },
-            ensure_ascii=False,
-        ),
-    )
-    return {
-        "requested": True,
-        "success": False,
-        "mode": "names",
-        "result": result_by_names,
-        "fallback_from_name_objects_result": result_by_name_objects,
-        "fallback_from_rich_objects_result": result_by_rich_objects,
-        "fallback_from_enabled_objects_result": result_by_enabled_objects,
-        "fallback_from_single_names_result": single_results,
-        "fallback_from_full_names_result": result_by_full_names,
     }
 
 
@@ -1578,27 +1611,20 @@ def public_club_detail(club_id):
     zone_stats = {} # {"ZoneName": {"total": 0, "free": 0}}
     
     try:
-        if c.api_key:
-            headers = {"Authorization": f"Bearer {c.api_key.strip()}", "Accept": "application/json"}
-            pc_raw = requests.get(f"{ICAFE_BASE}/cafe/{c.cafe_id}/pcList", headers=headers, timeout=5).json()
-            if pc_raw.get("code") == 200:
-                data_field = pc_raw.get("data", {})
-                pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
-                total_pcs = len(pcs)
-                for pc in pcs:
-                    # Find real zone name
-                    z_name = pc.get("pc_area_name") or pc.get("pc_group_name") or "Unknown"
-                    if z_name not in zone_stats:
-                        zone_stats[z_name] = {"total": 0, "free": 0}
-                    
-                    zone_stats[z_name]["total"] += 1
-                    
-                    # Logic for "free" vs "busy"
-                    if not (pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account")):
-                        s_str = str(pc.get("pc_status", "")).lower()
-                        if s_str not in ("busy", "locked", "ordered", "using", "offline", "off"):
-                            free_pcs += 1
-                            zone_stats[z_name]["free"] += 1
+        if c.api_key and c.cafe_id:
+            approved_pc_keys = get_approved_booking_pc_keys(c.id)
+            pcs = _get_club_pcs_for_actions(c)
+            total_pcs = len(pcs)
+            for pc in pcs:
+                z_name = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "Unknown").strip()
+                p_name = str(pc.get("pc_name") or "").strip()
+                if z_name not in zone_stats:
+                    zone_stats[z_name] = {"total": 0, "free": 0}
+
+                zone_stats[z_name]["total"] += 1
+                if detect_pc_status(pc) == "free" and (z_name.casefold(), p_name.casefold()) not in approved_pc_keys:
+                    free_pcs += 1
+                    zone_stats[z_name]["free"] += 1
     except:
         pass
         
@@ -1645,8 +1671,8 @@ def public_zone_pcs(club_id):
     if not zone_name:
         return jsonify({"message": "zone_name is required"}), 400
 
-    pc_raw = icafe_get_for_club(club, "/pcList", timeout=8)
-    pcs = parse_icafe_pcs(pc_raw)
+    pcs = _get_club_pcs_for_actions(club)
+    approved_pc_keys = get_approved_booking_pc_keys(club.id)
 
     zone_name_folded = zone_name.casefold()
     zone_pcs = []
@@ -1654,10 +1680,14 @@ def public_zone_pcs(club_id):
         pc_zone = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
         if pc_zone.casefold() != zone_name_folded:
             continue
+        status = detect_pc_status(pc)
+        if status == "free" and (pc_zone.casefold(), str(pc.get("pc_name") or "").strip().casefold()) in approved_pc_keys:
+            status = "busy"
+
         zone_pcs.append({
             "id": pc.get("pc_icafe_id") or pc.get("pc_mac") or pc.get("pc_name"),
             "name": pc.get("pc_name", "Unknown"),
-            "status": detect_pc_status(pc),
+            "status": status,
             "member": pc.get("member_account", ""),
             "time_left": pc.get("status_connect_time_left", ""),
             "zone": pc_zone or zone_name,
@@ -1754,6 +1784,7 @@ def create_public_booking(club_id):
 
     missing = []
     unavailable = []
+    approved_pc_keys = get_approved_booking_pc_keys(club.id)
     for entry in unique_entries:
         z = entry["zone_name"]
         p = entry["pc_name"]
@@ -1761,7 +1792,7 @@ def create_public_booking(club_id):
         if not found:
             missing.append(f"{z}/{p}")
             continue
-        if detect_pc_status(found) != "free":
+        if detect_pc_status(found) != "free" or (z.casefold(), p.casefold()) in approved_pc_keys:
             unavailable.append(f"{z}/{p}")
 
     if missing:
@@ -2093,6 +2124,7 @@ def create_booking_by_manager():
 
     missing = []
     unavailable = []
+    approved_pc_keys = get_approved_booking_pc_keys(target_club.id)
     for entry in unique_entries:
         z = entry["zone_name"]
         p = entry["pc_name"]
@@ -2100,7 +2132,7 @@ def create_booking_by_manager():
         if not found:
             missing.append(entry)
             continue
-        if detect_pc_status(found) != "free":
+        if detect_pc_status(found) != "free" or (z.casefold(), p.casefold()) in approved_pc_keys:
             unavailable.append(entry)
 
     if missing:
