@@ -15,6 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 from sqlalchemy import func, or_
 
 # Initialize Flask with static folder pointing to frontend build
@@ -54,6 +55,21 @@ def invalid_token_callback(error):
 @jwt.unauthorized_loader
 def missing_token_callback(error):
     return jsonify({"message": "Request does not contain an access token", "error": "authorization_required"}), 401
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_api_error(e):
+    # Keep non-API behavior unchanged (HTML pages, static routes, etc.).
+    if not request.path.startswith("/api/"):
+        if isinstance(e, HTTPException):
+            return e
+        raise e
+
+    if isinstance(e, HTTPException):
+        return jsonify({"message": e.description or "HTTP error"}), int(e.code or 500)
+
+    print(f"ERROR: Unhandled API exception on {request.method} {request.path}: {e}")
+    return jsonify({"message": "Internal server error"}), 500
 
 @app.before_request
 def log_request_info():

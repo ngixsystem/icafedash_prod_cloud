@@ -5,6 +5,27 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Navigate, useLocation } from "react-router-dom";
 
+async function parseApiPayload(res: Response): Promise<any> {
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    const raw = await res.text();
+
+    if (contentType.includes("application/json")) {
+        try {
+            return raw ? JSON.parse(raw) : {};
+        } catch {
+            return {};
+        }
+    }
+    if (raw && raw.trim().startsWith("<")) {
+        throw new Error("Server returned HTML instead of JSON. Check backend/proxy.");
+    }
+    try {
+        return raw ? JSON.parse(raw) : {};
+    } catch {
+        return raw ? { message: raw.slice(0, 200) } : {};
+    }
+}
+
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [showVerify, setShowVerify] = useState(false);
@@ -35,7 +56,7 @@ export default function AuthPage() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, code: verifyCode })
                 });
-                const data = await res.json();
+                const data = await parseApiPayload(res);
                 if (!res.ok) throw new Error(data.message || "Неверный код");
 
                 login(data.access_token, data.user);
@@ -53,7 +74,7 @@ export default function AuthPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-            const data = await res.json();
+            const data = await parseApiPayload(res);
 
             if (!res.ok) throw new Error(data.message || "Ошибка");
 
