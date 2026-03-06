@@ -8,6 +8,37 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, User } from "lucide-react";
 
+async function wait(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function loginRequestWithRetry(body: { username: string; password: string }, retries = 1) {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      return response;
+    } catch (e) {
+      lastError = e;
+      if (attempt < retries) {
+        await wait(600);
+      }
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }
+
+  throw lastError;
+}
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -20,11 +51,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await loginRequestWithRetry({ username, password }, 1);
 
       const data = await response.json();
 
