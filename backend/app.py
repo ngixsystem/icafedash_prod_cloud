@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import date, timedelta, datetime
 from functools import wraps
+from typing import Any
 
 import requests
 from flask import Flask, jsonify, request, send_from_directory
