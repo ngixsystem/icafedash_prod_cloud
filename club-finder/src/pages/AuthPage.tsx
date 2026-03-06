@@ -17,7 +17,7 @@ async function parseApiPayload(res: Response): Promise<any> {
         }
     }
     if (raw && raw.trim().startsWith("<")) {
-        throw new Error("Server returned HTML instead of JSON. Check backend/proxy.");
+        throw new Error(`Server returned HTML (HTTP ${res.status}). Check backend/proxy.`);
     }
     try {
         return raw ? JSON.parse(raw) : {};
@@ -57,7 +57,7 @@ export default function AuthPage() {
                     body: JSON.stringify({ email, code: verifyCode })
                 });
                 const data = await parseApiPayload(res);
-                if (!res.ok) throw new Error(data.message || "Неверный код");
+                if (!res.ok) throw new Error(data.message || `Verify failed (HTTP ${res.status})`);
 
                 login(data.access_token, data.user);
                 toast({ title: "Email подтвержден!", description: "Добро пожаловать!" });
@@ -76,7 +76,7 @@ export default function AuthPage() {
             });
             const data = await parseApiPayload(res);
 
-            if (!res.ok) throw new Error(data.message || "Ошибка");
+            if (!res.ok) throw new Error(data.message || `Auth failed (HTTP ${res.status})`);
 
             if (isLogin) {
                 login(data.access_token, data.user);
