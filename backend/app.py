@@ -227,90 +227,79 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # Create tables if they don't exist
 with app.app_context():
     db.create_all()
-    
+
     # Migration: add new columns to existing tables if they don't exist
     from sqlalchemy import inspect, text
     inspector = inspect(db.engine)
+    dialect_name = str(db.engine.dialect.name or "").lower()
+
+    def _safe_migration(conn, sql: str, success_message: str | None = None):
+        try:
+            conn.execute(text(sql))
+            conn.commit()
+            if success_message:
+                print(success_message)
+            return True
+        except Exception as e:
+            # Do not block application startup because of dialect-specific DDL.
+            print(f"WARN: migration skipped: {sql} | error: {e}")
+            return False
+
     existing_columns = [col['name'] for col in inspector.get_columns('users')]
-    
+
     with db.engine.connect() as conn:
         if 'email' not in existing_columns:
-            conn.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR(120) UNIQUE"))
-            conn.commit()
-            print("Added email column to users table")
+            _safe_migration(conn, "ALTER TABLE users ADD COLUMN email VARCHAR(120)", "Added email column to users table")
         if 'phone' not in existing_columns:
-            conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(20)"))
-            conn.commit()
-            print("Added phone column to users table")
+            _safe_migration(conn, "ALTER TABLE users ADD COLUMN phone VARCHAR(20)", "Added phone column to users table")
         if 'is_verified' not in existing_columns:
-            conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
-            conn.commit()
-            print("Added is_verified column to users table")
+            _safe_migration(conn, "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1", "Added is_verified column to users table")
         if 'avatar_url' not in existing_columns:
-            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) DEFAULT ''"))
-            conn.commit()
-            print("Added avatar_url column to users table")
+            _safe_migration(conn, "ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) DEFAULT ''", "Added avatar_url column to users table")
             
     # Migration for clubs
     existing_club_columns_info = {col['name']: col for col in inspector.get_columns('clubs')}
     existing_club_columns = list(existing_club_columns_info.keys())
     with db.engine.connect() as conn:
         if 'address' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN address VARCHAR(255)"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN address VARCHAR(255)")
         if 'phone' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN phone VARCHAR(50)"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN phone VARCHAR(50)")
         if 'telegram_username' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN telegram_username VARCHAR(100)"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN telegram_username VARCHAR(100)")
         if 'description' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN description TEXT"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN description TEXT")
         if 'lat' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN lat DOUBLE"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN lat DOUBLE")
         if 'lng' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN lng DOUBLE"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN lng DOUBLE")
         # Upgrade existing FLOAT columns to DOUBLE to keep geolocation precision.
-        if 'lat' in existing_club_columns:
+        if 'lat' in existing_club_columns and dialect_name in ("mysql", "mariadb"):
             lat_type = str(existing_club_columns_info['lat'].get('type', '')).upper()
             if 'DOUBLE' not in lat_type:
-                conn.execute(text("ALTER TABLE clubs MODIFY COLUMN lat DOUBLE NULL"))
-                conn.commit()
-        if 'lng' in existing_club_columns:
+                _safe_migration(conn, "ALTER TABLE clubs MODIFY COLUMN lat DOUBLE NULL")
+        if 'lng' in existing_club_columns and dialect_name in ("mysql", "mariadb"):
             lng_type = str(existing_club_columns_info['lng'].get('type', '')).upper()
             if 'DOUBLE' not in lng_type:
-                conn.execute(text("ALTER TABLE clubs MODIFY COLUMN lng DOUBLE NULL"))
-                conn.commit()
+                _safe_migration(conn, "ALTER TABLE clubs MODIFY COLUMN lng DOUBLE NULL")
         if 'instagram' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN instagram VARCHAR(100)"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN instagram VARCHAR(100)")
         if 'working_hours' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN working_hours VARCHAR(100)"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN working_hours VARCHAR(100)")
         if 'zones' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN zones TEXT"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN zones TEXT")
         if 'tariffs' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN tariffs TEXT"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN tariffs TEXT")
         if 'internet_speed' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN internet_speed VARCHAR(50)"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN internet_speed VARCHAR(50)")
         if 'cashback_enabled' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN cashback_enabled BOOLEAN DEFAULT 0"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN cashback_enabled BOOLEAN DEFAULT 0")
         if 'cashback_percent' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN cashback_percent FLOAT DEFAULT 5"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN cashback_percent FLOAT DEFAULT 5")
         if 'club_main_photo_url' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN club_main_photo_url VARCHAR(255) DEFAULT ''"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN club_main_photo_url VARCHAR(255) DEFAULT ''")
         if 'club_photos' not in existing_club_columns:
-            conn.execute(text("ALTER TABLE clubs ADD COLUMN club_photos TEXT"))
-            conn.commit()
+            _safe_migration(conn, "ALTER TABLE clubs ADD COLUMN club_photos TEXT")
 
     # Migration for booking_requests
     existing_tables = inspector.get_table_names()
@@ -318,14 +307,11 @@ with app.app_context():
         existing_booking_columns = [col['name'] for col in inspector.get_columns('booking_requests')]
         with db.engine.connect() as conn:
             if 'cancellation_reason' not in existing_booking_columns:
-                conn.execute(text("ALTER TABLE booking_requests ADD COLUMN cancellation_reason TEXT"))
-                conn.commit()
+                _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN cancellation_reason TEXT")
             if 'canceled_by' not in existing_booking_columns:
-                conn.execute(text("ALTER TABLE booking_requests ADD COLUMN canceled_by VARCHAR(20)"))
-                conn.commit()
+                _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN canceled_by VARCHAR(20)")
             if 'canceled_at' not in existing_booking_columns:
-                conn.execute(text("ALTER TABLE booking_requests ADD COLUMN canceled_at DATETIME"))
-                conn.commit()
+                _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN canceled_at DATETIME")
             
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
