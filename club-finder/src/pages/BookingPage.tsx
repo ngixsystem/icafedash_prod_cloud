@@ -27,6 +27,7 @@ interface MyBooking {
   club_name: string;
   zone_name: string;
   duration: string | null;
+  booking_start_at?: string | null;
   pc_names: string[];
   status: "pending" | "approved" | "rejected" | "cancelled" | "completed";
   cancellation_reason?: string | null;
@@ -37,6 +38,16 @@ interface MyBooking {
 }
 
 const durationOptions = ["30 мин", "1 час", "2 часа", "3 часа", "5 часов"];
+
+function toLocalDateTimeParts(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mm = pad(d.getMinutes());
+  return { date: `${y}-${m}-${day}`, time: `${hh}:${mm}` };
+}
 
 function formatDate(value: string | null): string {
   if (!value) return "-";
@@ -84,6 +95,9 @@ export default function BookingPage() {
   const [selectedByZone, setSelectedByZone] = useState<Record<string, string[]>>({});
 
   const [duration, setDuration] = useState(durationOptions[1]);
+  const nowPlus = new Date(Date.now() + 30 * 60 * 1000);
+  const [bookingDate, setBookingDate] = useState(toLocalDateTimeParts(nowPlus).date);
+  const [bookingTime, setBookingTime] = useState(toLocalDateTimeParts(nowPlus).time);
   const [clientName, setClientName] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -336,6 +350,10 @@ export default function BookingPage() {
       toast({ title: "Ошибка", description: "Введите номер телефона", variant: "destructive" });
       return;
     }
+    if (!bookingDate || !bookingTime) {
+      toast({ title: "Ошибка", description: "Укажите дату и время брони", variant: "destructive" });
+      return;
+    }
     if (selectedPcEntries.length < 1) {
       toast({ title: "Ошибка", description: "Выберите хотя бы один ПК", variant: "destructive" });
       return;
@@ -353,6 +371,7 @@ export default function BookingPage() {
           client_name: clientName.trim(),
           phone: phone.trim(),
           duration,
+          booking_start_at: `${bookingDate}T${bookingTime}:00`,
           selected_pcs: selectedPcEntries,
         }),
       });
@@ -445,7 +464,7 @@ export default function BookingPage() {
                   </div>
                   <div className="mt-2 text-sm text-white/80">{b.zone_name}</div>
                   <div className="mt-1 text-xs text-white/60">{b.pc_names.join(", ")}</div>
-                  <div className="mt-1 text-xs text-white/50">{formatDate(b.created_at)}</div>
+                  <div className="mt-1 text-xs text-white/50">{formatDate(b.booking_start_at || b.created_at)}</div>
 
                   {b.status === "cancelled" && b.cancellation_reason ? (
                     <div className="mt-2 rounded-lg border border-slate-500/40 bg-slate-500/10 px-2.5 py-2 text-xs text-slate-200">
@@ -615,6 +634,8 @@ export default function BookingPage() {
           </div>
 
           <div className="px-4 mb-6 space-y-3">
+            <Input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} min={toLocalDateTimeParts(new Date()).date} />
+            <Input type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} />
             <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Имя клиента *" />
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Номер телефона *" />
           </div>
@@ -622,7 +643,7 @@ export default function BookingPage() {
           <div className="px-4">
             <Button
               onClick={submitBooking}
-              disabled={!!activeBooking || submitting || totalSelectedCount < 1 || !clientName.trim() || !phone.trim()}
+              disabled={!!activeBooking || submitting || totalSelectedCount < 1 || !clientName.trim() || !phone.trim() || !bookingDate || !bookingTime}
               className="w-full h-12 rounded-lg gradient-primary text-primary-foreground font-display font-bold text-base neon-glow disabled:opacity-40 disabled:shadow-none"
             >
               {submitting ? "Отправка..." : "Забронировать"}

@@ -157,6 +157,7 @@ class BookingRequest(db.Model):
     phone = db.Column(db.String(30), nullable=False)
     zone_name = db.Column(db.String(120), nullable=False)
     duration = db.Column(db.String(50), nullable=True)
+    booking_start_at = db.Column(db.DateTime, nullable=True)
     pc_names = db.Column(db.Text, nullable=False)  # JSON array
     status = db.Column(db.String(20), nullable=False, default="pending")
     cancellation_reason = db.Column(db.Text, nullable=True)
@@ -329,6 +330,8 @@ with app.app_context():
                 _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN canceled_by VARCHAR(20)")
             if 'canceled_at' not in existing_booking_columns:
                 _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN canceled_at DATETIME")
+            if 'booking_start_at' not in existing_booking_columns:
+                _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN booking_start_at DATETIME")
             
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
@@ -439,6 +442,20 @@ def parse_icafe_datetime(value: str | None):
         except Exception:
             continue
     return None
+
+
+def parse_client_booking_datetime(value: str | None):
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    normalized = raw.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(normalized)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone().replace(tzinfo=None)
+        return dt
+    except Exception:
+        return None
 
 
 def detect_pc_status(pc: dict) -> str:
@@ -1739,13 +1756,17 @@ def create_public_booking(club_id):
     phone = (data.get("phone") or "").strip()
     zone_name = (data.get("zone_name") or "").strip()
     duration = (data.get("duration") or "").strip()
+    booking_start_raw = (data.get("booking_start_at") or "").strip()
     pc_names = data.get("pc_names") or []
     selected_pcs = data.get("selected_pcs") or []
+    booking_start_at = parse_client_booking_datetime(booking_start_raw)
 
     if not client_name:
         return jsonify({"message": "Client name is required"}), 400
     if not phone:
         return jsonify({"message": "Phone is required"}), 400
+    if not booking_start_at:
+        return jsonify({"message": "booking_start_at is required in ISO format"}), 400
     normalized_entries = []
     if isinstance(selected_pcs, list) and len(selected_pcs) > 0:
         for item in selected_pcs:
@@ -1827,6 +1848,7 @@ def create_public_booking(club_id):
         phone=phone,
         zone_name=zone_label,
         duration=duration or None,
+        booking_start_at=booking_start_at,
         pc_names=json.dumps(unique_entries, ensure_ascii=False),
         status="pending",
     )
@@ -1843,6 +1865,7 @@ def create_public_booking(club_id):
             "phone": booking.phone,
             "zone_name": booking.zone_name,
             "duration": booking.duration,
+            "booking_start_at": booking.booking_start_at.isoformat() + "Z" if booking.booking_start_at else None,
             "pc_names": booking_display_pc_names(unique_entries),
             "pc_entries": unique_entries,
             "status": normalize_booking_status(booking.status),
@@ -1878,6 +1901,7 @@ def get_my_public_bookings():
             "phone": b.phone,
             "zone_name": b.zone_name,
             "duration": b.duration,
+            "booking_start_at": b.booking_start_at.isoformat() + "Z" if b.booking_start_at else None,
             "pc_names": pc_names,
             "pc_entries": pc_entries,
             "status": normalize_booking_status(b.status),
@@ -2101,6 +2125,8 @@ def create_booking_by_manager():
     client_name = (data.get("client_name") or "").strip()
     phone = (data.get("phone") or "").strip()
     duration = (data.get("duration") or "").strip() or None
+    booking_start_raw = (data.get("booking_start_at") or "").strip()
+    booking_start_at = parse_client_booking_datetime(booking_start_raw)
     selected_pcs = data.get("selected_pcs") or []
 
     if not client_name:
@@ -2166,6 +2192,7 @@ def create_booking_by_manager():
         phone=phone,
         zone_name=zone_label,
         duration=duration,
+        booking_start_at=booking_start_at,
         pc_names=json.dumps(unique_entries, ensure_ascii=False),
         status="pending",
     )
@@ -2184,6 +2211,7 @@ def create_booking_by_manager():
             "phone": booking.phone,
             "zone_name": booking.zone_name,
             "duration": booking.duration,
+            "booking_start_at": booking.booking_start_at.isoformat() + "Z" if booking.booking_start_at else None,
             "pc_names": booking_display_pc_names(unique_entries),
             "pc_entries": unique_entries,
             "status": normalize_booking_status(booking.status),
@@ -2229,6 +2257,7 @@ def get_bookings_for_dashboard():
             "phone": b.phone,
             "zone_name": b.zone_name,
             "duration": b.duration,
+            "booking_start_at": b.booking_start_at.isoformat() + "Z" if b.booking_start_at else None,
             "pc_names": pc_names,
             "pc_entries": pc_entries,
             "status": normalize_booking_status(b.status),
