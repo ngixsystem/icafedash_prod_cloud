@@ -727,6 +727,19 @@ def _get_club_pcs_for_actions(club: Club | None) -> list[dict]:
     return parse_icafe_pcs(raw)
 
 
+def _get_club_pcs_for_public_status(club: Club | None) -> list[dict]:
+    if not club:
+        return []
+    # For live booking UI we prefer /pcList because occupancy fields are
+    # typically more complete there; /pcs is fallback only.
+    raw = icafe_get_for_club(club, "/pcList", timeout=10)
+    pcs = parse_icafe_pcs(raw)
+    if pcs:
+        return pcs
+    raw = icafe_get_for_club(club, "/pcs", timeout=10)
+    return parse_icafe_pcs(raw)
+
+
 def _pc_enabled_is_zero(value: Any) -> bool:
     if isinstance(value, bool):
         return value is False
@@ -1616,7 +1629,7 @@ def public_club_detail(club_id):
     try:
         if c.api_key and c.cafe_id:
             approved_pc_keys = get_approved_booking_pc_keys(c.id)
-            pcs = _get_club_pcs_for_actions(c)
+            pcs = _get_club_pcs_for_public_status(c)
             total_pcs = len(pcs)
             for pc in pcs:
                 z_name = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "Unknown").strip()
@@ -1674,7 +1687,7 @@ def public_zone_pcs(club_id):
     if not zone_name:
         return jsonify({"message": "zone_name is required"}), 400
 
-    pcs = _get_club_pcs_for_actions(club)
+    pcs = _get_club_pcs_for_public_status(club)
     approved_pc_keys = get_approved_booking_pc_keys(club.id)
 
     zone_name_folded = zone_name.casefold()
