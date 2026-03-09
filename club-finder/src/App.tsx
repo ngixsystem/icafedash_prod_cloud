@@ -12,6 +12,7 @@ import ClubPage from "./pages/ClubPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import BookingPage from "./pages/BookingPage";
+import TournamentsPage from "./pages/TournamentsPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/map" element={<MapPage />} />
+              <Route path="/tournaments" element={<TournamentsPage />} />
               <Route path="/club/:id" element={<ClubPage />} />
               <Route path="/auth" element={<AuthPage />} />
 
