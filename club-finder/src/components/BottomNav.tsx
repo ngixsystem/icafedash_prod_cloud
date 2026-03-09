@@ -38,19 +38,15 @@ export default function BottomNav() {
 
         <NavLink to="/tournaments" className="absolute left-1/2 -translate-x-1/2 -top-[22px]">
           {({ isActive }) => (
-            <div
-              className={`w-[86px] h-[86px] rounded-full bg-white flex items-center justify-center transition-all ${
-                isActive ? "scale-[1.02] shadow-[0_8px_22px_rgba(0,0,0,0.45)]" : "shadow-[0_6px_16px_rgba(0,0,0,0.35)]"
+            <img
+              src={fragLogo}
+              alt="FRAG.GG"
+              className={`w-[74px] h-[74px] object-contain transition-all ${
+                isActive
+                  ? "scale-[1.02] drop-shadow-[0_0_12px_rgba(255,120,0,0.55)]"
+                  : "drop-shadow-[0_6px_16px_rgba(0,0,0,0.35)]"
               }`}
-            >
-              <img
-                src={fragLogo}
-                alt="FRAG.GG"
-                className={`w-[66px] h-[66px] object-contain transition-all ${
-                  isActive ? "drop-shadow-[0_0_12px_rgba(255,120,0,0.55)]" : "drop-shadow-[0_0_6px_rgba(0,0,0,0.35)]"
-                }`}
-              />
-            </div>
+            />
           )}
         </NavLink>
 
