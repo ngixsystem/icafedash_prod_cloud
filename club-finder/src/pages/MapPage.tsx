@@ -120,7 +120,7 @@ export default function MapPage() {
         <p className="text-sm text-muted-foreground font-medium">Свободные места в клубах города в реальном времени</p>
       </div>
 
-      <div className="mx-6 relative group">
+      <div className="mx-6 relative group z-0">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-accent/30 rounded-[2rem] blur opacity-20 transition duration-500" />
         <div
           ref={mapRef}
@@ -144,6 +144,8 @@ export default function MapPage() {
         }
         .custom-marker { background: none !important; border: none !important; }
         .leaflet-container { background: #06080d !important; }
+        .leaflet-pane { z-index: 100 !important; }
+        .leaflet-top, .leaflet-bottom { z-index: 200 !important; }
         .leaflet-control-zoom { border: none !important; margin: 20px !important; }
         .leaflet-control-zoom-in, .leaflet-control-zoom-out {
           background: rgba(20, 24, 32, 0.8) !important;

@@ -28,7 +28,7 @@ function IconTab({ to, icon: Icon, end = false }: { to: string; icon: any; end?:
 
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] h-[60px] bg-[#0b0d12] border-t border-[#2F3136] px-8 z-50">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] h-[60px] bg-[#0b0d12] border-t border-[#2F3136] px-8 z-[1001]">
       <div className="h-full flex items-center justify-between">
         <div className="flex items-center gap-5">
           {leftTabs.map((tab) => (
