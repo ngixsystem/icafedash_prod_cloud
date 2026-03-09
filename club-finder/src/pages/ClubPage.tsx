@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+﻿import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi, ChevronDown, ChevronUp, Navigation } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { TouchEvent } from "react";
@@ -39,6 +39,7 @@ export default function ClubPage() {
   const { data: reviewsData } = useClubReviews(id);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+
   const [openReviewDialog, setOpenReviewDialog] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(0);
@@ -48,9 +49,7 @@ export default function ClubPage() {
   const [heroFullScreen, setHeroFullScreen] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
-  const heroPhotos = (club?.photos && club.photos.length > 0)
-    ? club.photos
-    : [club?.main_photo_url || club?.logo || (club as any)?.image].filter(Boolean);
+  const heroPhotos = club?.photos?.length ? club.photos : [club?.main_photo_url || club?.logo || (club as any)?.image].filter(Boolean);
 
   useEffect(() => {
     setActivePhotoIndex(0);
@@ -79,24 +78,20 @@ export default function ClubPage() {
     const dy = touch.clientY - touchStart.y;
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
-    const swipeX = 35;
-    const swipeY = 45;
 
-    if (absDx > absDy && absDx > swipeX) {
+    if (absDx > absDy && absDx > 35) {
       if (dx < 0) goNextPhoto();
       else goPrevPhoto();
-    } else if (absDy > absDx && absDy > swipeY) {
-      if (dy > 0 && !fromFullScreen) {
-        setHeroFullScreen(true);
-      } else if (dy < 0 && fromFullScreen) {
-        setHeroFullScreen(false);
-      }
+    } else if (absDy > absDx && absDy > 45) {
+      if (dy > 0 && !fromFullScreen) setHeroFullScreen(true);
+      if (dy < 0 && fromFullScreen) setHeroFullScreen(false);
     }
     setTouchStart(null);
   };
 
   const handleSubmitReview = async () => {
     if (!id) return;
+
     if (!isAuthenticated) {
       navigate("/auth", { state: { from: { pathname: `/club/${id}` } } });
       return;
@@ -123,12 +118,9 @@ export default function ClubPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          text: reviewText.trim(),
-          rating: reviewRating,
-        }),
+        body: JSON.stringify({ text: reviewText.trim(), rating: reviewRating }),
       });
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.message || "Не удалось отправить отзыв");
@@ -141,10 +133,7 @@ export default function ClubPage() {
         queryClient.invalidateQueries({ queryKey: ["public_club", id] }),
         queryClient.invalidateQueries({ queryKey: ["public_clubs"] }),
       ]);
-      toast({
-        title: "Спасибо!",
-        description: "Ваш отзыв отправлен",
-      });
+      toast({ title: "Спасибо!", description: "Ваш отзыв отправлен" });
     } catch (err: any) {
       toast({
         title: "Ошибка",
@@ -157,19 +146,11 @@ export default function ClubPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground animate-pulse">
-        Загрузка...
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground animate-pulse">Загрузка...</div>;
   }
 
   if (!club) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Клуб не найден
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Клуб не найден</div>;
   }
 
   const hasValidClubCoords =
@@ -188,75 +169,63 @@ export default function ClubPage() {
   };
 
   return (
-    <div className="min-h-screen pb-24">
-      {/* Hero */}
+    <div className="min-h-screen pb-24 bg-[#0f1115]">
       <div
         className="relative h-64 overflow-hidden rounded-b-[2rem]"
         onTouchStart={onHeroTouchStart}
         onTouchEnd={(e) => onHeroTouchEnd(e, false)}
       >
         <img src={heroPhotos[activePhotoIndex] || club.logo || (club as any).image} alt={club.name} className="w-full h-full object-cover" />
-        {/* Dark gradient for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#090b10] via-[#090b10]/45 to-transparent" />
 
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-10 left-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
+          className="absolute top-10 left-6 w-10 h-10 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {heroPhotos.length > 1 && (
-          <>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-              {heroPhotos.map((_, idx) => (
-                <button
-                  key={`hero-dot-${idx}`}
-                  type="button"
-                  onClick={() => setActivePhotoIndex(idx)}
-                  className={`h-1.5 rounded-full transition-all ${idx === activePhotoIndex ? "w-6 bg-primary" : "w-2 bg-white/40"}`}
-                />
-              ))}
-            </div>
-          </>
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            {heroPhotos.map((_, idx) => (
+              <button
+                key={`hero-dot-${idx}`}
+                type="button"
+                onClick={() => setActivePhotoIndex(idx)}
+                className={`h-1.5 rounded-full transition-all ${idx === activePhotoIndex ? "w-6 bg-[#FF7800]" : "w-2 bg-white/40"}`}
+              />
+            ))}
+          </div>
         )}
 
-        {/* Title Overlaid on Hero Bottom */}
         <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
-          <h1 className="text-4xl font-sans font-extrabold tracking-tight text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">{club.name}</h1>
-          <div className="flex items-center gap-1.5 text-warning font-black drop-shadow-md lg:mb-1">
+          <h1
+            className="text-[42px] font-display font-bold uppercase tracking-wide text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)] leading-none"
+            style={{ fontFamily: "Oswald, sans-serif" }}
+          >
+            {club.name}
+          </h1>
+          <div className="flex items-center gap-1.5 text-[#FEE75C] font-black drop-shadow-md">
             <Star className="w-5 h-5 fill-current" />
-            <span className="text-xl">{club.rating}</span>
+            <span className="text-2xl font-display leading-none">{club.rating}</span>
           </div>
         </div>
       </div>
 
       {heroFullScreen && (
-        <div
-          className="fixed inset-0 z-[80] bg-black/95"
-          onTouchStart={onHeroTouchStart}
-          onTouchEnd={(e) => onHeroTouchEnd(e, true)}
-        >
-          <img
-            src={heroPhotos[activePhotoIndex] || club.logo || (club as any).image}
-            alt={club.name}
-            className="w-full h-full object-contain"
-          />
+        <div className="fixed inset-0 z-[80] bg-black/95" onTouchStart={onHeroTouchStart} onTouchEnd={(e) => onHeroTouchEnd(e, true)}>
+          <img src={heroPhotos[activePhotoIndex] || club.logo || (club as any).image} alt={club.name} className="w-full h-full object-contain" />
         </div>
       )}
 
-      {/* Info */}
-      <div className="px-6 py-5 relative z-10 space-y-7">
-        <div className="flex items-center gap-2 text-[13px] text-white/50 -mt-2">
-          <MapPin className="w-3.5 h-3.5" /> {club.address}
+      <div className="px-6 py-5 space-y-7">
+        <div className="flex items-center gap-2 text-[13px] text-white/60 -mt-2">
+          <MapPin className="w-3.5 h-3.5 text-[#FF7800]" /> {club.address}
         </div>
 
-        {/* Status chips */}
         <div className="flex gap-2.5 flex-wrap">
-          <span className="px-4 py-1.5 rounded-full text-xs font-bold text-black bg-white">
-            {club.isOpen ? "Открыто" : "Закрыто"}
-          </span>
-          <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#04283b] text-[#00bfff]">
+          <span className="px-4 py-1.5 rounded-full text-xs font-bold text-black bg-white">{club.isOpen ? "Открыто" : "Закрыто"}</span>
+          <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#1b1b1b] text-[#FF9A2F] border border-[#2f2f2f]">
             <Monitor className="w-3.5 h-3.5 inline mr-1.5" />
             {club.pcsFree} свободно
           </span>
@@ -267,73 +236,79 @@ export default function ClubPage() {
             type="button"
             onClick={openYandexRoute}
             disabled={!hasValidClubCoords}
-            className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#1a2436] text-white/80 border border-white/10 hover:bg-[#243247] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#1a1a1a] text-white/85 border border-[#2f2f2f] hover:bg-[#202020] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Navigation className="w-3.5 h-3.5 inline mr-1.5" />
             Маршрут
           </button>
         </div>
 
-        {/* Zones */}
-        <h2 className="text-xl font-display font-black tracking-wide mb-4 mt-2">Зоны</h2>
+        <h2 className="text-[34px] font-display font-bold tracking-wide mt-2 leading-none">Зоны</h2>
         <div className="space-y-4 mb-8">
-          {(!club.zones || club.zones.length === 0) ? (
-            <div className="text-sm text-white/40">Нет информации о залах</div>
-          ) : club.zones.map((zone: any, i: number) => {
-            const zTotal = parseInt(zone.capacity) || 0;
-            const zFree = parseInt(zone.pcsFree) || 0;
-            // Progress bar shows "Busy" or simply how much is available. Based on styling, it looks like it's a fill. Let's make it the occupied percentage.
-            const progressPercent = zTotal > 0 ? ((zTotal - zFree) / zTotal) * 100 : 0;
+          {!club.zones || club.zones.length === 0 ? (
+            <div className="text-sm text-white/45">Нет информации о залах</div>
+          ) : (
+            club.zones.map((zone: any, i: number) => {
+              const zTotal = parseInt(zone.capacity) || 0;
+              const zFree = parseInt(zone.pcsFree) || 0;
+              const busyPercent = zTotal > 0 ? ((zTotal - zFree) / zTotal) * 100 : 0;
 
-            return (
-              <div
-                key={i}
-                onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
-                className="rounded-[18px] bg-[#11131a] border border-white/5 p-5 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all group shadow-lg"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-sans font-black uppercase tracking-wide text-lg text-[#00bfff] group-hover:brightness-125 transition-all leading-none mb-1.5">
-                      {zone.name}
-                    </h3>
-                    <div className="text-white font-sans font-bold text-sm tracking-wide">{zone.price || 0} СУМ/ЧАС</div>
+              return (
+                <div
+                  key={i}
+                  onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
+                  className="rounded-2xl bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] border border-[#2f2f2f] p-5 cursor-pointer transition-all hover:border-[#FF7800]/45 hover:shadow-[0_10px_30px_rgba(255,120,0,0.1)]"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-display uppercase tracking-wide text-[30px] text-[#FF9A2F] leading-none mb-2">{zone.name}</h3>
+                      <div className="text-white font-display text-[30px] leading-none">{zone.price || 0} СУМ/ЧАС</div>
+                    </div>
+                    <span className="text-[22px] text-white/50 whitespace-nowrap leading-none pt-1">
+                      <span className={zFree > 0 ? "text-[#57F287] font-display" : "text-white/60 font-display"}>{zFree} свободно</span> из {zTotal} ПК
+                    </span>
                   </div>
-                  <span className="text-[13px] font-semibold text-white/40 whitespace-nowrap leading-none mt-0.5">
-                    <span className={zFree > 0 ? "text-emerald-400 font-bold" : ""}>{zFree} свободно</span> из {zTotal} ПК
-                  </span>
+
+                  <p className="text-[20px] text-white/60 mb-5 leading-snug">{zone.specs || "Характеристики не указаны"}</p>
+
+                  <div className="w-full h-2 rounded-full bg-[#272727] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-1000 ease-out"
+                      style={{
+                        width: `${busyPercent}%`,
+                        background: "linear-gradient(90deg, #22c55e 0%, #f0b429 52%, #ef4444 100%)",
+                      }}
+                    />
+                  </div>
                 </div>
-                <p className="text-[13px] text-white/50 mb-5 font-medium tracking-wide">{zone.specs}</p>
-                <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(34,197,94,0.35)]"
-                    style={{
-                      width: `${progressPercent}%`,
-                      background: "linear-gradient(90deg, #22c55e 0%, #eab308 55%, #ef4444 100%)"
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
 
-        {/* Tariffs */}
-        <h2 className="text-xl font-display font-black tracking-wide mb-4">Тарифы</h2>
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {(!club.tariffs || club.tariffs.length === 0) ? (
+        <h2 className="text-[34px] font-display font-bold tracking-wide mb-4 leading-none">Тарифы</h2>
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          {!club.tariffs || club.tariffs.length === 0 ? (
             <div className="col-span-3 text-sm text-muted-foreground">Нет информации о тарифах</div>
-          ) : club.tariffs.map((t: any, i: number) => (
-            <div key={i} className="rounded-lg glass p-3 text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                <Clock className="w-3 h-3" /> {t.duration}
+          ) : (
+            club.tariffs.map((t: any, i: number) => (
+              <div
+                key={i}
+                className="rounded-2xl bg-[linear-gradient(180deg,#151923_0%,#11151e_100%)] border border-[#2F3136] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+              >
+                <div className="flex items-center justify-center gap-1.5 text-[#9aa1ab] text-[10px] uppercase tracking-wider font-semibold mb-2">
+                  <Clock className="w-3 h-3" /> {t.duration}
+                </div>
+                <p className="text-center text-[#FF7800] font-display text-[26px] leading-none drop-shadow-[0_0_10px_rgba(255,120,0,0.28)]">
+                  {t.price || 0} <span className="text-[18px]">СУМ</span>
+                </p>
               </div>
-              <p className="text-primary font-display font-bold text-lg">{t.price || 0} СУМ</p>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-3 mb-2">
-          <h2 className="text-xl font-display font-black tracking-wide">Отзывы</h2>
+          <h2 className="text-[34px] font-display font-bold tracking-wide leading-none">Отзывы</h2>
           <Dialog open={openReviewDialog} onOpenChange={setOpenReviewDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 text-xs">
@@ -343,9 +318,7 @@ export default function ClubPage() {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Отзыв о клубе</DialogTitle>
-                <DialogDescription>
-                  Оценка от 0 до 5 звезд и короткий комментарий
-                </DialogDescription>
+                <DialogDescription>Оценка от 0 до 5 звезд и короткий комментарий</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4">
@@ -356,23 +329,12 @@ export default function ClubPage() {
                       const current = idx + 1;
                       const active = current <= reviewRating;
                       return (
-                        <button
-                          key={`rate-${current}`}
-                          type="button"
-                          onClick={() => setReviewRating(current)}
-                          className="rounded-md p-1 hover:bg-accent"
-                        >
+                        <button key={`rate-${current}`} type="button" onClick={() => setReviewRating(current)} className="rounded-md p-1 hover:bg-accent">
                           <Star className={`h-6 w-6 ${active ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
                         </button>
                       );
                     })}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setReviewRating(0)}
-                      className="ml-1 h-8 px-2 text-xs"
-                    >
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setReviewRating(0)} className="ml-1 h-8 px-2 text-xs">
                       0/5
                     </Button>
                   </div>
@@ -391,19 +353,10 @@ export default function ClubPage() {
               </div>
 
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpenReviewDialog(false)}
-                  disabled={sendingReview}
-                >
+                <Button type="button" variant="outline" onClick={() => setOpenReviewDialog(false)} disabled={sendingReview}>
                   Отмена
                 </Button>
-                <Button
-                  type="button"
-                  onClick={handleSubmitReview}
-                  disabled={sendingReview}
-                >
+                <Button type="button" onClick={handleSubmitReview} disabled={sendingReview}>
                   {sendingReview ? "Отправка..." : "Отправить"}
                 </Button>
               </DialogFooter>
@@ -413,29 +366,22 @@ export default function ClubPage() {
 
         <div className="space-y-3 mb-8">
           {(reviewsData?.reviews || []).length === 0 ? (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">
-              Пока нет отзывов
-            </div>
+            <div className="rounded-xl border border-[#2f2f2f] bg-[#121212] p-4 text-sm text-white/50">Пока нет отзывов</div>
           ) : (
             reviewsData?.reviews.map((review) => (
-              <div key={review.id} className="rounded-xl border border-white/10 bg-[#11131a] p-4">
+              <div key={review.id} className="rounded-xl border border-[#2f2f2f] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-semibold text-white">{review.username}</div>
-                  <div className="text-xs text-white/50">{formatDate(review.created_at)}</div>
+                  <div className="text-xs text-[#8f8f8f]">{formatDate(review.created_at)}</div>
                 </div>
                 <div className="mt-2 flex items-center gap-1 text-amber-400">
                   {Array.from({ length: 5 }).map((_, idx) => (
-                    <Star
-                      key={`${review.id}-star-${idx}`}
-                      className={`h-4 w-4 ${idx < review.rating ? "fill-current" : "text-white/20"}`}
-                    />
+                    <Star key={`${review.id}-star-${idx}`} className={`h-4 w-4 ${idx < review.rating ? "fill-current" : "text-white/20"}`} />
                   ))}
                   <span className="ml-1 text-xs text-white/70">{review.rating}/5</span>
                 </div>
                 <p className="mt-3 text-sm text-white/90 whitespace-pre-wrap">
-                  {expandedReviews[review.id]
-                    ? review.text
-                    : (review.text.length > 90 ? `${review.text.slice(0, 90)}...` : review.text)}
+                  {expandedReviews[review.id] ? review.text : review.text.length > 90 ? `${review.text.slice(0, 90)}...` : review.text}
                 </p>
                 <div className="mt-2 flex justify-end">
                   <button
@@ -446,14 +392,10 @@ export default function ClubPage() {
                         [review.id]: !prev[review.id],
                       }))
                     }
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-[#FF7800] hover:text-[#ffa145] transition-colors"
                   >
                     {expandedReviews[review.id] ? "Свернуть" : "Развернуть"}
-                    {expandedReviews[review.id] ? (
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    ) : (
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    )}
+                    {expandedReviews[review.id] ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
                 </div>
               </div>
@@ -461,12 +403,7 @@ export default function ClubPage() {
           )}
         </div>
 
-        {/* Book button */}
-        <Button
-          onClick={() => navigate(`/booking?club=${club.id}`)}
-          className="w-full h-12 rounded-lg gradient-primary text-primary-foreground font-display font-bold text-base neon-glow"
-          disabled={!club.isOpen}
-        >
+        <Button onClick={() => navigate(`/booking?club=${club.id}`)} className="w-full h-12 rounded-xl font-display text-xl" disabled={!club.isOpen}>
           {club.isOpen ? "Забронировать место" : "Клуб закрыт"}
         </Button>
       </div>
