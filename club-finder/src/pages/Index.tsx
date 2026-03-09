@@ -67,8 +67,8 @@ export default function Index() {
             <img src={brandLogo} alt="Cloud Finder" className="relative z-10 w-7 h-7 object-contain" />
           </div>
           <div className="flex flex-col">
-            <h1 className="font-display text-[30px] font-bold uppercase tracking-wide leading-tight">Cloud Finder</h1>
-            <span className="text-[#F5A623] text-[10px] font-bold tracking-widest uppercase">Esports Discovery</span>
+            <h1 className="font-display text-[30px] font-bold uppercase tracking-wide leading-tight">FRAG.GG</h1>
+            <span className="text-[#F5A623] text-[10px] font-bold tracking-widest uppercase">Киберспортивный поиск</span>
           </div>
         </div>
         <button className="w-10 h-10 bg-[#1E1F22] rounded-xl flex items-center justify-center border border-[#2F3136] text-[#949BA4] hover:text-[#F5A623] transition-colors">
@@ -98,7 +98,7 @@ export default function Index() {
 
         <div className="px-5 mb-5 flex items-center">
           <div className="w-1.5 h-4 bg-[#F5A623] rounded-sm mr-3" />
-          <h2 className="font-display text-lg font-bold text-[#949BA4] uppercase tracking-widest leading-none pt-1">Popular Locations</h2>
+          <h2 className="font-display text-lg font-bold text-[#949BA4] uppercase tracking-widest leading-none pt-1">Популярные локации</h2>
           <div className="flex-1 h-[1px] bg-[#2F3136] ml-4" />
         </div>
 

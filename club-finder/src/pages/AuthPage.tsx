@@ -94,16 +94,14 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/25 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/25 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-[-12%] left-[-12%] w-[48%] h-[48%] bg-[#FF7800]/18 rounded-full blur-[130px]" />
+        <div className="absolute bottom-[-15%] right-[-15%] w-[52%] h-[52%] bg-[#FF7800]/14 rounded-full blur-[150px]" />
       </div>
 
       <div className="w-full max-w-[420px] relative z-10">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-5 h-16 w-16 rounded-2xl border border-white/10 bg-black/35 p-3 shadow-[0_0_26px_rgba(108,92,231,0.32)]">
-            <img src={brandLogo} alt="Cloud Finder" className="h-full w-full object-contain" />
-          </div>
-          <h1 className="text-3xl font-display tracking-tight text-white mb-2">Cloud Finder</h1>
+          <img src={brandLogo} alt="FRAG.GG" className="mx-auto mb-5 h-24 w-24 object-contain drop-shadow-[0_0_28px_rgba(255,120,0,0.38)]" />
+          <h1 className="text-3xl font-display tracking-tight text-white mb-2">FRAG.GG</h1>
           <p className="text-white/45 text-sm">
             {showVerify ? `Введите код, отправленный на ${email}` : isLogin ? "Вход в игровой аккаунт" : "Создание аккаунта"}
           </p>
@@ -170,7 +168,7 @@ export default function AuthPage() {
 
           {!showVerify && (
             <div className="mt-7 text-center">
-              <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-[#00E5FF] transition-colors">
+              <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-[#FF7800] transition-colors">
                 {isLogin ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти"}
               </button>
             </div>
