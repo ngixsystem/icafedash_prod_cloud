@@ -101,4 +101,20 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
+
+  .animate-center-logo {
+    animation: centerLogoPulse 2.1s ease-in-out infinite;
+  }
+}
+
+@keyframes centerLogoPulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 8px 22px rgba(255, 120, 0, 0.35);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 10px 28px rgba(255, 120, 0, 0.55);
+  }
 }
