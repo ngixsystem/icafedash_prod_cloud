@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,138 +6,92 @@
 
 @layer base {
   :root {
-    --background: 228 40% 8%;
-    --foreground: 210 28% 96%;
+    --background: 225 6% 8%;
+    --foreground: 0 0% 100%;
 
-    --card: 224 34% 12%;
-    --card-foreground: 210 28% 95%;
+    --card: 220 6% 13%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 225 34% 11%;
-    --popover-foreground: 210 28% 95%;
+    --popover: 220 6% 13%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 249 70% 64%;
+    --primary: 37 91% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 225 30% 18%;
-    --secondary-foreground: 210 28% 92%;
+    --secondary: 220 7% 18%;
+    --secondary-foreground: 0 0% 94%;
 
-    --muted: 225 27% 16%;
-    --muted-foreground: 217 16% 66%;
+    --muted: 220 6% 15%;
+    --muted-foreground: 220 9% 60%;
 
-    --accent: 186 100% 50%;
-    --accent-foreground: 223 48% 7%;
+    --accent: 37 91% 55%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 358 82% 59%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 226 24% 24%;
-    --input: 225 28% 19%;
-    --ring: 186 100% 50%;
+    --border: 222 8% 20%;
+    --input: 222 8% 20%;
+    --ring: 37 91% 55%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    --success: 142 70% 45%;
-    --success-foreground: 142 70% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 10%;
+    --success: 142 85% 65%;
+    --success-foreground: 0 0% 10%;
+    --warning: 50 98% 68%;
+    --warning-foreground: 0 0% 10%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    background-color: #0b0f1a;
-    background-image:
-      radial-gradient(1200px circle at 12% -10%, rgba(108, 92, 231, 0.27) 0%, transparent 40%),
-      radial-gradient(900px circle at 110% 5%, rgba(0, 229, 255, 0.18) 0%, transparent 33%),
-      linear-gradient(160deg, #070b13 0%, #0b0f1a 45%, #0f1627 100%);
-    @apply text-foreground font-body antialiased selection:bg-primary/30;
-    background-attachment: fixed, fixed, fixed;
+    @apply bg-background text-foreground font-body antialiased;
+    background: #121315;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-bold tracking-tight text-white;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display tracking-wide;
   }
 }
 
 @layer utilities {
-  .esports-shell {
-    position: relative;
-    isolation: isolate;
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
-  .esports-shell::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(circle at center, #000 35%, transparent 95%);
-    pointer-events: none;
-    z-index: -1;
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
-  .neon-text {
-    text-shadow: 0 0 12px rgba(0, 229, 255, 0.45);
+  .brand-surface {
+    background: #1e1f22;
   }
 
-  .neon-border {
-    box-shadow: 0 0 10px hsl(var(--primary) / 0.15), inset 0 0 5px hsl(var(--primary) / 0.05);
+  .brand-border {
+    border-color: #2f3136;
   }
 
-  .neon-glow {
-    box-shadow: 0 0 25px hsl(var(--primary) / 0.35), 0 0 50px hsl(var(--primary) / 0.1);
+  .brand-muted {
+    color: #949ba4;
   }
 
-  .glass {
-    @apply bg-card/60 backdrop-blur-xl border border-white/10 shadow-[0_12px_36px_0_rgba(0,0,0,0.45)];
+  .brand-accent {
+    color: #f5a623;
   }
 
-  .glass-dark {
-    @apply bg-black/35 backdrop-blur-2xl border border-white/10;
-  }
-
-  .gradient-primary {
-    background: linear-gradient(115deg, #6c5ce7 0%, #00e5ff 100%);
-  }
-
-  .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-400 to-accent;
-  }
-
-  .card-hover {
-    @apply transition-all duration-300 hover:scale-[1.015] hover:shadow-[0_20px_42px_-14px_rgba(0,13,32,0.6)] active:scale-[0.985];
+  .brand-accent-bg {
+    background: #f5a623;
   }
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
 }
-
-::-webkit-scrollbar {
-  width: 7px;
-}
-
-::-webkit-scrollbar-track {
-  background: #090d17;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(108, 92, 231, 0.8), rgba(0, 229, 255, 0.8));
-  border-radius: 999px;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-

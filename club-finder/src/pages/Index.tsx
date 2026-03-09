@@ -1,5 +1,5 @@
-﻿import { Search, MapPin, Cpu, TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
+﻿import { Search, MapPin, Cpu, Activity, TrendingUp } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useClubs } from "@/hooks/use-clubs";
 import ClubCard from "@/components/ClubCard";
 import { distanceKm, hasValidCoords } from "@/lib/distance";
@@ -54,98 +54,79 @@ export default function Index() {
     [clubsWithDistance],
   );
 
+  const totalFree = clubs.reduce((s, c) => s + c.pcsFree, 0);
+  const online = clubs.filter((c) => c.isOpen).length;
+
   return (
-    <div className="min-h-screen pb-36 md:pb-24">
-      <div className="fixed top-0 left-0 right-0 h-[28rem] bg-gradient-to-b from-primary/15 via-transparent to-transparent -z-10 pointer-events-none" />
-
-      <div className="relative px-5 md:px-8 pt-10 pb-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl border border-white/10 bg-black/35 p-2.5 shadow-[0_0_26px_rgba(108,92,231,0.32)]">
-              <img src={brandLogo} alt="Cloud Finder" className="h-full w-full object-contain" />
-            </div>
-            <div>
-              <p className="font-display text-2xl text-white leading-tight">Cloud Finder</p>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-[#00E5FF] font-semibold">Esports Discovery</p>
-            </div>
+    <div className="h-screen w-full overflow-hidden flex flex-col antialiased">
+      <header className="flex items-center justify-between px-5 pt-8 pb-4 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="relative w-11 h-11 bg-[#1E1F22] rounded-xl flex items-center justify-center border border-[#2F3136] overflow-hidden shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1E1F22] to-[#121315] opacity-50" />
+            <div className="absolute -left-2 -top-2 w-6 h-6 bg-[#F5A623]/20 rotate-45" />
+            <img src={brandLogo} alt="Cloud Finder" className="relative z-10 w-7 h-7 object-contain" />
           </div>
-
-          <div className="w-11 h-11 rounded-xl glass flex items-center justify-center border-white/10 animate-float">
-            <TrendingUp className="w-5 h-5 text-[#00E5FF]" />
+          <div className="flex flex-col">
+            <h1 className="font-display text-[30px] font-bold uppercase tracking-wide leading-tight">Cloud Finder</h1>
+            <span className="text-[#F5A623] text-[10px] font-bold tracking-widest uppercase">Esports Discovery</span>
           </div>
         </div>
+        <button className="w-10 h-10 bg-[#1E1F22] rounded-xl flex items-center justify-center border border-[#2F3136] text-[#949BA4] hover:text-[#F5A623] transition-colors">
+          <TrendingUp className="w-[18px] h-[18px]" />
+        </button>
+      </header>
 
-        <div className="relative group max-w-2xl">
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-accent/50 rounded-2xl blur opacity-20 group-focus-within:opacity-100 transition duration-500" />
-          <div className="relative flex items-center glass-dark rounded-2xl border-white/10 overflow-hidden px-4">
-            <Search className="w-4 h-4 text-[#00E5FF]" />
+      <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
+        <div className="px-5 mb-6">
+          <div className="flex items-center bg-[#18191C] border border-[#2F3136] rounded-xl px-4 py-3.5 focus-within:border-[#F5A623] transition-colors shadow-inner">
+            <Search className="w-[18px] h-[18px] text-[#949BA4] mr-3 shrink-0" />
             <input
               type="text"
               placeholder="Поиск по названию или адресу..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-3 pr-4 py-3.5 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none transition-all"
+              className="bg-transparent text-sm w-full outline-none text-white placeholder-[#949BA4] font-medium"
             />
           </div>
         </div>
-      </div>
 
-      <div className="px-5 md:px-8 mb-8">
-        <div className="grid grid-cols-3 gap-3 max-w-xl">
-          <MetricCard label="Клубы" value={clubs.length} icon={<MapPin className="w-3.5 h-3.5 text-[#6C5CE7]" />} />
-          <MetricCard
-            label="Свободно"
-            value={clubs.reduce((s, c) => s + c.pcsFree, 0)}
-            icon={<Cpu className="w-3.5 h-3.5 text-[#00E5FF]" />}
-            highlight
-          />
-          <MetricCard
-            label="Онлайн"
-            value={clubs.filter((c) => c.isOpen).length}
-            icon={<TrendingUp className="w-3.5 h-3.5 text-emerald-400" />}
-          />
-        </div>
-      </div>
-
-      <div className="px-5 md:px-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[11px] font-bold uppercase text-white/45 tracking-[0.2em]">Popular Locations</h2>
-          <div className="h-px flex-1 bg-white/10 ml-4" />
+        <div className="flex gap-3 px-5 mb-8">
+          <MetricCard label="Клубы" value={clubs.length} icon={<MapPin className="w-3 h-3 text-[#F5A623]" />} />
+          <MetricCard label="Свободно" value={totalFree} icon={<Cpu className="w-3 h-3 text-[#F5A623]" />} />
+          <MetricCard label="Онлайн" value={online} icon={<Activity className="w-3 h-3 text-[#F5A623]" />} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="px-5 mb-5 flex items-center">
+          <div className="w-1.5 h-4 bg-[#F5A623] rounded-sm mr-3" />
+          <h2 className="font-display text-lg font-bold text-[#949BA4] uppercase tracking-widest leading-none pt-1">Popular Locations</h2>
+          <div className="flex-1 h-[1px] bg-[#2F3136] ml-4" />
+        </div>
+
+        <div className="px-5 flex flex-col gap-5">
           {isLoading ? (
-            Array(3)
-              .fill(0)
-              .map((_, i) => <div key={i} className="h-64 w-full rounded-2xl glass animate-pulse" />)
+            Array.from({ length: 2 }).map((_, i) => <div key={i} className="h-72 rounded-2xl bg-[#1E1F22] border border-[#2F3136] animate-pulse" />)
           ) : sorted.length > 0 ? (
             sorted.map((club) => (
               <ClubCard key={club.id} club={club} distanceKm={distanceByClubId.get(club.id) ?? null} isNearest={club.id === nearestClubId} />
             ))
           ) : (
-            <div className="md:col-span-2 xl:col-span-3 text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
-              <Search className="w-10 h-10 text-white/10 mx-auto mb-4" />
-              <p className="text-white/40 font-medium">Ничего не найдено</p>
-            </div>
+            <div className="rounded-2xl border border-[#2F3136] bg-[#1E1F22] p-8 text-center text-[#949BA4]">Ничего не найдено</div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-function MetricCard({ label, value, icon, highlight = false }: { label: string; value: number; icon: any; highlight?: boolean }) {
+function MetricCard({ label, value, icon }: { label: string; value: number; icon: ReactNode }) {
   return (
-    <div
-      className={`rounded-xl p-3 transition-all ${
-        highlight ? "glass-dark border-[#00E5FF]/30 ring-1 ring-[#00E5FF]/20" : "glass border-white/10"
-      }`}
-    >
-      <div className="flex items-center gap-1.5 mb-2">
-        <div className="p-1 rounded-lg bg-white/5 border border-white/10">{icon}</div>
-        <span className="text-[9px] uppercase tracking-wider text-white/45 font-bold whitespace-nowrap">{label}</span>
+    <div className="flex-1 bg-[#1E1F22] border border-[#2F3136] rounded-xl p-3.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+      <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-[#121315] rounded-full opacity-50" />
+      <div className="flex items-center gap-2 mb-3 relative z-10">
+        <div className="w-6 h-6 rounded-full bg-[#121315] flex items-center justify-center border border-[#2F3136]">{icon}</div>
+        <span className="text-[10px] text-[#949BA4] font-bold uppercase tracking-wider">{label}</span>
       </div>
-      <p className="text-xl font-display font-bold text-white">{value}</p>
+      <div className="font-display text-3xl font-bold relative z-10 leading-none">{value}</div>
     </div>
   );
 }

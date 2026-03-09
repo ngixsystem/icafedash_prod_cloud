@@ -10,60 +10,61 @@ interface ClubCardProps {
 }
 
 export default function ClubCard({ club, distanceKm, isNearest = false }: ClubCardProps) {
-  const freePercent = Math.round((club.pcsFree / club.pcsTotal) * 100);
+  const image = (club as any).main_photo_url || (club as any).logo || (club as any).image;
 
   return (
-    <Link to={`/club/${club.id}`} className="block group relative overflow-hidden glass card-hover rounded-2xl border-white/10">
-      <div className="relative h-52 overflow-hidden">
+    <Link to={`/club/${club.id}`} className="bg-[#1E1F22] border border-[#2F3136] rounded-2xl overflow-hidden flex flex-col shadow-lg transition-transform duration-300 hover:scale-[1.01]">
+      <div className="relative h-44 bg-[#111214] group overflow-hidden">
         <img
-          src={(club as any).main_photo_url || (club as any).logo || (club as any).image}
+          src={image}
           alt={club.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className={`w-full h-full object-cover transition-all duration-500 ${club.isOpen ? "opacity-70 group-hover:scale-105" : "opacity-45 grayscale group-hover:opacity-60"}`}
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {club.isOpen ? <div className="absolute inset-0 bg-gradient-to-t from-[#1E1F22] via-transparent to-transparent opacity-80" /> : null}
 
-        <div className="absolute top-3 right-3 glass-dark px-2 py-1 rounded-full flex items-center gap-1.5 border-white/20">
-          <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-          <span className="text-xs font-bold text-white">{club.rating}</span>
+        <div className="absolute top-3 left-3 bg-[#121315]/90 backdrop-blur-md border border-[#2F3136] rounded-full px-2.5 py-1.5 flex items-center gap-2 shadow-sm">
+          <div className={`w-2 h-2 rounded-full ${club.isOpen ? "bg-[#57F287]" : "bg-[#ED4245] animate-pulse"}`} />
+          <span className="text-[10px] font-bold text-white uppercase tracking-wider leading-none pt-0.5">{club.isOpen ? "Открыто" : "Закрыто"}</span>
         </div>
 
-        <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${club.isOpen ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-red-500"}`} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/90">{club.isOpen ? "Открыто" : "Закрыто"}</span>
-          </div>
+        <div className="absolute top-3 right-3 bg-[#121315]/90 backdrop-blur-md border border-[#2F3136] rounded-full px-2.5 py-1.5 flex items-center gap-1.5 shadow-sm">
+          <Star className="w-3 h-3 text-[#FEE75C] fill-[#FEE75C]" />
+          <span className="text-[11px] font-bold text-white leading-none pt-0.5">{club.rating}</span>
         </div>
 
-        <div className="absolute bottom-4 left-4 right-4 focus-visible:outline-none">
-          <h3 className="text-xl font-display font-bold text-white group-hover:text-[#00E5FF] transition-colors leading-tight mb-1">{club.name}</h3>
-          <div className="flex items-center gap-1.5 text-white/70">
-            <MapPin className="w-3.5 h-3.5 text-[#00E5FF]" />
-            <p className="text-xs truncate">{club.address || "Адрес не указан"}</p>
-          </div>
+        <div className="absolute bottom-4 left-4 right-4">
+          <h3 className="font-display text-[32px] leading-none font-bold text-white uppercase tracking-wide drop-shadow-md">{club.name}</h3>
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
-              <Monitor className="w-4.5 h-4.5 text-[#00E5FF]" />
+      <div className="p-5 pt-4">
+        <div className="flex items-start gap-2 mb-5 text-[#949BA4]">
+          <MapPin className="w-[14px] h-[14px] text-[#F5A623] mt-0.5 shrink-0" />
+          <span className="text-xs font-medium line-clamp-2 leading-relaxed">{club.address || "Адрес не указан"}</span>
+        </div>
+
+        <div className="h-[1px] bg-[#2F3136] w-full mb-4 relative">
+          <div className="absolute left-0 -top-[1.5px] w-8 h-[4px] bg-[#F5A623] rounded-full" />
+        </div>
+
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-[#121315] rounded-xl flex items-center justify-center border border-[#2F3136]">
+              <Monitor className="w-5 h-5 text-[#F5A623]" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Свободно</span>
-              <span className="text-sm font-semibold">
-                <span className={freePercent > 30 ? "text-emerald-400" : "text-amber-400"}>{club.pcsFree}</span>
-                <span className="text-white/40 font-normal ml-1"> / {club.pcsTotal} ПК</span>
-              </span>
+              <span className="text-[10px] text-[#949BA4] font-bold uppercase tracking-widest mb-0.5">Свободно</span>
+              <div className="font-display text-xl font-bold leading-none tracking-wide">
+                <span className={club.pcsFree > 0 ? "text-[#57F287]" : "text-[#F5A623]"}>{club.pcsFree}</span>
+                <span className="text-[#949BA4] text-lg"> / {club.pcsTotal} ПК</span>
+              </div>
             </div>
           </div>
 
-          <div className="text-right">
-            <span className="block text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none mb-1">
-              {isNearest ? "Ближайший" : "Расстояние"}
-            </span>
-            <div className="text-sm md:text-base font-display font-bold text-white">{distanceKm != null ? `${formatDistance(distanceKm)}` : "-"}</div>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] text-[#949BA4] font-bold uppercase tracking-widest mb-0.5">{isNearest ? "Ближайший" : "Расстояние"}</span>
+            <span className="font-display text-xl font-bold leading-none">{distanceKm != null ? formatDistance(distanceKm) : "-"}</span>
           </div>
         </div>
       </div>

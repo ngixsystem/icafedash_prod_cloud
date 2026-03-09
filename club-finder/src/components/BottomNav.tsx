@@ -10,27 +10,29 @@ const tabs = [
 
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-4 md:bottom-6 left-4 right-4 md:left-8 md:right-8 z-50 rounded-2xl glass-dark border border-white/10 shadow-2xl safe-bottom overflow-hidden">
-      <div className="flex items-center justify-around h-16 max-w-3xl mx-auto px-2">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            end={tab.to === "/"}
-            className={({ isActive }) =>
-              `relative flex flex-col items-center justify-center w-16 h-14 transition-all duration-300 ${isActive ? "text-[#00E5FF]" : "text-white/45 hover:text-white/70"}`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <tab.icon className={`w-5 h-5 transition-transform ${isActive ? "scale-110 drop-shadow-[0_0_10px_rgba(0,229,255,0.45)]" : ""}`} />
-                <span className="mt-1 text-[10px] font-semibold tracking-wide">{tab.label}</span>
-                {isActive && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_12px_#00E5FF]" />}
-              </>
-            )}
-          </NavLink>
-        ))}
-      </div>
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] bg-[#121315]/95 backdrop-blur-lg border-t border-[#2F3136] flex justify-between px-2 pt-2 pb-6 safe-bottom z-50">
+      {tabs.map((tab) => (
+        <NavLink
+          key={tab.to}
+          to={tab.to}
+          end={tab.to === "/"}
+          className={({ isActive }) =>
+            `flex-1 flex flex-col items-center justify-center py-2 relative transition-colors ${
+              isActive ? "text-[#FF7800]" : "text-[#949BA4] hover:text-white"
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive ? <div className="absolute top-0 w-12 h-[3px] bg-[#FF7800] rounded-b-full -mt-[9px]" /> : null}
+              <div className={`mb-1.5 p-1.5 rounded-lg ${isActive ? "bg-[#FF7800]/10" : ""}`}>
+                <tab.icon className="w-[22px] h-[22px]" />
+              </div>
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? "text-[#FF7800]" : "text-[#949BA4]"}`}>{tab.label}</span>
+            </>
+          )}
+        </NavLink>
+      ))}
     </nav>
   );
 }

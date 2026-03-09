@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
+﻿import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -24,18 +24,37 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="esports-shell max-w-6xl mx-auto relative min-h-screen">
+          <div className="max-w-[420px] mx-auto relative min-h-screen bg-[#121315] border-x border-[#2F3136]">
             <Routes>
-              {/* Публичные роуты (поиск клуба) */}
               <Route path="/" element={<Index />} />
               <Route path="/map" element={<MapPage />} />
               <Route path="/club/:id" element={<ClubPage />} />
               <Route path="/auth" element={<AuthPage />} />
 
-              {/* Защищённые роуты (только для авторизованных клиентов) */}
-              <Route path="/profile" element={<AuthGuard><ProfilePage /></AuthGuard>} />
-              <Route path="/profile/settings" element={<AuthGuard><ProfileSettingsPage /></AuthGuard>} />
-              <Route path="/booking" element={<AuthGuard><BookingPage /></AuthGuard>} />
+              <Route
+                path="/profile"
+                element={
+                  <AuthGuard>
+                    <ProfilePage />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/profile/settings"
+                element={
+                  <AuthGuard>
+                    <ProfileSettingsPage />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/booking"
+                element={
+                  <AuthGuard>
+                    <BookingPage />
+                  </AuthGuard>
+                }
+              />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

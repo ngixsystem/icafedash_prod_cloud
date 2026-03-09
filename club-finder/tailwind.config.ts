@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Orbitron", "Space Grotesk", "sans-serif"],
-        body: ["Inter", "Space Grotesk", "sans-serif"],
+        display: ["Oswald", "sans-serif"],
+        body: ["Inter", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
