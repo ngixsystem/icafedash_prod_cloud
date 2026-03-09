@@ -100,7 +100,7 @@ export default function AuthPage() {
 
       <div className="w-full max-w-[420px] relative z-10">
         <div className="text-center mb-8">
-          <img src={brandLogo} alt="FRAG.GG" className="mx-auto mb-5 h-24 w-24 object-contain drop-shadow-[0_0_28px_rgba(255,120,0,0.38)]" />
+          <img src={brandLogo} alt="FRAG.GG" className="mx-auto mb-5 h-32 w-32 object-contain drop-shadow-[0_0_28px_rgba(255,120,0,0.38)]" />
           <h1 className="text-3xl font-display tracking-tight text-white mb-2">FRAG.GG</h1>
           <p className="text-white/45 text-sm">
             {showVerify ? `Введите код, отправленный на ${email}` : isLogin ? "Вход в игровой аккаунт" : "Создание аккаунта"}

@@ -61,10 +61,10 @@ export default function Index() {
     <div className="h-screen w-full overflow-hidden flex flex-col antialiased">
       <header className="flex items-center justify-between px-5 pt-8 pb-4 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="relative w-11 h-11 bg-[#1E1F22] rounded-xl flex items-center justify-center border border-[#2F3136] overflow-hidden shadow-lg">
+          <div className="relative w-14 h-14 bg-transparent rounded-xl flex items-center justify-center overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-[#1E1F22] to-[#121315] opacity-50" />
             <div className="absolute -left-2 -top-2 w-6 h-6 bg-[#F5A623]/20 rotate-45" />
-            <img src={brandLogo} alt="Cloud Finder" className="relative z-10 w-7 h-7 object-contain" />
+            <img src={brandLogo} alt="FRAG.GG" className="relative z-10 w-11 h-11 object-contain" />
           </div>
           <div className="flex flex-col">
             <h1 className="font-display text-[30px] font-bold uppercase tracking-wide leading-tight">FRAG.GG</h1>

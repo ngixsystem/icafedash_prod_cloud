@@ -257,21 +257,23 @@ export default function ClubPage() {
                 <div
                   key={i}
                   onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
-                  className="rounded-2xl bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] border border-[#2f2f2f] p-5 cursor-pointer transition-all hover:border-[#FF7800]/45 hover:shadow-[0_10px_30px_rgba(255,120,0,0.1)]"
+                  className="rounded-2xl bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] border border-[#2f2f2f] p-4 cursor-pointer transition-all hover:border-[#FF7800]/45 hover:shadow-[0_10px_30px_rgba(255,120,0,0.1)]"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-display uppercase tracking-wide text-[30px] text-[#FF9A2F] leading-none mb-2">{zone.name}</h3>
-                      <div className="text-white font-display text-[30px] leading-none">{zone.price || 0} СУМ/ЧАС</div>
+                  <div className="flex flex-col gap-2.5 mb-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h3 className="font-display uppercase tracking-wide text-[16px] sm:text-[18px] text-[#FF9A2F] leading-none mb-1.5 break-words">
+                        {zone.name}
+                      </h3>
+                      <div className="text-white font-display text-[19px] sm:text-[22px] leading-none">{zone.price || 0} СУМ/ЧАС</div>
                     </div>
-                    <span className="text-[22px] text-white/50 whitespace-nowrap leading-none pt-1">
-                      <span className={zFree > 0 ? "text-[#57F287] font-display" : "text-white/60 font-display"}>{zFree} свободно</span> из {zTotal} ПК
+                    <span className="text-[14px] sm:text-[15px] text-white/55 leading-tight sm:pt-1">
+                      <span className={zFree > 0 ? "text-[#57F287] font-semibold" : "text-white/60 font-semibold"}>{zFree} свободно</span> из {zTotal} ПК
                     </span>
                   </div>
 
-                  <p className="text-[20px] text-white/60 mb-5 leading-snug">{zone.specs || "Характеристики не указаны"}</p>
+                  <p className="text-[13px] sm:text-[14px] text-white/60 mb-4 leading-snug break-words">{zone.specs || "Характеристики не указаны"}</p>
 
-                  <div className="w-full h-2 rounded-full bg-[#272727] overflow-hidden">
+                  <div className="w-full h-1.5 rounded-full bg-[#272727] overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{
@@ -294,7 +296,7 @@ export default function ClubPage() {
             club.tariffs.map((t: any, i: number) => (
               <div
                 key={i}
-                className="rounded-2xl bg-[linear-gradient(180deg,#151923_0%,#11151e_100%)] border border-[#2F3136] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                className="rounded-2xl bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] border border-[#2F3136] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
               >
                 <div className="flex items-center justify-center gap-1.5 text-[#9aa1ab] text-[10px] uppercase tracking-wider font-semibold mb-2">
                   <Clock className="w-3 h-3" /> {t.duration}

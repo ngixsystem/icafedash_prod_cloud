@@ -48,7 +48,14 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
-    background: #121315;
+    background-color: #121315;
+    background-image:
+      linear-gradient(rgba(8, 8, 8, 0.78), rgba(8, 8, 8, 0.78)),
+      url("./assets/fon_JPG.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
 
   h1,
