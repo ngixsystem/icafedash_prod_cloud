@@ -26,18 +26,11 @@ export default function BottomNav() {
               >
                 {({ isActive }) => (
                   <>
-                    <div
-                      className={`w-14 h-14 rounded-full border flex items-center justify-center transition-all ${
-                        isActive
-                          ? "bg-[#FF7800] text-black border-[#ffbf7f] shadow-[0_8px_22px_rgba(255,120,0,0.5)] animate-center-logo"
-                          : "bg-[#1A1B1F] text-[#FF7800] border-[#3A3A3A]"
-                      }`}
-                    >
-                      <img src={fragLogo} alt="FRAG.GG" className="w-8 h-8 object-contain" />
-                    </div>
-                    <span className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${isActive ? "text-[#FF7800]" : "text-[#949BA4]"}`}>
-                      {tab.label}
-                    </span>
+                    <img
+                      src={fragLogo}
+                      alt="FRAG.GG"
+                      className={`object-contain transition-all ${isActive ? "w-11 h-11 animate-center-logo" : "w-9 h-9 opacity-80"}`}
+                    />
                   </>
                 )}
               </NavLink>
@@ -58,10 +51,9 @@ export default function BottomNav() {
               {({ isActive }) => (
                 <>
                   {isActive ? <div className="absolute top-0 w-12 h-[3px] bg-[#FF7800] rounded-b-full -mt-[9px]" /> : null}
-                  <div className={`mb-1.5 p-1.5 rounded-lg ${isActive ? "bg-[#FF7800]/10" : ""}`}>
+                  <div className={`p-1.5 rounded-lg ${isActive ? "bg-[#FF7800]/10" : ""}`}>
                     <tab.icon className="w-[22px] h-[22px]" />
                   </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? "text-[#FF7800]" : "text-[#949BA4]"}`}>{tab.label}</span>
                 </>
               )}
             </NavLink>
