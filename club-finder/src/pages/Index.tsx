@@ -1,9 +1,10 @@
-import { Search, MapPin, Cpu, TrendingUp } from "lucide-react";
+﻿import { Search, MapPin, Cpu, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useClubs } from "@/hooks/use-clubs";
 import ClubCard from "@/components/ClubCard";
 import { distanceKm, hasValidCoords } from "@/lib/distance";
 import { useUserLocation } from "@/hooks/use-user-location";
+import brandLogo from "@/assets/frag.png";
 
 type ClubWithDistance = {
   id: number;
@@ -16,17 +17,12 @@ export default function Index() {
   const userLocation = useUserLocation();
 
   const filtered = clubs.filter(
-    (c) =>
-      c.name.toLowerCase().includes(query.toLowerCase()) ||
-      c.address.toLowerCase().includes(query.toLowerCase())
+    (c) => c.name.toLowerCase().includes(query.toLowerCase()) || c.address.toLowerCase().includes(query.toLowerCase()),
   );
 
   const clubsWithDistance = useMemo<ClubWithDistance[]>(() => {
     return filtered.map((club) => {
-      if (
-        userLocation &&
-        hasValidCoords(club.lat, club.lng)
-      ) {
+      if (userLocation && hasValidCoords(club.lat, club.lng)) {
         return {
           id: club.id,
           distanceKm: distanceKm(userLocation, { lat: Number(club.lat), lng: Number(club.lng) }),
@@ -37,16 +33,12 @@ export default function Index() {
   }, [filtered, userLocation]);
 
   const nearestClubId = useMemo(() => {
-    const nearest = clubsWithDistance
-      .filter((x) => x.distanceKm != null)
-      .sort((a, b) => (a.distanceKm as number) - (b.distanceKm as number))[0];
+    const nearest = clubsWithDistance.filter((x) => x.distanceKm != null).sort((a, b) => (a.distanceKm as number) - (b.distanceKm as number))[0];
     return nearest?.id ?? null;
   }, [clubsWithDistance]);
 
   const sorted = useMemo(() => {
-    const distanceMap = new Map<number, number | null>(
-      clubsWithDistance.map((item) => [item.id, item.distanceKm])
-    );
+    const distanceMap = new Map<number, number | null>(clubsWithDistance.map((item) => [item.id, item.distanceKm]));
     return [...filtered].sort((a, b) => {
       const da = distanceMap.get(a.id);
       const db = distanceMap.get(b.id);
@@ -59,35 +51,34 @@ export default function Index() {
 
   const distanceByClubId = useMemo(
     () => new Map<number, number | null>(clubsWithDistance.map((item) => [item.id, item.distanceKm])),
-    [clubsWithDistance]
+    [clubsWithDistance],
   );
 
   return (
-    <div className="min-h-screen pb-32">
-      <div className="fixed top-0 left-0 right-0 h-96 bg-gradient-to-b from-primary/10 via-transparent to-transparent -z-10 pointer-events-none" />
+    <div className="min-h-screen pb-36 md:pb-24">
+      <div className="fixed top-0 left-0 right-0 h-[28rem] bg-gradient-to-b from-primary/15 via-transparent to-transparent -z-10 pointer-events-none" />
 
-      <div className="relative px-6 pt-12 pb-8">
+      <div className="relative px-5 md:px-8 pt-10 pb-8">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="ICAFE DASH" className="h-8 w-auto object-contain" />
-              <div className="h-6 w-px bg-white/10 mx-1" />
-              <p className="text-[9px] text-primary uppercase font-black tracking-[0.2em] leading-tight">
-                Премиум
-                <br />
-                Поиск
-              </p>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl border border-white/10 bg-black/35 p-2.5 shadow-[0_0_26px_rgba(108,92,231,0.32)]">
+              <img src={brandLogo} alt="Cloud Finder" className="h-full w-full object-contain" />
+            </div>
+            <div>
+              <p className="font-display text-2xl text-white leading-tight">Cloud Finder</p>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-[#00E5FF] font-semibold">Esports Discovery</p>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl glass flex items-center justify-center border-primary/20 animate-float">
-            <TrendingUp className="w-5 h-5 text-primary" />
+
+          <div className="w-11 h-11 rounded-xl glass flex items-center justify-center border-white/10 animate-float">
+            <TrendingUp className="w-5 h-5 text-[#00E5FF]" />
           </div>
         </div>
 
-        <div className="relative group">
+        <div className="relative group max-w-2xl">
           <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-accent/50 rounded-2xl blur opacity-20 group-focus-within:opacity-100 transition duration-500" />
           <div className="relative flex items-center glass-dark rounded-2xl border-white/10 overflow-hidden px-4">
-            <Search className="w-4 h-4 text-primary" />
+            <Search className="w-4 h-4 text-[#00E5FF]" />
             <input
               type="text"
               placeholder="Поиск по названию или адресу..."
@@ -99,17 +90,13 @@ export default function Index() {
         </div>
       </div>
 
-      <div className="px-6 mb-8">
-        <div className="grid grid-cols-3 gap-2.5">
-          <MetricCard
-            label="Клубы"
-            value={clubs.length}
-            icon={<MapPin className="w-3.5 h-3.5 text-purple-400" />}
-          />
+      <div className="px-5 md:px-8 mb-8">
+        <div className="grid grid-cols-3 gap-3 max-w-xl">
+          <MetricCard label="Клубы" value={clubs.length} icon={<MapPin className="w-3.5 h-3.5 text-[#6C5CE7]" />} />
           <MetricCard
             label="Свободно"
             value={clubs.reduce((s, c) => s + c.pcsFree, 0)}
-            icon={<Cpu className="w-3.5 h-3.5 text-cyan-400" />}
+            icon={<Cpu className="w-3.5 h-3.5 text-[#00E5FF]" />}
             highlight
           />
           <MetricCard
@@ -120,28 +107,23 @@ export default function Index() {
         </div>
       </div>
 
-      <div className="px-6 space-y-6">
+      <div className="px-5 md:px-8 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold tracking-tight uppercase text-white/40 text-[10px] tracking-[0.2em]">Популярные локации</h2>
-          <div className="h-px flex-1 bg-white/5 ml-4" />
+          <h2 className="text-[11px] font-bold uppercase text-white/45 tracking-[0.2em]">Popular Locations</h2>
+          <div className="h-px flex-1 bg-white/10 ml-4" />
         </div>
 
-        <div className="grid grid-cols-1 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {isLoading ? (
-            Array(3).fill(0).map((_, i) => (
-              <div key={i} className="h-64 w-full rounded-2xl glass animate-pulse" />
-            ))
+            Array(3)
+              .fill(0)
+              .map((_, i) => <div key={i} className="h-64 w-full rounded-2xl glass animate-pulse" />)
           ) : sorted.length > 0 ? (
             sorted.map((club) => (
-              <ClubCard
-                key={club.id}
-                club={club}
-                distanceKm={distanceByClubId.get(club.id) ?? null}
-                isNearest={club.id === nearestClubId}
-              />
+              <ClubCard key={club.id} club={club} distanceKm={distanceByClubId.get(club.id) ?? null} isNearest={club.id === nearestClubId} />
             ))
           ) : (
-            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+            <div className="md:col-span-2 xl:col-span-3 text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
               <Search className="w-10 h-10 text-white/10 mx-auto mb-4" />
               <p className="text-white/40 font-medium">Ничего не найдено</p>
             </div>
@@ -152,16 +134,18 @@ export default function Index() {
   );
 }
 
-function MetricCard({ label, value, icon, highlight = false }: { label: string, value: number, icon: any, highlight?: boolean }) {
+function MetricCard({ label, value, icon, highlight = false }: { label: string; value: number; icon: any; highlight?: boolean }) {
   return (
-    <div className={`flex-1 rounded-xl p-3 transition-all ${highlight ? "glass-dark border-primary/30 ring-1 ring-primary/20" : "glass border-white/5"}`}>
+    <div
+      className={`rounded-xl p-3 transition-all ${
+        highlight ? "glass-dark border-[#00E5FF]/30 ring-1 ring-[#00E5FF]/20" : "glass border-white/10"
+      }`}
+    >
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="p-1 rounded-lg bg-white/5 border border-white/10">
-          {icon}
-        </div>
-        <span className="text-[9px] uppercase tracking-wider text-white/40 font-bold whitespace-nowrap">{label}</span>
+        <div className="p-1 rounded-lg bg-white/5 border border-white/10">{icon}</div>
+        <span className="text-[9px] uppercase tracking-wider text-white/45 font-bold whitespace-nowrap">{label}</span>
       </div>
-      <p className="text-xl font-display font-black text-white">{value}</p>
+      <p className="text-xl font-display font-bold text-white">{value}</p>
     </div>
   );
 }

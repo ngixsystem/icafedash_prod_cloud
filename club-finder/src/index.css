@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    --background: 224 30% 6%;
-    --foreground: 210 20% 98%;
+    --background: 228 40% 8%;
+    --foreground: 210 28% 96%;
 
-    --card: 224 25% 10%;
-    --card-foreground: 210 20% 98%;
+    --card: 224 34% 12%;
+    --card-foreground: 210 28% 95%;
 
-    --popover: 224 25% 10%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 225 34% 11%;
+    --popover-foreground: 210 28% 95%;
 
-    --primary: 199 89% 48%; /* Vibrant Cyan/Azure */
-    --primary-foreground: 224 30% 6%;
+    --primary: 249 70% 64%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 224 20% 14%;
-    --secondary-foreground: 210 20% 92%;
+    --secondary: 225 30% 18%;
+    --secondary-foreground: 210 28% 92%;
 
-    --muted: 224 20% 12%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 225 27% 16%;
+    --muted-foreground: 217 16% 66%;
 
-    --accent: 262 83% 58%; /* Sci-fi Purple */
-    --accent-foreground: 210 20% 98%;
+    --accent: 186 100% 50%;
+    --accent-foreground: 223 48% 7%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 224 20% 16%;
-    --input: 224 20% 16%;
-    --ring: 199 89% 48%;
+    --border: 226 24% 24%;
+    --input: 225 28% 19%;
+    --ring: 186 100% 50%;
 
     --radius: 1rem;
 
@@ -49,11 +49,13 @@
   }
 
   body {
-    background-color: hsl(var(--background));
-    background-image: 
-      radial-gradient(circle at 0% 0%, hsla(var(--primary), 0.08) 0%, transparent 40%),
-      radial-gradient(circle at 100% 100%, hsla(var(--accent), 0.08) 0%, transparent 40%);
+    background-color: #0b0f1a;
+    background-image:
+      radial-gradient(1200px circle at 12% -10%, rgba(108, 92, 231, 0.27) 0%, transparent 40%),
+      radial-gradient(900px circle at 110% 5%, rgba(0, 229, 255, 0.18) 0%, transparent 33%),
+      linear-gradient(160deg, #070b13 0%, #0b0f1a 45%, #0f1627 100%);
     @apply text-foreground font-body antialiased selection:bg-primary/30;
+    background-attachment: fixed, fixed, fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -62,8 +64,26 @@
 }
 
 @layer utilities {
+  .esports-shell {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .esports-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at center, #000 35%, transparent 95%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
   .neon-text {
-    text-shadow: 0 0 12px hsl(var(--primary) / 0.7);
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.45);
   }
 
   .neon-border {
@@ -75,15 +95,15 @@
   }
 
   .glass {
-    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.4)];
+    @apply bg-card/60 backdrop-blur-xl border border-white/10 shadow-[0_12px_36px_0_rgba(0,0,0,0.45)];
   }
 
   .glass-dark {
-    @apply bg-black/40 backdrop-blur-2xl border border-white/5;
+    @apply bg-black/35 backdrop-blur-2xl border border-white/10;
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    background: linear-gradient(115deg, #6c5ce7 0%, #00e5ff 100%);
   }
 
   .gradient-text {
@@ -91,12 +111,25 @@
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] active:scale-[0.98];
+    @apply transition-all duration-300 hover:scale-[1.015] hover:shadow-[0_20px_42px_-14px_rgba(0,13,32,0.6)] active:scale-[0.985];
   }
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090d17;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(108, 92, 231, 0.8), rgba(0, 229, 255, 0.8));
+  border-radius: 999px;
 }
 
 @keyframes float {

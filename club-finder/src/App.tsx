@@ -24,7 +24,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="max-w-lg mx-auto relative">
+          <div className="esports-shell max-w-6xl mx-auto relative min-h-screen">
             <Routes>
               {/* Публичные роуты (поиск клуба) */}
               <Route path="/" element={<Index />} />
