@@ -1,29 +1,31 @@
-п»їimport { Trophy, CalendarDays, Users, MapPin, Medal, Crown } from "lucide-react";
+import { Trophy, CalendarDays, Users, MapPin, Medal, Crown, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import cs2Banner from "@/assets/tournamentsgcs.jpg";
+import dota2Banner from "@/assets/tournamentsgdota.jpg";
+import pubgBanner from "@/assets/tournamentsgpubg.jpg";
 
-const teamRanking = [
-  { id: 1, name: "TeamPro Sergeli", points: 1280, wins: 14, color: "#FEE75C" },
-  { id: 2, name: "Energy Gaming", points: 1195, wins: 12, color: "#C0C0C0" },
-  { id: 3, name: "Cloud1 Squad", points: 1110, wins: 10, color: "#CD7F32" },
-  { id: 4, name: "OpenSpace Crew", points: 980, wins: 9, color: "#FF7800" },
-  { id: 5, name: "Main Arena", points: 910, wins: 8, color: "#FF7800" },
+const gameSections = [
+  { id: "cs2", title: "CS2", subtitle: "Рейтинг команд", image: cs2Banner },
+  { id: "dota2", title: "Dota2", subtitle: "Рейтинг команд", image: dota2Banner },
+  { id: "pubg-mobile", title: "PUBG Mobile", subtitle: "Рейтинг команд", image: pubgBanner },
 ];
 
 const tournaments = [
   {
     id: 1,
     title: "FRAG Night Cup",
-    date: "15 РјР°СЂС‚Р° 2026, 19:00",
-    players: "5v5 вЂў 16 РєРѕРјР°РЅРґ",
+    date: "15 марта 2026, 19:00",
+    players: "5v5 • 16 команд",
     location: "TeamPro Sergeli",
-    prize: "20 000 000 СЃСѓРј",
+    prize: "20 000 000 сум",
   },
   {
     id: 2,
     title: "Cyber Weekend Showdown",
-    date: "22 РјР°СЂС‚Р° 2026, 18:30",
-    players: "2v2 вЂў 24 РєРѕРјР°РЅРґС‹",
+    date: "22 марта 2026, 18:30",
+    players: "2v2 • 24 команды",
     location: "Energy Gaming",
-    prize: "12 000 000 СЃСѓРј",
+    prize: "12 000 000 сум",
   },
 ];
 
@@ -35,42 +37,47 @@ export default function TournamentsPage() {
           <Trophy className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-[32px] font-display leading-none">РўСѓСЂРЅРёСЂС‹</h1>
-          <p className="text-xs text-[#949BA4]">Р РµР№С‚РёРЅРі РєРѕРјР°РЅРґ Рё Р±Р»РёР¶Р°Р№С€РёРµ СЃРѕР±С‹С‚РёСЏ</p>
+          <h1 className="text-[32px] font-display leading-none">Турниры</h1>
+          <p className="text-xs text-[#949BA4]">Рейтинг по играм и ближайшие события</p>
         </div>
       </div>
 
       <section className="mb-7">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-[26px] leading-none">Р РµР№С‚РёРЅРі РєРѕРјР°РЅРґ</h2>
-          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">РЎРµР·РѕРЅ 2026</span>
+          <h2 className="font-display text-[26px] leading-none">Рейтинг по играм</h2>
+          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">Сезон 2026</span>
         </div>
 
-        <div className="rounded-2xl border border-[#2F3136] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-3 space-y-2">
-          {teamRanking.map((team, idx) => (
-            <div key={team.id} className="flex items-center justify-between rounded-xl border border-[#2A2A2A] bg-[#141414] px-3 py-2.5">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-[#1E1E1E] border border-[#2F3136] flex items-center justify-center text-xs font-bold" style={{ color: team.color }}>
-                  {idx + 1}
+        <div className="space-y-3">
+          {gameSections.map((game) => (
+            <Link
+              key={game.id}
+              to={`/tournaments/${game.id}`}
+              className="group relative block h-[106px] overflow-hidden rounded-2xl border border-[#2F3136]"
+            >
+              <img
+                src={game.image}
+                alt={game.title}
+                className="absolute inset-0 h-full w-full object-cover grayscale transition-all duration-300 group-hover:grayscale-0 group-focus-visible:grayscale-0 group-active:grayscale-0"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/20" />
+              <div className="relative flex h-full items-center justify-between px-4">
+                <div>
+                  <h3 className="font-display text-[28px] leading-none text-white">{game.title}</h3>
+                  <p className="text-[11px] uppercase tracking-wide text-[#C4CAD2]">{game.subtitle}</p>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-white truncate">{team.name}</div>
-                  <div className="text-[11px] text-[#949BA4]">РџРѕР±РµРґ: {team.wins}</div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white">
+                  <ChevronRight className="h-4 w-4" />
                 </div>
               </div>
-
-              <div className="text-right shrink-0">
-                <div className="text-sm font-bold text-[#FF9A2F]">{team.points}</div>
-                <div className="text-[10px] text-[#949BA4] uppercase">Pts</div>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-[26px] leading-none">РўСѓСЂРЅРёСЂС‹</h2>
+          <h2 className="font-display text-[26px] leading-none">Турниры</h2>
           <Crown className="w-4 h-4 text-[#FF7800]" />
         </div>
 
