@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Medal, ShieldCheck, Swords } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,14 @@ function fmtDate(value: string | null) {
   });
 }
 
+function toInputDatetime(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function TournamentPanel() {
   const { isAdmin, isCaptain } = useAuth();
   const queryClient = useQueryClient();
@@ -34,6 +42,19 @@ export default function TournamentPanel() {
     prize_pool: "",
     max_teams: 16,
   });
+  const [editData, setEditData] = useState({
+    title: "",
+    game: "",
+    team_format: "",
+    location: "",
+    starts_at: "",
+    check_in_at: "",
+    entry_fee: "",
+    format: "",
+    prize_pool: "",
+    max_teams: 16,
+    status: "draft",
+  });
 
   const tournamentsQuery = useQuery({ queryKey: ["public_tournaments"], queryFn: api.publicTournaments });
 
@@ -42,6 +63,23 @@ export default function TournamentPanel() {
     if (selectedId) return tournamentsQuery.data.find((x) => x.id === selectedId) || tournamentsQuery.data[0];
     return tournamentsQuery.data[0];
   }, [selectedId, tournamentsQuery.data]);
+
+  useEffect(() => {
+    if (!selectedFromList) return;
+    setEditData({
+      title: selectedFromList.title || "",
+      game: selectedFromList.game || "",
+      team_format: selectedFromList.team_format || "",
+      location: selectedFromList.location || "",
+      starts_at: toInputDatetime(selectedFromList.starts_at),
+      check_in_at: toInputDatetime(selectedFromList.check_in_at),
+      entry_fee: selectedFromList.entry_fee || "",
+      format: selectedFromList.format || "",
+      prize_pool: selectedFromList.prize_pool || "",
+      max_teams: selectedFromList.max_teams || 16,
+      status: selectedFromList.status || "draft",
+    });
+  }, [selectedFromList?.id]);
 
   const detailsQuery = useQuery({
     queryKey: ["tournament_details", selectedFromList?.id],
@@ -123,6 +161,47 @@ export default function TournamentPanel() {
       refreshAll();
     },
     onError: (e: any) => toast.error(e?.message || "Failed to generate bracket"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: () =>
+      api.updateTournament(selectedFromList!.id, {
+        title: editData.title,
+        game: editData.game,
+        team_format: editData.team_format,
+        location: editData.location,
+        starts_at: editData.starts_at || null,
+        check_in_at: editData.check_in_at || null,
+        entry_fee: editData.entry_fee,
+        format: editData.format,
+        prize_pool: editData.prize_pool,
+        max_teams: Number(editData.max_teams),
+        status: editData.status,
+      }),
+    onSuccess: () => {
+      toast.success("Tournament updated");
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to update tournament"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.deleteTournament(id),
+    onSuccess: () => {
+      toast.success("Tournament deleted");
+      setSelectedId(null);
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to delete tournament"),
+  });
+
+  const registrationStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => api.updateTournament(id, { status }),
+    onSuccess: () => {
+      toast.success("Registration status updated");
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to update registration status"),
   });
 
   const isCreateDisabled =
@@ -227,6 +306,46 @@ export default function TournamentPanel() {
                 <button className="h-10 px-4 rounded-xl bg-[#00E5FF]/12 border border-[#00E5FF]/40 text-[#00E5FF] mb-4 ml-2" onClick={() => generateBracketMutation.mutate(selectedFromList.id)} disabled={generateBracketMutation.isPending}>
                   Generate bracket
                 </button>
+              ) : null}
+
+              {isAdmin && selectedFromList ? (
+                <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs text-slate-400 mb-3">Admin controls</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 mb-2">
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Title" value={editData.title} onChange={(e) => setEditData((p) => ({ ...p, title: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Game" value={editData.game} onChange={(e) => setEditData((p) => ({ ...p, game: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Team format" value={editData.team_format} onChange={(e) => setEditData((p) => ({ ...p, team_format: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Location" value={editData.location} onChange={(e) => setEditData((p) => ({ ...p, location: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="datetime-local" value={editData.starts_at} onChange={(e) => setEditData((p) => ({ ...p, starts_at: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="datetime-local" value={editData.check_in_at} onChange={(e) => setEditData((p) => ({ ...p, check_in_at: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Entry fee" value={editData.entry_fee} onChange={(e) => setEditData((p) => ({ ...p, entry_fee: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Bracket" value={editData.format} onChange={(e) => setEditData((p) => ({ ...p, format: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Prize pool" value={editData.prize_pool} onChange={(e) => setEditData((p) => ({ ...p, prize_pool: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="number" min={2} value={editData.max_teams} onChange={(e) => setEditData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
+                    <select className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" value={editData.status} onChange={(e) => setEditData((p) => ({ ...p, status: e.target.value }))}>
+                      <option value="draft">draft</option>
+                      <option value="open">open</option>
+                      <option value="closed">closed</option>
+                      <option value="live">live</option>
+                      <option value="finished">finished</option>
+                      <option value="cancelled">cancelled</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button className="h-9 px-3 rounded-lg border border-[#00E5FF]/40 bg-[#00E5FF]/10 text-[#00E5FF]" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
+                      Save changes
+                    </button>
+                    <button className="h-9 px-3 rounded-lg border border-[#58d68d]/40 bg-[#58d68d]/10 text-[#58d68d]" onClick={() => registrationStatusMutation.mutate({ id: selectedFromList.id, status: "open" })} disabled={registrationStatusMutation.isPending}>
+                      Open registration
+                    </button>
+                    <button className="h-9 px-3 rounded-lg border border-[#f39c12]/40 bg-[#f39c12]/10 text-[#f39c12]" onClick={() => registrationStatusMutation.mutate({ id: selectedFromList.id, status: "closed" })} disabled={registrationStatusMutation.isPending}>
+                      Close registration
+                    </button>
+                    <button className="h-9 px-3 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-400" onClick={() => deleteMutation.mutate(selectedFromList.id)} disabled={deleteMutation.isPending}>
+                      Delete tournament
+                    </button>
+                  </div>
+                </div>
               ) : null}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
