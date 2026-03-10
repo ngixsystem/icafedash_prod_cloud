@@ -5,27 +5,27 @@ import dota2Banner from "@/assets/tournamentsgdota.jpg";
 import pubgBanner from "@/assets/tournamentsgpubg.jpg";
 
 const gameSections = [
-  { id: "cs2", title: "CS2", subtitle: "–ейтинг команд", image: cs2Banner },
-  { id: "dota2", title: "Dota2", subtitle: "–ейтинг команд", image: dota2Banner },
-  { id: "pubg-mobile", title: "PUBG Mobile", subtitle: "–ейтинг команд", image: pubgBanner },
+  { id: "cs2", title: "CS2", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: cs2Banner },
+  { id: "dota2", title: "Dota2", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: dota2Banner },
+  { id: "pubg-mobile", title: "PUBG Mobile", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: pubgBanner },
 ];
 
 const tournaments = [
   {
     id: 1,
     title: "FRAG Night Cup",
-    date: "15 марта 2026, 19:00",
-    players: "5v5 Х 16 команд",
+    date: "15 \u043c\u0430\u0440\u0442\u0430 2026, 19:00",
+    players: "5v5 \u2022 16 \u043a\u043e\u043c\u0430\u043d\u0434",
     location: "TeamPro Sergeli",
-    prize: "20 000 000 сум",
+    prize: "20 000 000 \u0441\u0443\u043c",
   },
   {
     id: 2,
     title: "Cyber Weekend Showdown",
-    date: "22 марта 2026, 18:30",
-    players: "2v2 Х 24 команды",
+    date: "22 \u043c\u0430\u0440\u0442\u0430 2026, 18:30",
+    players: "2v2 \u2022 24 \u043a\u043e\u043c\u0430\u043d\u0434\u044b",
     location: "Energy Gaming",
-    prize: "12 000 000 сум",
+    prize: "12 000 000 \u0441\u0443\u043c",
   },
 ];
 
@@ -37,15 +37,15 @@ export default function TournamentsPage() {
           <Trophy className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-[32px] font-display leading-none">“урниры</h1>
-          <p className="text-xs text-[#949BA4]">–ейтинг по играм и ближайшие событи€</p>
+          <h1 className="text-[32px] font-display leading-none">{"\u0422\u0443\u0440\u043d\u0438\u0440\u044b"}</h1>
+          <p className="text-xs text-[#949BA4]">{"\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043f\u043e \u0438\u0433\u0440\u0430\u043c \u0438 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0438\u0435 \u0441\u043e\u0431\u044b\u0442\u0438\u044f"}</p>
         </div>
       </div>
 
       <section className="mb-7">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-[26px] leading-none">–ейтинг по играм</h2>
-          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">—езон 2026</span>
+          <h2 className="font-display text-[26px] leading-none">{"\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043f\u043e \u0438\u0433\u0440\u0430\u043c"}</h2>
+          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">{"\u0421\u0435\u0437\u043e\u043d 2026"}</span>
         </div>
 
         <div className="space-y-3">
@@ -77,7 +77,7 @@ export default function TournamentsPage() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-[26px] leading-none">“урниры</h2>
+          <h2 className="font-display text-[26px] leading-none">{"\u0422\u0443\u0440\u043d\u0438\u0440\u044b"}</h2>
           <Crown className="w-4 h-4 text-[#FF7800]" />
         </div>
 

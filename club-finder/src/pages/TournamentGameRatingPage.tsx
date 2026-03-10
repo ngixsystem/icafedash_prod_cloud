@@ -59,9 +59,9 @@ export default function TournamentGameRatingPage() {
       <div className="min-h-screen px-5 pt-7 pb-28">
         <Link to="/tournaments" className="inline-flex items-center gap-2 text-sm text-[#C4CAD2]">
           <ArrowLeft className="h-4 w-4" />
-          Назад к турнирам
+          {"\u041d\u0430\u0437\u0430\u0434 \u043a \u0442\u0443\u0440\u043d\u0438\u0440\u0430\u043c"}
         </Link>
-        <p className="mt-5 text-[#949BA4]">Раздел не найден.</p>
+        <p className="mt-5 text-[#949BA4]">{"\u0420\u0430\u0437\u0434\u0435\u043b \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d."}</p>
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function TournamentGameRatingPage() {
     <div className="min-h-screen px-5 pt-7 pb-28">
       <Link to="/tournaments" className="mb-4 inline-flex items-center gap-2 text-sm text-[#C4CAD2]">
         <ArrowLeft className="h-4 w-4" />
-        Назад
+        {"\u041d\u0430\u0437\u0430\u0434"}
       </Link>
 
       <div className="relative mb-5 h-[122px] overflow-hidden rounded-2xl border border-[#2F3136]">
@@ -82,15 +82,15 @@ export default function TournamentGameRatingPage() {
           </div>
           <div>
             <h1 className="text-[30px] font-display leading-none">{selected.title}</h1>
-            <p className="text-xs text-[#C4CAD2]">Топ команд по рейтингу</p>
+            <p className="text-xs text-[#C4CAD2]">{"\u0422\u043e\u043f \u043a\u043e\u043c\u0430\u043d\u0434 \u043f\u043e \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u0443"}</p>
           </div>
         </div>
       </div>
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-[26px] leading-none">Топ по рейтингу</h2>
-          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">Сезон 2026</span>
+          <h2 className="font-display text-[26px] leading-none">{"\u0422\u043e\u043f \u043f\u043e \u0440\u0435\u0439\u0442\u0438\u043d\u0433\u0443"}</h2>
+          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">{"\u0421\u0435\u0437\u043e\u043d 2026"}</span>
         </div>
 
         <div className="rounded-2xl border border-[#2F3136] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-3 space-y-2">
@@ -102,7 +102,7 @@ export default function TournamentGameRatingPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-white">{team.name}</div>
-                  <div className="text-[11px] text-[#949BA4]">Побед: {team.wins}</div>
+                  <div className="text-[11px] text-[#949BA4]">{"\u041f\u043e\u0431\u0435\u0434: "}{team.wins}</div>
                 </div>
               </div>
 
