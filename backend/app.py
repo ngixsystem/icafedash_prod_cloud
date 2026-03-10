@@ -221,6 +221,7 @@ class Tournament(db.Model):
     title = db.Column(db.String(180), nullable=False, index=True)
     game = db.Column(db.String(60), nullable=False, default="CS2")
     description = db.Column(db.Text, nullable=True)
+    team_format = db.Column(db.String(80), nullable=True, default="")
     location = db.Column(db.String(160), nullable=True)
     starts_at = db.Column(db.DateTime, nullable=True, index=True)
     check_in_at = db.Column(db.DateTime, nullable=True)
@@ -228,6 +229,7 @@ class Tournament(db.Model):
     format = db.Column(db.String(60), nullable=False, default="single_elimination")
     max_teams = db.Column(db.Integer, nullable=False, default=16)
     prize_pool = db.Column(db.String(80), nullable=True)
+    entry_fee = db.Column(db.String(80), nullable=True, default="")
     created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -415,6 +417,15 @@ with app.app_context():
                 _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN canceled_at DATETIME")
             if 'booking_start_at' not in existing_booking_columns:
                 _safe_migration(conn, "ALTER TABLE booking_requests ADD COLUMN booking_start_at DATETIME")
+
+    # Migration for tournaments
+    if 'tournaments' in existing_tables:
+        existing_tournament_columns = [col['name'] for col in inspector.get_columns('tournaments')]
+        with db.engine.connect() as conn:
+            if 'team_format' not in existing_tournament_columns:
+                _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN team_format VARCHAR(80) DEFAULT ''")
+            if 'entry_fee' not in existing_tournament_columns:
+                _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN entry_fee VARCHAR(80) DEFAULT ''")
             
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
@@ -1412,6 +1423,7 @@ def serialize_tournament(item: Tournament) -> dict:
         "title": item.title,
         "game": item.game,
         "description": item.description or "",
+        "team_format": item.team_format or "",
         "location": item.location or "",
         "starts_at": item.starts_at.isoformat() if item.starts_at else None,
         "check_in_at": item.check_in_at.isoformat() if item.check_in_at else None,
@@ -1419,6 +1431,7 @@ def serialize_tournament(item: Tournament) -> dict:
         "format": item.format,
         "max_teams": item.max_teams,
         "prize_pool": item.prize_pool or "",
+        "entry_fee": item.entry_fee or "",
         "created_by_user_id": item.created_by_user_id,
         "created_at": item.created_at.isoformat() if item.created_at else None,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
@@ -1515,21 +1528,49 @@ def admin_tournaments_list():
 def admin_create_tournament():
     data = request.get_json(force=True) or {}
     title = str(data.get("title") or "").strip()
+    game = str(data.get("game") or "").strip()
+    location = str(data.get("location") or "").strip()
+    team_format = str(data.get("team_format") or "").strip()
+    entry_fee = str(data.get("entry_fee") or "").strip()
+    bracket = str(data.get("format") or "").strip()
+    starts_at = parse_iso_datetime(data.get("starts_at"))
+    check_in_at = parse_iso_datetime(data.get("check_in_at"))
+
+    missing = []
     if not title:
-        return jsonify({"message": "title is required"}), 400
+        missing.append("title")
+    if not game:
+        missing.append("game")
+    if not location:
+        missing.append("location")
+    if not team_format:
+        missing.append("team_format")
+    if not entry_fee:
+        missing.append("entry_fee")
+    if not bracket:
+        missing.append("format")
+    if not starts_at:
+        missing.append("starts_at")
+    if not check_in_at:
+        missing.append("check_in_at")
+
+    if missing:
+        return jsonify({"message": f"Missing required fields: {', '.join(missing)}"}), 400
 
     user = get_current_user_from_jwt()
     tournament = Tournament(
         title=title,
-        game=str(data.get("game") or "CS2").strip() or "CS2",
+        game=game,
         description=str(data.get("description") or "").strip(),
-        location=str(data.get("location") or "").strip(),
-        starts_at=parse_iso_datetime(data.get("starts_at")),
-        check_in_at=parse_iso_datetime(data.get("check_in_at")),
+        team_format=team_format,
+        location=location,
+        starts_at=starts_at,
+        check_in_at=check_in_at,
         status=str(data.get("status") or "draft").strip() or "draft",
-        format=str(data.get("format") or "single_elimination").strip() or "single_elimination",
+        format=bracket,
         max_teams=max(int(data.get("max_teams") or 16), 2),
         prize_pool=str(data.get("prize_pool") or "").strip(),
+        entry_fee=entry_fee,
         created_by_user_id=user.id if user else 1,
     )
     db.session.add(tournament)
@@ -1552,6 +1593,8 @@ def admin_update_tournament(tournament_id):
         item.game = str(data.get("game") or "").strip() or item.game
     if "description" in data:
         item.description = str(data.get("description") or "").strip()
+    if "team_format" in data:
+        item.team_format = str(data.get("team_format") or "").strip()
     if "location" in data:
         item.location = str(data.get("location") or "").strip()
     if "starts_at" in data:
@@ -1566,6 +1609,8 @@ def admin_update_tournament(tournament_id):
         item.max_teams = max(int(data.get("max_teams") or item.max_teams), 2)
     if "prize_pool" in data:
         item.prize_pool = str(data.get("prize_pool") or "").strip()
+    if "entry_fee" in data:
+        item.entry_fee = str(data.get("entry_fee") or "").strip()
 
     db.session.commit()
     return jsonify({"message": "Tournament updated", "tournament": serialize_tournament(item)})

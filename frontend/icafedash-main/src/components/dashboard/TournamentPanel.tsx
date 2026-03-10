@@ -22,7 +22,18 @@ export default function TournamentPanel() {
   const { isAdmin, isCaptain } = useAuth();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [createData, setCreateData] = useState({ title: "", game: "CS2", location: "", prize_pool: "", max_teams: 16 });
+  const [createData, setCreateData] = useState({
+    title: "",
+    game: "CS2",
+    team_format: "",
+    location: "",
+    starts_at: "",
+    check_in_at: "",
+    entry_fee: "",
+    format: "",
+    prize_pool: "",
+    max_teams: 16,
+  });
 
   const tournamentsQuery = useQuery({ queryKey: ["public_tournaments"], queryFn: api.publicTournaments });
 
@@ -57,14 +68,30 @@ export default function TournamentPanel() {
       api.createTournament({
         title: createData.title,
         game: createData.game,
+        team_format: createData.team_format,
         location: createData.location,
+        starts_at: createData.starts_at,
+        check_in_at: createData.check_in_at,
+        entry_fee: createData.entry_fee,
+        format: createData.format,
         prize_pool: createData.prize_pool,
         max_teams: Number(createData.max_teams),
         status: "open",
       }),
     onSuccess: () => {
       toast.success("Tournament created");
-      setCreateData({ title: "", game: "CS2", location: "", prize_pool: "", max_teams: 16 });
+      setCreateData({
+        title: "",
+        game: "CS2",
+        team_format: "",
+        location: "",
+        starts_at: "",
+        check_in_at: "",
+        entry_fee: "",
+        format: "",
+        prize_pool: "",
+        max_teams: 16,
+      });
       refreshAll();
     },
     onError: (e: any) => toast.error(e?.message || "Failed to create tournament"),
@@ -98,19 +125,35 @@ export default function TournamentPanel() {
     onError: (e: any) => toast.error(e?.message || "Failed to generate bracket"),
   });
 
+  const isCreateDisabled =
+    createMutation.isPending ||
+    !createData.title.trim() ||
+    !createData.game.trim() ||
+    !createData.team_format.trim() ||
+    !createData.location.trim() ||
+    !createData.starts_at.trim() ||
+    !createData.check_in_at.trim() ||
+    !createData.entry_fee.trim() ||
+    !createData.format.trim();
+
   return (
     <div className="space-y-6">
       {isAdmin ? (
         <section className="rounded-2xl border border-white/10 bg-black/20 p-4">
           <h2 className="font-display text-2xl mb-4 text-white">Tournament management</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Title" value={createData.title} onChange={(e) => setCreateData((p) => ({ ...p, title: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Game" value={createData.game} onChange={(e) => setCreateData((p) => ({ ...p, game: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Format (2v2 • 24 teams)" value={createData.team_format} onChange={(e) => setCreateData((p) => ({ ...p, team_format: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Location" value={createData.location} onChange={(e) => setCreateData((p) => ({ ...p, location: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="datetime-local" placeholder="Start date" value={createData.starts_at} onChange={(e) => setCreateData((p) => ({ ...p, starts_at: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="datetime-local" placeholder="Check-in date" value={createData.check_in_at} onChange={(e) => setCreateData((p) => ({ ...p, check_in_at: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Entry fee" value={createData.entry_fee} onChange={(e) => setCreateData((p) => ({ ...p, entry_fee: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Bracket (Groups + Playoff, BO3)" value={createData.format} onChange={(e) => setCreateData((p) => ({ ...p, format: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Prize pool" value={createData.prize_pool} onChange={(e) => setCreateData((p) => ({ ...p, prize_pool: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="number" min={2} placeholder="Teams" value={createData.max_teams} onChange={(e) => setCreateData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
           </div>
-          <button className="mt-3 h-10 px-4 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/40 text-[#00E5FF]" onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !createData.title.trim()}>
+          <button className="mt-3 h-10 px-4 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/40 text-[#00E5FF]" onClick={() => createMutation.mutate()} disabled={isCreateDisabled}>
             Create tournament
           </button>
         </section>
@@ -151,19 +194,27 @@ export default function TournamentPanel() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                   <p className="text-xs text-slate-400">Start</p>
                   <p className="text-sm font-semibold">{fmtDate(selectedFromList.starts_at)}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs text-slate-400">Team format</p>
+                  <p className="text-sm font-semibold">{selectedFromList.team_format || "-"}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                   <p className="text-xs text-slate-400">Check-in</p>
                   <p className="text-sm font-semibold">{fmtDate(selectedFromList.check_in_at)}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs text-slate-400">Format</p>
+                  <p className="text-xs text-slate-400">Bracket</p>
                   <p className="text-sm font-semibold">{selectedFromList.format}</p>
                 </div>
+              </div>
+              <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="text-xs text-slate-400">Entry fee</p>
+                <p className="text-sm font-semibold">{selectedFromList.entry_fee || "-"}</p>
               </div>
 
               {isCaptain ? (

@@ -242,6 +242,7 @@ export interface Tournament {
     title: string;
     game: string;
     description: string;
+    team_format: string;
     location: string;
     starts_at: string | null;
     check_in_at: string | null;
@@ -249,6 +250,7 @@ export interface Tournament {
     format: string;
     max_teams: number;
     prize_pool: string;
+    entry_fee: string;
     created_by_user_id: number;
     created_at: string | null;
     updated_at: string | null;
@@ -427,13 +429,15 @@ export const api = {
     adminTournaments: () => get<Tournament[]>("/admin/tournaments"),
     createTournament: (data: {
         title: string;
-        game?: string;
+        game: string;
+        team_format: string;
+        location: string;
+        starts_at: string;
+        check_in_at: string;
+        entry_fee: string;
+        format: string;
         description?: string;
-        location?: string;
-        starts_at?: string | null;
-        check_in_at?: string | null;
         status?: string;
-        format?: string;
         max_teams?: number;
         prize_pool?: string;
     }) => post<{ message: string; tournament: Tournament }>("/admin/tournaments", data),
