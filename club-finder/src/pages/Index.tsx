@@ -23,9 +23,9 @@ type BannerSlide = {
 };
 
 const bannerSlides: BannerSlide[] = [
-  { id: 1, title: "\u0422\u0443\u0440\u043d\u0438\u0440\u043d\u044b\u0439 \u0441\u0435\u0437\u043e\u043d", subtitle: "CS2 / Dota 2 / Valorant", image: slideOne },
-  { id: 2, title: "\u041d\u043e\u0447\u043d\u044b\u0435 \u0441\u043a\u0438\u0434\u043a\u0438", subtitle: "\u041f\u0430\u043a\u0435\u0442\u044b \u0434\u043e -25% \u043f\u043e\u0441\u043b\u0435 23:00", image: slideTwo },
-  { id: 3, title: "VIP-\u0437\u043e\u043d\u044b", subtitle: "\u041a\u043e\u043c\u0444\u043e\u0440\u0442\u043d\u044b\u0435 \u043a\u0430\u0431\u0438\u043d\u044b \u0434\u043b\u044f \u0441\u043a\u0432\u0430\u0434\u043e\u0432", image: slideThree },
+  { id: 1, title: "Турнирный сезон", subtitle: "CS2 / Dota 2 / Valorant", image: slideOne },
+  { id: 2, title: "Ночные скидки", subtitle: "Пакеты до -25% после 23:00", image: slideTwo },
+  { id: 3, title: "VIP-зоны", subtitle: "Комфортные кабины для сквадов", image: slideThree },
 ];
 
 export default function Index() {
@@ -112,7 +112,7 @@ export default function Index() {
           </div>
           <div className="flex flex-col">
             <h1 className="font-display text-[30px] font-bold uppercase tracking-wide leading-tight">FRAG.GG</h1>
-            <span className="text-[#F5A623] text-[10px] font-bold tracking-widest uppercase">\u041a\u0438\u0431\u0435\u0440\u0441\u043f\u043e\u0440\u0442\u0438\u0432\u043d\u044b\u0439 \u043f\u043e\u0438\u0441\u043a</span>
+            <span className="text-[#F5A623] text-[10px] font-bold tracking-widest uppercase">Киберспортивный поиск</span>
           </div>
         </div>
         <button className="w-10 h-10 bg-[#1E1F22] rounded-xl flex items-center justify-center border border-[#2F3136] text-[#949BA4] hover:text-[#F5A623] transition-colors">
@@ -126,7 +126,7 @@ export default function Index() {
             <Search className="w-[18px] h-[18px] text-[#949BA4] mr-3 shrink-0" />
             <input
               type="text"
-              placeholder="\u041f\u043e\u0438\u0441\u043a \u043f\u043e \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044e \u0438\u043b\u0438 \u0430\u0434\u0440\u0435\u0441\u0443..."
+              placeholder="Поиск по названию или адресу..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="bg-transparent text-sm w-full outline-none text-white placeholder-[#949BA4] font-medium"
@@ -145,7 +145,7 @@ export default function Index() {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#121315]/85 via-transparent to-transparent" />
                     <div className="relative z-10 flex h-full flex-col justify-end p-4">
                       <span className="mb-1 inline-flex w-fit rounded-full border border-[#F5A623]/40 bg-[#121315]/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-[#F5A623]">
-                        \u0411\u0430\u043d\u043d\u0435\u0440 {slide.id}
+                        Баннер {slide.id}
                       </span>
                       <h3 className="font-display text-[26px] leading-none font-bold uppercase tracking-wide text-white">{slide.title}</h3>
                       <p className="mt-1 text-xs font-medium text-[#D3D7DE]">{slide.subtitle}</p>
@@ -160,7 +160,7 @@ export default function Index() {
               <button
                 key={slide.id}
                 type="button"
-                aria-label={`\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a \u0431\u0430\u043d\u043d\u0435\u0440\u0443 ${slide.id}`}
+                aria-label={`Перейти к баннеру ${slide.id}`}
                 onClick={() => carouselApi?.scrollTo(index)}
                 className={`h-1.5 rounded-full transition-all duration-300 ${selectedSlide === index ? "w-8 bg-[#F5A623]" : "w-2 bg-[#454A52]"}`}
               />
@@ -170,7 +170,7 @@ export default function Index() {
 
         <div className="px-5 mb-5 flex items-center">
           <div className="w-1.5 h-4 bg-[#F5A623] rounded-sm mr-3" />
-          <h2 className="font-display text-lg font-bold text-[#949BA4] uppercase tracking-widest leading-none pt-1">\u041f\u043e\u043f\u0443\u043b\u044f\u0440\u043d\u044b\u0435 \u043b\u043e\u043a\u0430\u0446\u0438\u0438</h2>
+          <h2 className="font-display text-lg font-bold text-[#949BA4] uppercase tracking-widest leading-none pt-1">Популярные локации</h2>
           <div className="flex-1 h-[1px] bg-[#2F3136] ml-4" />
         </div>
 
@@ -182,7 +182,7 @@ export default function Index() {
               <ClubCard key={club.id} club={club} distanceKm={distanceByClubId.get(club.id) ?? null} isNearest={club.id === nearestClubId} />
             ))
           ) : (
-            <div className="rounded-2xl border border-[#2F3136] bg-[#1E1F22] p-8 text-center text-[#949BA4]">\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e</div>
+            <div className="rounded-2xl border border-[#2F3136] bg-[#1E1F22] p-8 text-center text-[#949BA4]">Ничего не найдено</div>
           )}
         </div>
       </main>
