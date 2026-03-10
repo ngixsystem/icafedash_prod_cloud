@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Lock, Radar, User } from "lucide-react";
-const brandLogo = "/logo.png";
+import { Lock, User } from "lucide-react";
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -53,6 +52,7 @@ const Login = () => {
 
     try {
       const response = await loginRequestWithRetry({ username, password }, 1);
+
       const data = await response.json();
 
       if (response.ok) {
@@ -70,80 +70,67 @@ const Login = () => {
   };
 
   return (
-    <div className="esports-shell min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="gradient-orb top-[-14%] left-[-14%] w-[34rem] h-[34rem] bg-[#6C5CE7]/45" />
-      <div className="gradient-orb bottom-[-15%] right-[-15%] w-[38rem] h-[38rem] bg-[#00E5FF]/30" />
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.1)_0%,transparent_50%)] opacity-40" />
+    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] p-4 relative overflow-hidden">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none" />
 
-      <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 items-stretch relative z-10">
-        <div className="hidden lg:flex glass-card rounded-3xl p-10 flex-col justify-between overflow-hidden">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.28em] text-slate-300">
-              <Radar className="h-4 w-4 text-accent" />
-              Cloud Finder
-            </div>
-            <div>
-              <h1 className="font-display text-5xl leading-tight text-white">Gaming Cloud Control</h1>
-              <p className="mt-4 max-w-md text-slate-300/80">
-                Unified control panel for esports clubs, bookings and live monitoring.
-              </p>
+      <div className="w-full max-w-md space-y-8 relative z-10">
+        <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="relative inline-block">
+            <div className="absolute inset-0 bg-primary/40 blur-2xl rounded-full" />
+            <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-black border-2 border-primary/50 shadow-[0_0_30px_rgba(var(--primary),0.3)] mb-2">
+              <Lock className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.8)]" />
             </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-black/25 p-5">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl border border-white/10 bg-white/5 p-2">
-                <img src={brandLogo} alt="Cloud Finder Logo" className="h-full w-full object-contain" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-400">Brand</p>
-                <p className="font-display text-lg text-white">Cloud Finder</p>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent uppercase italic">
+              iCafe<span className="text-primary">Dash</span>
+            </h1>
+            <div className="h-1 w-12 bg-primary mx-auto mt-1 rounded-full shadow-[0_0_10px_#00ffa3]" />
+            <p className="text-gray-500 text-sm font-medium mt-4 tracking-widest uppercase">Система управления кибер-ареной</p>
           </div>
         </div>
 
-        <Card className="rounded-3xl border-white/10 bg-[linear-gradient(170deg,rgba(14,20,38,0.86),rgba(10,14,27,0.86))] shadow-[0_20px_80px_rgba(0,0,0,0.4)]">
+        <Card className="border-white/5 bg-black/40 backdrop-blur-xl shadow-2xl overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
           <CardHeader className="space-y-1 pt-8">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-2xl border border-white/10 bg-black/25 p-2.5 shadow-[0_0_26px_rgba(108,92,231,0.35)]">
-              <img src={brandLogo} alt="Cloud Finder Logo" className="h-full w-full object-contain" />
-            </div>
-            <CardTitle className="text-center font-display text-3xl text-white">Cloud Finder</CardTitle>
-            <CardDescription className="text-center text-slate-400">Login to the esports control panel</CardDescription>
+            <CardTitle className="text-2xl font-bold text-white text-center">АВТОРИЗАЦИЯ</CardTitle>
+            <CardDescription className="text-center text-gray-500">Введите данные для входа в панель</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit} className="relative z-10">
             <CardContent className="space-y-6 pt-2">
               <div className="space-y-2 group/field">
-                <Label htmlFor="username" className="text-slate-300 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">
-                  Логин
+                <Label htmlFor="username" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">
+                  Логин оператора
                 </Label>
                 <div className="relative">
-                  <div className="absolute left-3 top-3.5 h-4 w-4 text-slate-500 group-focus-within/field:text-primary transition-colors">
+                  <div className="absolute left-3 top-3.5 h-4 w-4 text-gray-500 group-focus-within/field:text-primary transition-colors">
                     <User className="h-4 w-4" />
                   </div>
                   <Input
                     id="username"
                     placeholder="Username"
-                    className="pl-10 h-12 bg-white/5 border-white/10 hover:border-white/20 focus:border-primary/50 text-white placeholder:text-slate-500 rounded-xl transition-all"
+                    className="pl-10 h-12 bg-white/5 border-white/10 hover:border-white/20 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-gray-600 rounded-xl transition-all"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>
               </div>
-
               <div className="space-y-2 group/field">
-                <Label htmlFor="password" className="text-slate-300 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">
-                  Пароль
+                <Label htmlFor="password" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">
+                  Код доступа
                 </Label>
                 <div className="relative">
-                  <div className="absolute left-3 top-3.5 h-4 w-4 text-slate-500 group-focus-within/field:text-primary transition-colors">
+                  <div className="absolute left-3 top-3.5 h-4 w-4 text-gray-500 group-focus-within/field:text-primary transition-colors">
                     <Lock className="h-4 w-4" />
                   </div>
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    className="pl-10 h-12 bg-white/5 border-white/10 hover:border-white/20 focus:border-primary/50 text-white placeholder:text-slate-500 rounded-xl transition-all"
+                    className="pl-10 h-12 bg-white/5 border-white/10 hover:border-white/20 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-gray-600 rounded-xl transition-all"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -151,21 +138,33 @@ const Login = () => {
                 </div>
               </div>
             </CardContent>
-
             <CardFooter className="pb-8">
-              <Button className="w-full h-12 neon-button font-bold uppercase tracking-[0.16em] rounded-xl disabled:opacity-50" type="submit" disabled={isLoading}>
+              <Button
+                className="w-full h-12 bg-primary hover:bg-primary/80 text-black font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(var(--primary),0.2)] hover:shadow-[0_0_30px_rgba(var(--primary),0.4)] transition-all rounded-xl disabled:opacity-50"
+                type="submit"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />
+                    <div className="h-4 w-4 border-2 border-black/30 border-t-black animate-spin rounded-full" />
                     <span>Загрузка</span>
                   </div>
                 ) : (
-                  "Войти"
+                  "ПОДКЛЮЧИТЬСЯ"
                 )}
               </Button>
             </CardFooter>
           </form>
         </Card>
+
+        <div className="flex items-center justify-between text-gray-600 text-[10px] font-bold uppercase tracking-[0.2em]">
+          <span>ver 2.0.0</span>
+          <span className="flex items-center gap-1 italic">
+            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_5px_#00ffa3]" />
+            System Online
+          </span>
+          <span>&copy; iCafeDash 2026</span>
+        </div>
       </div>
     </div>
   );
