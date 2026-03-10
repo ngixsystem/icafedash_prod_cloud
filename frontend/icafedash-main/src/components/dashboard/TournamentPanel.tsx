@@ -9,13 +9,47 @@ function fmtDate(value: string | null) {
   if (!value) return "-";
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return "-";
-  return dt.toLocaleString("en-GB", {
+  return dt.toLocaleString("ru-RU", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatTournamentStatus(status: string | null | undefined) {
+  switch ((status || "").toLowerCase()) {
+    case "draft":
+      return "черновик";
+    case "open":
+      return "открыт";
+    case "closed":
+      return "закрыт";
+    case "live":
+      return "идет";
+    case "finished":
+      return "завершен";
+    case "cancelled":
+      return "отменен";
+    default:
+      return status || "-";
+  }
+}
+
+function formatRegistrationStatus(status: string | null | undefined) {
+  switch ((status || "").toLowerCase()) {
+    case "pending":
+      return "ожидает";
+    case "approved":
+      return "подтверждена";
+    case "rejected":
+      return "отклонена";
+    case "cancelled":
+      return "отменена";
+    default:
+      return status || "-";
+  }
 }
 
 function toInputDatetime(value: string | null) {
@@ -117,7 +151,7 @@ export default function TournamentPanel() {
         status: "open",
       }),
     onSuccess: () => {
-      toast.success("Tournament created");
+      toast.success("Турнир создан");
       setCreateData({
         title: "",
         game: "CS2",
@@ -132,35 +166,35 @@ export default function TournamentPanel() {
       });
       refreshAll();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to create tournament"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось создать турнир"),
   });
 
   const registerMutation = useMutation({
     mutationFn: (id: number) => api.captainRegisterTournament(id),
     onSuccess: () => {
-      toast.success("Team registration request sent");
+      toast.success("Заявка на регистрацию команды отправлена");
       refreshAll();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to register team"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось зарегистрировать команду"),
   });
 
   const approveMutation = useMutation({
     mutationFn: ({ tournamentId, registrationId }: { tournamentId: number; registrationId: number }) =>
       api.approveTournamentRegistration(tournamentId, registrationId),
     onSuccess: () => {
-      toast.success("Registration approved");
+      toast.success("Регистрация подтверждена");
       refreshAll();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to approve registration"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось подтвердить регистрацию"),
   });
 
   const generateBracketMutation = useMutation({
     mutationFn: (tournamentId: number) => api.generateTournamentBracket(tournamentId),
     onSuccess: () => {
-      toast.success("Bracket generated");
+      toast.success("Сетка сгенерирована");
       refreshAll();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to generate bracket"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось сгенерировать сетку"),
   });
 
   const updateMutation = useMutation({
@@ -179,29 +213,29 @@ export default function TournamentPanel() {
         status: editData.status,
       }),
     onSuccess: () => {
-      toast.success("Tournament updated");
+      toast.success("Турнир обновлен");
       refreshAll();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to update tournament"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось обновить турнир"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.deleteTournament(id),
     onSuccess: () => {
-      toast.success("Tournament deleted");
+      toast.success("Турнир удален");
       setSelectedId(null);
       refreshAll();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to delete tournament"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось удалить турнир"),
   });
 
   const registrationStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => api.updateTournament(id, { status }),
     onSuccess: () => {
-      toast.success("Registration status updated");
+      toast.success("Статус регистрации обновлен");
       refreshAll();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to update registration status"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось обновить статус регистрации"),
   });
 
   const isCreateDisabled =
@@ -219,28 +253,28 @@ export default function TournamentPanel() {
     <div className="space-y-6">
       {isAdmin ? (
         <section className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <h2 className="font-display text-2xl mb-4 text-white">Tournament management</h2>
+          <h2 className="font-display text-2xl mb-4 text-white">Управление турнирами</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Title" value={createData.title} onChange={(e) => setCreateData((p) => ({ ...p, title: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Game" value={createData.game} onChange={(e) => setCreateData((p) => ({ ...p, game: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Format (2v2 • 24 teams)" value={createData.team_format} onChange={(e) => setCreateData((p) => ({ ...p, team_format: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Location" value={createData.location} onChange={(e) => setCreateData((p) => ({ ...p, location: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="datetime-local" placeholder="Start date" value={createData.starts_at} onChange={(e) => setCreateData((p) => ({ ...p, starts_at: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="datetime-local" placeholder="Check-in date" value={createData.check_in_at} onChange={(e) => setCreateData((p) => ({ ...p, check_in_at: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Entry fee" value={createData.entry_fee} onChange={(e) => setCreateData((p) => ({ ...p, entry_fee: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Bracket (Groups + Playoff, BO3)" value={createData.format} onChange={(e) => setCreateData((p) => ({ ...p, format: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Prize pool" value={createData.prize_pool} onChange={(e) => setCreateData((p) => ({ ...p, prize_pool: e.target.value }))} />
-            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="number" min={2} placeholder="Teams" value={createData.max_teams} onChange={(e) => setCreateData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Название" value={createData.title} onChange={(e) => setCreateData((p) => ({ ...p, title: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Дисциплина" value={createData.game} onChange={(e) => setCreateData((p) => ({ ...p, game: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Формат (2v2 • 24 команд)" value={createData.team_format} onChange={(e) => setCreateData((p) => ({ ...p, team_format: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Локация" value={createData.location} onChange={(e) => setCreateData((p) => ({ ...p, location: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="datetime-local" placeholder="Дата старта" value={createData.starts_at} onChange={(e) => setCreateData((p) => ({ ...p, starts_at: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="datetime-local" placeholder="Дата чек-ина" value={createData.check_in_at} onChange={(e) => setCreateData((p) => ({ ...p, check_in_at: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Взнос" value={createData.entry_fee} onChange={(e) => setCreateData((p) => ({ ...p, entry_fee: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Сетка (Группы + плей-офф, BO3)" value={createData.format} onChange={(e) => setCreateData((p) => ({ ...p, format: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Призовой фонд" value={createData.prize_pool} onChange={(e) => setCreateData((p) => ({ ...p, prize_pool: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="number" min={2} placeholder="Команд" value={createData.max_teams} onChange={(e) => setCreateData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
           </div>
           <button className="mt-3 h-10 px-4 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/40 text-[#00E5FF]" onClick={() => createMutation.mutate()} disabled={isCreateDisabled}>
-            Create tournament
+            Создать турнир
           </button>
         </section>
       ) : null}
 
       <div className="grid grid-cols-1 xl:grid-cols-[320px,1fr] gap-4">
         <section className="rounded-2xl border border-white/10 bg-black/20 p-3">
-          <h3 className="font-display text-xl mb-3">Tournaments</h3>
+          <h3 className="font-display text-xl mb-3">Турниры</h3>
           <div className="space-y-2 max-h-[520px] overflow-auto pr-1">
             {(tournamentsQuery.data || []).map((item) => (
               <button
@@ -250,7 +284,7 @@ export default function TournamentPanel() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-semibold text-white truncate">{item.title}</p>
-                  <span className="text-[10px] uppercase text-slate-400">{item.status}</span>
+                  <span className="text-[10px] uppercase text-slate-400">{formatTournamentStatus(item.status)}</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-1">{item.game} • {item.registered_teams}/{item.max_teams}</p>
               </button>
@@ -260,89 +294,89 @@ export default function TournamentPanel() {
 
         <section className="rounded-2xl border border-white/10 bg-black/20 p-4">
           {!selectedFromList ? (
-            <p className="text-slate-400">No tournaments yet</p>
+            <p className="text-slate-400">Турниров пока нет</p>
           ) : (
             <>
               <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="font-display text-3xl leading-none text-white">{selectedFromList.title}</h3>
-                  <p className="text-sm text-slate-400 mt-2">{selectedFromList.game} • {selectedFromList.location || "Location not set"}</p>
+                  <p className="text-sm text-slate-400 mt-2">{selectedFromList.game} • {selectedFromList.location || "Локация не указана"}</p>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#2f2f2f] bg-black/40 px-3 py-1.5 text-xs text-[#FF9A2F]">
-                  <Medal className="w-3.5 h-3.5" /> {selectedFromList.prize_pool || "Prize pool not set"}
+                  <Medal className="w-3.5 h-3.5" /> {selectedFromList.prize_pool || "Призовой фонд не указан"}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs text-slate-400">Start</p>
+                  <p className="text-xs text-slate-400">Старт</p>
                   <p className="text-sm font-semibold">{fmtDate(selectedFromList.starts_at)}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs text-slate-400">Team format</p>
+                  <p className="text-xs text-slate-400">Формат команд</p>
                   <p className="text-sm font-semibold">{selectedFromList.team_format || "-"}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs text-slate-400">Check-in</p>
+                  <p className="text-xs text-slate-400">Чек-ин</p>
                   <p className="text-sm font-semibold">{fmtDate(selectedFromList.check_in_at)}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs text-slate-400">Bracket</p>
+                  <p className="text-xs text-slate-400">Сетка</p>
                   <p className="text-sm font-semibold">{selectedFromList.format}</p>
                 </div>
               </div>
               <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-slate-400">Entry fee</p>
+                <p className="text-xs text-slate-400">Взнос</p>
                 <p className="text-sm font-semibold">{selectedFromList.entry_fee || "-"}</p>
               </div>
 
               {isCaptain ? (
                 <button className="h-10 px-4 rounded-xl bg-[#6C5CE7]/20 border border-[#6C5CE7]/40 text-[#c7bbff] mb-4" onClick={() => registerMutation.mutate(selectedFromList.id)} disabled={registerMutation.isPending}>
-                  Register my team
+                  Зарегистрировать мою команду
                 </button>
               ) : null}
 
               {isAdmin && selectedFromList ? (
                 <button className="h-10 px-4 rounded-xl bg-[#00E5FF]/12 border border-[#00E5FF]/40 text-[#00E5FF] mb-4 ml-2" onClick={() => generateBracketMutation.mutate(selectedFromList.id)} disabled={generateBracketMutation.isPending}>
-                  Generate bracket
+                  Сгенерировать сетку
                 </button>
               ) : null}
 
               {isAdmin && selectedFromList ? (
                 <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs text-slate-400 mb-3">Admin controls</p>
+                  <p className="text-xs text-slate-400 mb-3">Панель администратора</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 mb-2">
-                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Title" value={editData.title} onChange={(e) => setEditData((p) => ({ ...p, title: e.target.value }))} />
-                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Game" value={editData.game} onChange={(e) => setEditData((p) => ({ ...p, game: e.target.value }))} />
-                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Team format" value={editData.team_format} onChange={(e) => setEditData((p) => ({ ...p, team_format: e.target.value }))} />
-                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Location" value={editData.location} onChange={(e) => setEditData((p) => ({ ...p, location: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Название" value={editData.title} onChange={(e) => setEditData((p) => ({ ...p, title: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Дисциплина" value={editData.game} onChange={(e) => setEditData((p) => ({ ...p, game: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Формат команд" value={editData.team_format} onChange={(e) => setEditData((p) => ({ ...p, team_format: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Локация" value={editData.location} onChange={(e) => setEditData((p) => ({ ...p, location: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="datetime-local" value={editData.starts_at} onChange={(e) => setEditData((p) => ({ ...p, starts_at: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="datetime-local" value={editData.check_in_at} onChange={(e) => setEditData((p) => ({ ...p, check_in_at: e.target.value }))} />
-                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Entry fee" value={editData.entry_fee} onChange={(e) => setEditData((p) => ({ ...p, entry_fee: e.target.value }))} />
-                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Bracket" value={editData.format} onChange={(e) => setEditData((p) => ({ ...p, format: e.target.value }))} />
-                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Prize pool" value={editData.prize_pool} onChange={(e) => setEditData((p) => ({ ...p, prize_pool: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Взнос" value={editData.entry_fee} onChange={(e) => setEditData((p) => ({ ...p, entry_fee: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Сетка" value={editData.format} onChange={(e) => setEditData((p) => ({ ...p, format: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Призовой фонд" value={editData.prize_pool} onChange={(e) => setEditData((p) => ({ ...p, prize_pool: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="number" min={2} value={editData.max_teams} onChange={(e) => setEditData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
                     <select className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" value={editData.status} onChange={(e) => setEditData((p) => ({ ...p, status: e.target.value }))}>
-                      <option value="draft">draft</option>
-                      <option value="open">open</option>
-                      <option value="closed">closed</option>
-                      <option value="live">live</option>
-                      <option value="finished">finished</option>
-                      <option value="cancelled">cancelled</option>
+                      <option value="draft">Черновик</option>
+                      <option value="open">Открыт</option>
+                      <option value="closed">Закрыт</option>
+                      <option value="live">Идет</option>
+                      <option value="finished">Завершен</option>
+                      <option value="cancelled">Отменен</option>
                     </select>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button className="h-9 px-3 rounded-lg border border-[#00E5FF]/40 bg-[#00E5FF]/10 text-[#00E5FF]" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
-                      Save changes
+                      Сохранить изменения
                     </button>
                     <button className="h-9 px-3 rounded-lg border border-[#58d68d]/40 bg-[#58d68d]/10 text-[#58d68d]" onClick={() => registrationStatusMutation.mutate({ id: selectedFromList.id, status: "open" })} disabled={registrationStatusMutation.isPending}>
-                      Open registration
+                      Открыть регистрацию
                     </button>
                     <button className="h-9 px-3 rounded-lg border border-[#f39c12]/40 bg-[#f39c12]/10 text-[#f39c12]" onClick={() => registrationStatusMutation.mutate({ id: selectedFromList.id, status: "closed" })} disabled={registrationStatusMutation.isPending}>
-                      Close registration
+                      Закрыть регистрацию
                     </button>
                     <button className="h-9 px-3 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-400" onClick={() => deleteMutation.mutate(selectedFromList.id)} disabled={deleteMutation.isPending}>
-                      Delete tournament
+                      Удалить турнир
                     </button>
                   </div>
                 </div>
@@ -350,18 +384,18 @@ export default function TournamentPanel() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="rounded-xl border border-white/10 bg-[#0c1020]/55 p-3">
-                  <h4 className="font-semibold flex items-center gap-2 mb-3"><ShieldCheck className="w-4 h-4 text-[#00E5FF]" /> Registrations</h4>
+                  <h4 className="font-semibold flex items-center gap-2 mb-3"><ShieldCheck className="w-4 h-4 text-[#00E5FF]" /> Регистрации</h4>
                   <div className="space-y-2 max-h-64 overflow-auto pr-1">
                     {(detailsQuery.data?.registrations || []).map((reg) => (
                       <div key={reg.id} className="rounded-lg border border-white/10 bg-black/25 p-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <div>
                             <p className="text-sm font-semibold text-white">{reg.team_name}</p>
-                            <p className="text-[11px] text-slate-400">{reg.status} • {fmtDate(reg.created_at)}</p>
+                            <p className="text-[11px] text-slate-400">{formatRegistrationStatus(reg.status)} • {fmtDate(reg.created_at)}</p>
                           </div>
                           {isAdmin && reg.status === "pending" ? (
                             <button className="text-xs rounded-md border border-[#58d68d]/40 bg-[#58d68d]/10 px-2 py-1 text-[#58d68d]" onClick={() => approveMutation.mutate({ tournamentId: selectedFromList.id, registrationId: reg.id })}>
-                              approve
+                              Подтвердить
                             </button>
                           ) : null}
                         </div>
@@ -371,16 +405,16 @@ export default function TournamentPanel() {
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-[#0c1020]/55 p-3">
-                  <h4 className="font-semibold flex items-center gap-2 mb-3"><Swords className="w-4 h-4 text-[#6C5CE7]" /> Bracket</h4>
+                  <h4 className="font-semibold flex items-center gap-2 mb-3"><Swords className="w-4 h-4 text-[#6C5CE7]" /> Сетка</h4>
                   <div className="space-y-2 max-h-64 overflow-auto pr-1">
                     {(bracketQuery.data?.matches || []).length === 0 ? (
-                      <p className="text-sm text-slate-400">Bracket not generated yet</p>
+                      <p className="text-sm text-slate-400">Сетка еще не сгенерирована</p>
                     ) : (
                       (bracketQuery.data?.matches || []).map((match) => (
                         <div key={match.id} className="rounded-lg border border-white/10 bg-black/25 p-2.5">
-                          <p className="text-[11px] text-slate-400 mb-1">Round {match.round_number} • Match {match.match_order}</p>
-                          <p className="text-sm text-white">{match.team1_name || "TBD"} vs {match.team2_name || "TBD"}</p>
-                          <p className="text-[11px] text-[#58d68d]">Winner: {match.winner_team_name || "-"}</p>
+                          <p className="text-[11px] text-slate-400 mb-1">Раунд {match.round_number} • Матч {match.match_order}</p>
+                          <p className="text-sm text-white">{match.team1_name || "Ожидается"} vs {match.team2_name || "Ожидается"}</p>
+                          <p className="text-[11px] text-[#58d68d]">Победитель: {match.winner_team_name || "-"}</p>
                         </div>
                       ))
                     )}

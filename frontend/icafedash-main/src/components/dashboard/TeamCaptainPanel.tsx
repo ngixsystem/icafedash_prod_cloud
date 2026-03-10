@@ -15,28 +15,28 @@ export default function TeamCaptainPanel() {
   const addMutation = useMutation({
     mutationFn: () => api.captainAddTeamMember(username),
     onSuccess: () => {
-      toast.success("Player added");
+      toast.success("Игрок добавлен");
       setUsername("");
       refresh();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to add player"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось добавить игрока"),
   });
 
   const removeMutation = useMutation({
     mutationFn: (userId: number) => api.captainRemoveTeamMember(userId),
     onSuccess: () => {
-      toast.success("Player removed");
+      toast.success("Игрок удален");
       refresh();
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to remove player"),
+    onError: (e: any) => toast.error(e?.message || "Не удалось удалить игрока"),
   });
 
   if (teamQuery.isLoading) {
-    return <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-slate-400">Loading team...</div>;
+    return <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-slate-400">Загрузка команды...</div>;
   }
 
   if (teamQuery.isError || !teamQuery.data) {
-    return <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-slate-400">Captain team not found. Ask admin to assign captain role and team.</div>;
+    return <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-slate-400">Команда капитана не найдена. Попросите администратора назначить капитана и команду.</div>;
   }
 
   const team = teamQuery.data.team;
@@ -46,28 +46,28 @@ export default function TeamCaptainPanel() {
       <section className="rounded-2xl border border-white/10 bg-black/20 p-4">
         <div className="flex items-center gap-3 mb-3">
           <Shield className="w-5 h-5 text-[#6C5CE7]" />
-          <h2 className="font-display text-2xl">Captain panel</h2>
+          <h2 className="font-display text-2xl">Панель капитана</h2>
         </div>
         <p className="text-sm text-slate-300">
-          Team: <span className="font-semibold text-white">{team.name}</span> {team.tag ? <span className="text-slate-400">[{team.tag}]</span> : null}
+          Команда: <span className="font-semibold text-white">{team.name}</span> {team.tag ? <span className="text-slate-400">[{team.tag}]</span> : null}
         </p>
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-black/20 p-4">
         <h3 className="font-semibold flex items-center gap-2 mb-3">
-          <UserPlus className="w-4 h-4 text-[#00E5FF]" /> Add player
+          <UserPlus className="w-4 h-4 text-[#00E5FF]" /> Добавить игрока
         </h3>
         <div className="flex gap-2">
-          <input className="h-10 flex-1 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+          <input className="h-10 flex-1 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Логин игрока" value={username} onChange={(e) => setUsername(e.target.value)} />
           <button className="h-10 px-3 rounded-xl border border-[#00E5FF]/40 bg-[#00E5FF]/10 text-[#00E5FF]" onClick={() => addMutation.mutate()} disabled={!username.trim() || addMutation.isPending}>
-            Add
+            Добавить
           </button>
         </div>
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-black/20 p-4">
         <h3 className="font-semibold flex items-center gap-2 mb-3">
-          <Users className="w-4 h-4 text-[#58d68d]" /> Roster
+          <Users className="w-4 h-4 text-[#58d68d]" /> Состав
         </h3>
         <div className="space-y-2">
           {teamQuery.data.members.map((member) => (
@@ -78,7 +78,7 @@ export default function TeamCaptainPanel() {
               </div>
               {member.role_in_team !== "captain" ? (
                 <button className="text-xs rounded-md border border-rose-400/40 bg-rose-400/10 px-2 py-1 text-rose-300" onClick={() => removeMutation.mutate(member.user_id)}>
-                  remove
+                  Удалить
                 </button>
               ) : null}
             </div>
