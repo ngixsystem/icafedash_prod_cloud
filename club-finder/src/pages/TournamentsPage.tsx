@@ -3,15 +3,36 @@ import { Link } from "react-router-dom";
 import cs2Banner from "@/assets/tournamentsgcs.jpg";
 import dota2Banner from "@/assets/tournamentsgdota.jpg";
 import pubgBanner from "@/assets/tournamentsgpubg.jpg";
-import { tournaments } from "@/data/tournaments";
+import { usePublicTournaments } from "@/hooks/use-tournaments";
 
 const gameSections = [
-  { id: "cs2", title: "CS2", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: cs2Banner },
-  { id: "dota2", title: "Dota2", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: dota2Banner },
-  { id: "pubg-mobile", title: "PUBG Mobile", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: pubgBanner },
+  { id: "cs2", title: "CS2", subtitle: "Рейтинг команд", image: cs2Banner },
+  { id: "dota2", title: "Dota2", subtitle: "Рейтинг команд", image: dota2Banner },
+  { id: "pubg-mobile", title: "PUBG Mobile", subtitle: "Рейтинг команд", image: pubgBanner },
 ];
 
+function formatDate(value: string | null) {
+  if (!value) return "Дата не указана";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Дата не указана";
+  return date.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatTeams(teamFormat: string, maxTeams: number) {
+  const base = teamFormat?.trim() ? teamFormat.trim() : "Формат не указан";
+  const teams = Number.isFinite(maxTeams) && maxTeams > 0 ? `${maxTeams} команд` : "0 команд";
+  return `${base} • ${teams}`;
+}
+
 export default function TournamentsPage() {
+  const { data: tournaments, isLoading, isError } = usePublicTournaments();
+
   return (
     <div className="min-h-screen pb-28 px-5 pt-7">
       <div className="flex items-center gap-3 mb-6">
@@ -19,15 +40,15 @@ export default function TournamentsPage() {
           <Trophy className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-[32px] font-display leading-none">{"\u0422\u0443\u0440\u043d\u0438\u0440\u044b"}</h1>
-          <p className="text-xs text-[#949BA4]">{"\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043f\u043e \u0438\u0433\u0440\u0430\u043c \u0438 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0438\u0435 \u0441\u043e\u0431\u044b\u0442\u0438\u044f"}</p>
+          <h1 className="text-[32px] font-display leading-none">Турниры</h1>
+          <p className="text-xs text-[#949BA4]">Рейтинг по играм и ближайшие события</p>
         </div>
       </div>
 
       <section className="mb-7">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-[26px] leading-none">{"\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043f\u043e \u0438\u0433\u0440\u0430\u043c"}</h2>
-          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">{"\u0421\u0435\u0437\u043e\u043d 2026"}</span>
+          <h2 className="font-display text-[26px] leading-none">Рейтинг по играм</h2>
+          <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">Сезон 2026</span>
         </div>
 
         <div className="space-y-3">
@@ -59,46 +80,54 @@ export default function TournamentsPage() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-[26px] leading-none">{"\u0422\u0443\u0440\u043d\u0438\u0440\u044b"}</h2>
+          <h2 className="font-display text-[26px] leading-none">Турниры</h2>
           <Crown className="w-4 h-4 text-[#FF7800]" />
         </div>
 
         <div className="space-y-4">
-          {tournaments.map((item) => (
-            <Link
-              key={item.id}
-              to={`/tournaments/details/${item.id}`}
-              className="group block rounded-2xl border border-[#2F3136] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-4 transition-colors hover:border-[#3A3E45] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7800]/50"
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <h3 className="font-display text-[24px] leading-none text-white">{item.title}</h3>
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#3a2a12] bg-[#2a1b08] px-2 py-1 text-[10px] font-semibold text-[#FF9A2F] uppercase">
-                  <Medal className="w-3 h-3" />
-                  {item.prize}
-                </span>
-              </div>
+          {isLoading ? (
+            <div className="rounded-2xl border border-[#2F3136] bg-[#121315] p-4 text-sm text-[#949BA4]">Загрузка турниров...</div>
+          ) : isError ? (
+            <div className="rounded-2xl border border-[#2F3136] bg-[#121315] p-4 text-sm text-[#949BA4]">Не удалось загрузить турниры</div>
+          ) : (tournaments || []).length === 0 ? (
+            <div className="rounded-2xl border border-[#2F3136] bg-[#121315] p-4 text-sm text-[#949BA4]">Турниры пока не созданы</div>
+          ) : (
+            (tournaments || []).map((item) => (
+              <Link
+                key={item.id}
+                to={`/tournaments/details/${item.id}`}
+                className="group block rounded-2xl border border-[#2F3136] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-4 transition-colors hover:border-[#3A3E45] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7800]/50"
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h3 className="font-display text-[24px] leading-none text-white">{item.title}</h3>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[#3a2a12] bg-[#2a1b08] px-2 py-1 text-[10px] font-semibold text-[#FF9A2F] uppercase">
+                    <Medal className="w-3 h-3" />
+                    {item.prize_pool || "Приз не указан"}
+                  </span>
+                </div>
 
-              <div className="space-y-2 text-sm text-[#b5bac1]">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-[#FF7800]" />
-                  <span>{item.date}</span>
+                <div className="space-y-2 text-sm text-[#b5bac1]">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-[#FF7800]" />
+                    <span>{formatDate(item.starts_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#FF7800]" />
+                    <span>{formatTeams(item.team_format, item.max_teams)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[#FF7800]" />
+                    <span>{item.location || "Локация не указана"}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#FF7800]" />
-                  <span>{item.players}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[#FF7800]" />
-                  <span>{item.location}</span>
-                </div>
-              </div>
 
-              <div className="mt-4 flex items-center justify-end text-[#C4CAD2]">
-                <span className="text-[11px] uppercase tracking-wider mr-1">{"\u041f\u043e\u0434\u0440\u043e\u0431\u043d\u043e\u0435"}</span>
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </div>
-            </Link>
-          ))}
+                <div className="mt-4 flex items-center justify-end text-[#C4CAD2]">
+                  <span className="text-[11px] uppercase tracking-wider mr-1">Подробное</span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </div>
+              </Link>
+            ))
+          )}
         </div>
       </section>
     </div>
