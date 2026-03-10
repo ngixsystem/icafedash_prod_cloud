@@ -37,8 +37,7 @@ docker-compose up -d --build
 
 ### 4. Initial Login
 Once the stack is up, you can log in at `http://localhost/login` using the default administrator credentials:
-- **Username**: `admin`
-- **Password**: `admin123`
+
 
 > [!IMPORTANT]
 > **Change your password immediately** after the first login via the Admin Panel or Database.
