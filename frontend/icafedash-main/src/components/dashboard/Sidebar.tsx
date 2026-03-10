@@ -19,7 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth/AuthProvider";
-import brandLogo from "@/assets/frag.png";
+const brandLogo = "/logo.png";
 
 const navItems = [
   { icon: LayoutGrid, label: "Обзор", section: "main", color: "text-[#00E5FF]" },
