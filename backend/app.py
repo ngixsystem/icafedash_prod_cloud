@@ -18,6 +18,7 @@ from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 from sqlalchemy import func, or_
+from sqlalchemy.exc import IntegrityError
 
 # Initialize Flask with static folder pointing to frontend build
 app = Flask(__name__, 
@@ -185,6 +186,88 @@ class CashbackTransaction(db.Model):
 
     club = db.relationship("Club", backref=db.backref("cashback_transactions", lazy=True))
     manager = db.relationship("User", backref=db.backref("cashback_transactions", lazy=True))
+
+
+class Team(db.Model):
+    __tablename__ = "teams"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    tag = db.Column(db.String(12), nullable=True)
+    captain_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    captain = db.relationship("User", foreign_keys=[captain_user_id], backref=db.backref("captain_teams", lazy=True))
+    created_by = db.relationship("User", foreign_keys=[created_by_user_id], backref=db.backref("created_teams", lazy=True))
+
+
+class TeamMember(db.Model):
+    __tablename__ = "team_members"
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    role_in_team = db.Column(db.String(20), nullable=False, default="player")  # captain/player
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    team = db.relationship("Team", backref=db.backref("members", lazy=True, cascade="all, delete-orphan"))
+    user = db.relationship("User", backref=db.backref("team_memberships", lazy=True))
+    __table_args__ = (db.UniqueConstraint("team_id", "user_id", name="uq_team_member"),)
+
+
+class Tournament(db.Model):
+    __tablename__ = "tournaments"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(180), nullable=False, index=True)
+    game = db.Column(db.String(60), nullable=False, default="CS2")
+    description = db.Column(db.Text, nullable=True)
+    location = db.Column(db.String(160), nullable=True)
+    starts_at = db.Column(db.DateTime, nullable=True, index=True)
+    check_in_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="draft")  # draft/open/live/finished/cancelled
+    format = db.Column(db.String(60), nullable=False, default="single_elimination")
+    max_teams = db.Column(db.Integer, nullable=False, default=16)
+    prize_pool = db.Column(db.String(80), nullable=True)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    created_by = db.relationship("User", backref=db.backref("created_tournaments", lazy=True))
+
+
+class TournamentRegistration(db.Model):
+    __tablename__ = "tournament_registrations"
+    id = db.Column(db.Integer, primary_key=True)
+    tournament_id = db.Column(db.Integer, db.ForeignKey("tournaments.id"), nullable=False, index=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id"), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default="pending")  # pending/approved/rejected/cancelled
+    registered_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    tournament = db.relationship("Tournament", backref=db.backref("registrations", lazy=True, cascade="all, delete-orphan"))
+    team = db.relationship("Team", backref=db.backref("tournament_registrations", lazy=True))
+    registered_by = db.relationship("User", backref=db.backref("tournament_registrations", lazy=True))
+    __table_args__ = (db.UniqueConstraint("tournament_id", "team_id", name="uq_tournament_team_registration"),)
+
+
+class TournamentMatch(db.Model):
+    __tablename__ = "tournament_matches"
+    id = db.Column(db.Integer, primary_key=True)
+    tournament_id = db.Column(db.Integer, db.ForeignKey("tournaments.id"), nullable=False, index=True)
+    round_number = db.Column(db.Integer, nullable=False, default=1, index=True)
+    match_order = db.Column(db.Integer, nullable=False, default=1)
+    team1_id = db.Column(db.Integer, db.ForeignKey("teams.id"), nullable=True, index=True)
+    team2_id = db.Column(db.Integer, db.ForeignKey("teams.id"), nullable=True, index=True)
+    winner_team_id = db.Column(db.Integer, db.ForeignKey("teams.id"), nullable=True, index=True)
+    status = db.Column(db.String(20), nullable=False, default="scheduled")  # scheduled/live/finished
+    score = db.Column(db.String(32), nullable=True)
+    scheduled_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    tournament = db.relationship("Tournament", backref=db.backref("matches", lazy=True, cascade="all, delete-orphan"))
+    team1 = db.relationship("Team", foreign_keys=[team1_id], backref=db.backref("matches_as_team1", lazy=True))
+    team2 = db.relationship("Team", foreign_keys=[team2_id], backref=db.backref("matches_as_team2", lazy=True))
+    winner_team = db.relationship("Team", foreign_keys=[winner_team_id], backref=db.backref("matches_won", lazy=True))
 
 
 def generate_verification_code():
@@ -1191,8 +1274,8 @@ def client_login():
     username = data.get("username")
     password = data.get("password")
     
-    # Allow both legacy 'client' and new 'member' roles
-    user = User.query.filter(User.username == username, User.role.in_(["client", "member"])).first()
+    # Allow player-facing roles to use client auth
+    user = User.query.filter(User.username == username, User.role.in_(["client", "member", "captain"])).first()
     if user and user.check_password(password):
         if not user.is_verified:
             return jsonify({"message": "Email не подтверждён. Проверьте почту."}), 403
@@ -1294,6 +1377,433 @@ def admin_required(fn):
             return jsonify({"message": "Admin access required"}), 403
         return fn(*args, **kwargs)
     return wrapper
+
+
+def get_current_user_from_jwt() -> User | None:
+    try:
+        user_id = int(get_jwt_identity())
+    except Exception:
+        return None
+    return User.query.get(user_id)
+
+
+def roles_required(*allowed_roles: str):
+    allowed = set(allowed_roles)
+
+    def decorator(fn):
+        @wraps(fn)
+        @jwt_required()
+        def wrapper(*args, **kwargs):
+            user = get_current_user_from_jwt()
+            if not user:
+                return jsonify({"message": "User not found"}), 404
+            if user.role not in allowed:
+                return jsonify({"message": "Permission denied"}), 403
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def serialize_tournament(item: Tournament) -> dict:
+    return {
+        "id": item.id,
+        "title": item.title,
+        "game": item.game,
+        "description": item.description or "",
+        "location": item.location or "",
+        "starts_at": item.starts_at.isoformat() if item.starts_at else None,
+        "check_in_at": item.check_in_at.isoformat() if item.check_in_at else None,
+        "status": item.status,
+        "format": item.format,
+        "max_teams": item.max_teams,
+        "prize_pool": item.prize_pool or "",
+        "created_by_user_id": item.created_by_user_id,
+        "created_at": item.created_at.isoformat() if item.created_at else None,
+        "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+        "registered_teams": len(item.registrations),
+    }
+
+
+def serialize_team(item: Team) -> dict:
+    return {
+        "id": item.id,
+        "name": item.name,
+        "tag": item.tag or "",
+        "captain_user_id": item.captain_user_id,
+        "captain_username": item.captain.username if item.captain else None,
+        "created_by_user_id": item.created_by_user_id,
+        "is_active": bool(item.is_active),
+        "created_at": item.created_at.isoformat() if item.created_at else None,
+        "members_count": len(item.members),
+    }
+
+
+def parse_iso_datetime(value: str | None):
+    if not value:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00")).replace(tzinfo=None)
+    except Exception:
+        return None
+
+
+@app.get("/api/public/tournaments")
+def public_tournaments():
+    rows = Tournament.query.order_by(Tournament.created_at.desc()).all()
+    return jsonify([serialize_tournament(item) for item in rows])
+
+
+@app.get("/api/public/tournaments/<int:tournament_id>")
+def public_tournament_details(tournament_id):
+    item = Tournament.query.get_or_404(tournament_id)
+    data = serialize_tournament(item)
+    data["registrations"] = [
+        {
+            "id": reg.id,
+            "team_id": reg.team_id,
+            "team_name": reg.team.name if reg.team else "Unknown",
+            "status": reg.status,
+            "created_at": reg.created_at.isoformat() if reg.created_at else None,
+        }
+        for reg in item.registrations
+    ]
+    return jsonify(data)
+
+
+@app.get("/api/public/tournaments/<int:tournament_id>/bracket")
+def public_tournament_bracket(tournament_id):
+    item = Tournament.query.get_or_404(tournament_id)
+    matches = TournamentMatch.query.filter_by(tournament_id=item.id).order_by(TournamentMatch.round_number.asc(), TournamentMatch.match_order.asc()).all()
+    return jsonify(
+        {
+            "tournament": serialize_tournament(item),
+            "matches": [
+                {
+                    "id": match.id,
+                    "round_number": match.round_number,
+                    "match_order": match.match_order,
+                    "team1_id": match.team1_id,
+                    "team1_name": match.team1.name if match.team1 else None,
+                    "team2_id": match.team2_id,
+                    "team2_name": match.team2.name if match.team2 else None,
+                    "winner_team_id": match.winner_team_id,
+                    "winner_team_name": match.winner_team.name if match.winner_team else None,
+                    "status": match.status,
+                    "score": match.score,
+                    "scheduled_at": match.scheduled_at.isoformat() if match.scheduled_at else None,
+                }
+                for match in matches
+            ],
+        }
+    )
+
+
+@app.get("/api/admin/tournaments")
+@admin_required
+def admin_tournaments_list():
+    rows = Tournament.query.order_by(Tournament.created_at.desc()).all()
+    return jsonify([serialize_tournament(item) for item in rows])
+
+
+@app.post("/api/admin/tournaments")
+@admin_required
+def admin_create_tournament():
+    data = request.get_json(force=True) or {}
+    title = str(data.get("title") or "").strip()
+    if not title:
+        return jsonify({"message": "title is required"}), 400
+
+    user = get_current_user_from_jwt()
+    tournament = Tournament(
+        title=title,
+        game=str(data.get("game") or "CS2").strip() or "CS2",
+        description=str(data.get("description") or "").strip(),
+        location=str(data.get("location") or "").strip(),
+        starts_at=parse_iso_datetime(data.get("starts_at")),
+        check_in_at=parse_iso_datetime(data.get("check_in_at")),
+        status=str(data.get("status") or "draft").strip() or "draft",
+        format=str(data.get("format") or "single_elimination").strip() or "single_elimination",
+        max_teams=max(int(data.get("max_teams") or 16), 2),
+        prize_pool=str(data.get("prize_pool") or "").strip(),
+        created_by_user_id=user.id if user else 1,
+    )
+    db.session.add(tournament)
+    db.session.commit()
+    return jsonify({"message": "Tournament created", "tournament": serialize_tournament(tournament)}), 201
+
+
+@app.put("/api/admin/tournaments/<int:tournament_id>")
+@admin_required
+def admin_update_tournament(tournament_id):
+    item = Tournament.query.get_or_404(tournament_id)
+    data = request.get_json(force=True) or {}
+
+    if "title" in data:
+        value = str(data.get("title") or "").strip()
+        if not value:
+            return jsonify({"message": "title cannot be empty"}), 400
+        item.title = value
+    if "game" in data:
+        item.game = str(data.get("game") or "").strip() or item.game
+    if "description" in data:
+        item.description = str(data.get("description") or "").strip()
+    if "location" in data:
+        item.location = str(data.get("location") or "").strip()
+    if "starts_at" in data:
+        item.starts_at = parse_iso_datetime(data.get("starts_at"))
+    if "check_in_at" in data:
+        item.check_in_at = parse_iso_datetime(data.get("check_in_at"))
+    if "status" in data:
+        item.status = str(data.get("status") or "").strip() or item.status
+    if "format" in data:
+        item.format = str(data.get("format") or "").strip() or item.format
+    if "max_teams" in data:
+        item.max_teams = max(int(data.get("max_teams") or item.max_teams), 2)
+    if "prize_pool" in data:
+        item.prize_pool = str(data.get("prize_pool") or "").strip()
+
+    db.session.commit()
+    return jsonify({"message": "Tournament updated", "tournament": serialize_tournament(item)})
+
+
+@app.delete("/api/admin/tournaments/<int:tournament_id>")
+@admin_required
+def admin_delete_tournament(tournament_id):
+    item = Tournament.query.get_or_404(tournament_id)
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({"message": "Tournament deleted"})
+
+
+@app.get("/api/admin/teams")
+@admin_required
+def admin_teams_list():
+    rows = Team.query.order_by(Team.created_at.desc()).all()
+    return jsonify([serialize_team(item) for item in rows])
+
+
+@app.post("/api/admin/teams")
+@admin_required
+def admin_create_team():
+    data = request.get_json(force=True) or {}
+    team_name = str(data.get("name") or "").strip()
+    if not team_name:
+        return jsonify({"message": "name is required"}), 400
+
+    creator = get_current_user_from_jwt()
+    team = Team(
+        name=team_name,
+        tag=str(data.get("tag") or "").strip().upper()[:12] or None,
+        created_by_user_id=creator.id if creator else 1,
+    )
+    db.session.add(team)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"message": "Team with this name already exists"}), 409
+
+    return jsonify({"message": "Team created", "team": serialize_team(team)}), 201
+
+
+@app.post("/api/admin/teams/<int:team_id>/assign-captain")
+@admin_required
+def admin_assign_team_captain(team_id):
+    team = Team.query.get_or_404(team_id)
+    data = request.get_json(force=True) or {}
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"message": "user_id is required"}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    team.captain_user_id = user.id
+    if user.role != "admin":
+        user.role = "captain"
+
+    membership = TeamMember.query.filter_by(team_id=team.id, user_id=user.id).first()
+    if not membership:
+        membership = TeamMember(team_id=team.id, user_id=user.id, role_in_team="captain")
+        db.session.add(membership)
+    else:
+        membership.role_in_team = "captain"
+
+    db.session.commit()
+    return jsonify({"message": "Captain assigned", "team": serialize_team(team)})
+
+
+@app.get("/api/captain/team/me")
+@roles_required("captain", "admin")
+def captain_team_me():
+    user = get_current_user_from_jwt()
+    team = Team.query.filter_by(captain_user_id=user.id).first()
+    if not team and user.role == "admin":
+        team_id = request.args.get("team_id", type=int)
+        if team_id:
+            team = Team.query.get(team_id)
+    if not team:
+        return jsonify({"message": "Captain team not found"}), 404
+
+    members = []
+    for member in TeamMember.query.filter_by(team_id=team.id).all():
+        if not member.user:
+            continue
+        members.append(
+            {
+                "user_id": member.user_id,
+                "username": member.user.username,
+                "email": member.user.email,
+                "role_in_team": member.role_in_team,
+            }
+        )
+    return jsonify({"team": serialize_team(team), "members": members})
+
+
+@app.post("/api/captain/team/me/members")
+@roles_required("captain", "admin")
+def captain_add_team_member():
+    user = get_current_user_from_jwt()
+    team = Team.query.filter_by(captain_user_id=user.id).first()
+    if not team and user.role != "admin":
+        return jsonify({"message": "Captain team not found"}), 404
+    if not team:
+        team_id = request.json.get("team_id") if isinstance(request.json, dict) else None
+        team = Team.query.get(team_id) if team_id else None
+    if not team:
+        return jsonify({"message": "Team not found"}), 404
+
+    data = request.get_json(force=True) or {}
+    username = str(data.get("username") or "").strip()
+    if not username:
+        return jsonify({"message": "username is required"}), 400
+    member_user = User.query.filter_by(username=username).first()
+    if not member_user:
+        return jsonify({"message": "User not found"}), 404
+
+    existing = TeamMember.query.filter_by(team_id=team.id, user_id=member_user.id).first()
+    if existing:
+        return jsonify({"message": "User already in team"}), 409
+
+    db.session.add(TeamMember(team_id=team.id, user_id=member_user.id, role_in_team="player"))
+    db.session.commit()
+    return jsonify({"message": "Team member added"})
+
+
+@app.delete("/api/captain/team/me/members/<int:user_id>")
+@roles_required("captain", "admin")
+def captain_remove_team_member(user_id):
+    current = get_current_user_from_jwt()
+    team = Team.query.filter_by(captain_user_id=current.id).first()
+    if not team and current.role != "admin":
+        return jsonify({"message": "Captain team not found"}), 404
+
+    if not team:
+        team_id = request.args.get("team_id", type=int)
+        team = Team.query.get(team_id) if team_id else None
+    if not team:
+        return jsonify({"message": "Team not found"}), 404
+
+    if team.captain_user_id == user_id:
+        return jsonify({"message": "Captain cannot be removed from own team"}), 400
+
+    member = TeamMember.query.filter_by(team_id=team.id, user_id=user_id).first()
+    if not member:
+        return jsonify({"message": "Member not found in this team"}), 404
+
+    db.session.delete(member)
+    db.session.commit()
+    return jsonify({"message": "Team member removed"})
+
+
+@app.post("/api/captain/tournaments/<int:tournament_id>/register")
+@roles_required("captain", "admin")
+def captain_register_team_to_tournament(tournament_id):
+    user = get_current_user_from_jwt()
+    tournament = Tournament.query.get_or_404(tournament_id)
+    if tournament.status not in ("draft", "open"):
+        return jsonify({"message": "Tournament registration is closed"}), 400
+
+    team = Team.query.filter_by(captain_user_id=user.id).first()
+    if not team and user.role == "admin":
+        body = request.get_json(silent=True) or {}
+        team_id = body.get("team_id")
+        team = Team.query.get(team_id) if team_id else None
+    if not team:
+        return jsonify({"message": "Captain team not found"}), 404
+
+    current_count = TournamentRegistration.query.filter_by(tournament_id=tournament.id).count()
+    if current_count >= tournament.max_teams:
+        return jsonify({"message": "No slots left in tournament"}), 409
+
+    exists = TournamentRegistration.query.filter_by(tournament_id=tournament.id, team_id=team.id).first()
+    if exists:
+        return jsonify({"message": "Team already registered"}), 409
+
+    reg = TournamentRegistration(
+        tournament_id=tournament.id,
+        team_id=team.id,
+        status="pending",
+        registered_by_user_id=user.id,
+    )
+    db.session.add(reg)
+    db.session.commit()
+    return jsonify({"message": "Registration created", "registration_id": reg.id}), 201
+
+
+@app.post("/api/admin/tournaments/<int:tournament_id>/registrations/<int:registration_id>/approve")
+@admin_required
+def admin_approve_tournament_registration(tournament_id, registration_id):
+    reg = TournamentRegistration.query.filter_by(id=registration_id, tournament_id=tournament_id).first()
+    if not reg:
+        return jsonify({"message": "Registration not found"}), 404
+    reg.status = "approved"
+    db.session.commit()
+    return jsonify({"message": "Registration approved"})
+
+
+@app.post("/api/admin/tournaments/<int:tournament_id>/generate-bracket")
+@admin_required
+def admin_generate_bracket(tournament_id):
+    tournament = Tournament.query.get_or_404(tournament_id)
+    approved = (
+        TournamentRegistration.query.filter_by(tournament_id=tournament.id, status="approved")
+        .order_by(TournamentRegistration.created_at.asc())
+        .all()
+    )
+    if len(approved) < 2:
+        return jsonify({"message": "At least 2 approved teams required"}), 400
+
+    TournamentMatch.query.filter_by(tournament_id=tournament.id).delete()
+    db.session.flush()
+
+    teams = [reg.team for reg in approved if reg.team]
+    pairs = []
+    for i in range(0, len(teams), 2):
+        team1 = teams[i]
+        team2 = teams[i + 1] if i + 1 < len(teams) else None
+        pairs.append((team1, team2))
+
+    for idx, pair in enumerate(pairs, start=1):
+        match = TournamentMatch(
+            tournament_id=tournament.id,
+            round_number=1,
+            match_order=idx,
+            team1_id=pair[0].id if pair[0] else None,
+            team2_id=pair[1].id if pair[1] else None,
+            status="scheduled",
+        )
+        db.session.add(match)
+
+    tournament.status = "live"
+    db.session.commit()
+    return jsonify({"message": "Bracket generated", "matches_count": len(pairs)})
 
 @app.get("/api/admin/clubs")
 @admin_required

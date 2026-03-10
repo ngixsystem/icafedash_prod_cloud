@@ -237,6 +237,68 @@ export interface CashbackTransaction {
     created_at: string | null;
 }
 
+export interface Tournament {
+    id: number;
+    title: string;
+    game: string;
+    description: string;
+    location: string;
+    starts_at: string | null;
+    check_in_at: string | null;
+    status: string;
+    format: string;
+    max_teams: number;
+    prize_pool: string;
+    created_by_user_id: number;
+    created_at: string | null;
+    updated_at: string | null;
+    registered_teams: number;
+}
+
+export interface Team {
+    id: number;
+    name: string;
+    tag: string;
+    captain_user_id: number | null;
+    captain_username: string | null;
+    created_by_user_id: number;
+    is_active: boolean;
+    created_at: string | null;
+    members_count: number;
+}
+
+export interface TeamMember {
+    user_id: number;
+    username: string;
+    email: string;
+    role_in_team: string;
+}
+
+export interface TournamentMatch {
+    id: number;
+    round_number: number;
+    match_order: number;
+    team1_id: number | null;
+    team1_name: string | null;
+    team2_id: number | null;
+    team2_name: string | null;
+    winner_team_id: number | null;
+    winner_team_name: string | null;
+    status: string;
+    score: string | null;
+    scheduled_at: string | null;
+}
+
+export interface TournamentDetails extends Tournament {
+    registrations: Array<{
+        id: number;
+        team_id: number;
+        team_name: string;
+        status: string;
+        created_at: string | null;
+    }>;
+}
+
 // ── API calls ──────────────────────────────────────────────────────────────
 
 export const api = {
@@ -358,6 +420,38 @@ export const api = {
         get<{ transactions: CashbackTransaction[] }>("/cashback/transactions", { limit }),
     accrueCashback: (data: { qr_payload: string; amount: number; note?: string }) =>
         post<{ message: string; transaction: CashbackTransaction }>("/cashback/accrue", data),
+    publicTournaments: () => get<Tournament[]>("/public/tournaments"),
+    publicTournamentDetails: (tournamentId: number) => get<TournamentDetails>(`/public/tournaments/${tournamentId}`),
+    publicTournamentBracket: (tournamentId: number) =>
+        get<{ tournament: Tournament; matches: TournamentMatch[] }>(`/public/tournaments/${tournamentId}/bracket`),
+    adminTournaments: () => get<Tournament[]>("/admin/tournaments"),
+    createTournament: (data: {
+        title: string;
+        game?: string;
+        description?: string;
+        location?: string;
+        starts_at?: string | null;
+        check_in_at?: string | null;
+        status?: string;
+        format?: string;
+        max_teams?: number;
+        prize_pool?: string;
+    }) => post<{ message: string; tournament: Tournament }>("/admin/tournaments", data),
+    updateTournament: (tournamentId: number, data: Partial<Tournament>) =>
+        put<{ message: string; tournament: Tournament }>(`/admin/tournaments/${tournamentId}`, data),
+    deleteTournament: (tournamentId: number) => del<{ message: string }>(`/admin/tournaments/${tournamentId}`),
+    adminTeams: () => get<Team[]>("/admin/teams"),
+    createTeam: (data: { name: string; tag?: string }) => post<{ message: string; team: Team }>("/admin/teams", data),
+    assignCaptain: (teamId: number, userId: number) =>
+        post<{ message: string; team: Team }>(`/admin/teams/${teamId}/assign-captain`, { user_id: userId }),
+    captainTeamMe: () => get<{ team: Team; members: TeamMember[] }>("/captain/team/me"),
+    captainAddTeamMember: (username: string) => post<{ message: string }>("/captain/team/me/members", { username }),
+    captainRemoveTeamMember: (userId: number) => del<{ message: string }>(`/captain/team/me/members/${userId}`),
+    captainRegisterTournament: (tournamentId: number) => post<{ message: string }>(`/captain/tournaments/${tournamentId}/register`, {}),
+    approveTournamentRegistration: (tournamentId: number, registrationId: number) =>
+        post<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations/${registrationId}/approve`, {}),
+    generateTournamentBracket: (tournamentId: number) =>
+        post<{ message: string; matches_count: number }>(`/admin/tournaments/${tournamentId}/generate-bracket`, {}),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),

@@ -14,6 +14,9 @@ interface AuthContextType {
     logout: () => void;
     isAuthenticated: boolean;
     isAdmin: boolean;
+    isCaptain: boolean;
+    canManageTournaments: boolean;
+    canViewTournamentPanel: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,7 +69,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('icafe_user');
     };
 
-    const isAdmin = user?.role === 'admin';
+    const role = user?.role || "";
+    const isAdmin = role === "admin";
+    const isCaptain = role === "captain";
+    const canManageTournaments = isAdmin;
+    const canViewTournamentPanel = !!role;
 
     return (
         <AuthContext.Provider value={{
@@ -75,7 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             login,
             logout,
             isAuthenticated: !!token,
-            isAdmin
+            isAdmin,
+            isCaptain,
+            canManageTournaments,
+            canViewTournamentPanel,
         }}>
             {children}
         </AuthContext.Provider>

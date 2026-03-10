@@ -16,20 +16,25 @@ import ReviewsPanel from "@/components/dashboard/ReviewsPanel";
 import BookingPanel from "@/components/dashboard/BookingPanel";
 import CashbackPanel from "@/components/dashboard/CashbackPanel";
 import ManagerHyperOverview from "@/components/dashboard/ManagerHyperOverview";
+import TournamentPanel from "@/components/dashboard/TournamentPanel";
+import TeamCaptainPanel from "@/components/dashboard/TeamCaptainPanel";
+import UserPrivilegesPanel from "@/components/dashboard/UserPrivilegesPanel";
 
 const Index = () => {
-  const { isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState(isAdmin ? "Клубы" : "Обзор");
+  const { isAdmin, isCaptain, user } = useAuth();
+  const role = user?.role || "";
+  const initialTab = isAdmin ? "Клубы" : isCaptain ? "Турниры" : role === "member" || role === "client" ? "Турниры" : "Обзор";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [bookingSearch, setBookingSearch] = useState("");
 
   return (
-    <div className="min-h-screen text-gray-300 relative overflow-hidden">
+    <div className="esports-shell min-h-screen text-gray-300 relative overflow-hidden">
       {!isAdmin && (
         <>
           <div className="ambient-layer">
-            <div className="blob bg-[#BD00FF]/20 w-[420px] h-[420px] lg:w-[600px] lg:h-[600px] top-[-10%] left-[-10%]" />
-            <div className="blob bg-[#00F0FF]/20 w-[360px] h-[360px] lg:w-[500px] lg:h-[500px] bottom-[-10%] right-[-10%]" />
-            <div className="blob bg-[#2B59F9]/20 w-[300px] h-[300px] lg:w-[400px] lg:h-[400px] top-[40%] left-[40%]" />
+            <div className="blob bg-[#6C5CE7]/22 w-[420px] h-[420px] lg:w-[600px] lg:h-[600px] top-[-10%] left-[-10%]" />
+            <div className="blob bg-[#00E5FF]/18 w-[360px] h-[360px] lg:w-[500px] lg:h-[500px] bottom-[-10%] right-[-10%]" />
+            <div className="blob bg-[#FF3D71]/14 w-[300px] h-[300px] lg:w-[400px] lg:h-[400px] top-[40%] left-[40%]" />
           </div>
           <div className="grid-bg" />
         </>
@@ -37,7 +42,7 @@ const Index = () => {
 
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="relative lg:ml-64 min-h-screen overflow-hidden">
+      <div className="relative lg:ml-[290px] min-h-screen overflow-hidden">
         <TopBar
           onOpenSettings={() => setActiveTab("Настройки")}
           searchQuery={bookingSearch}
@@ -77,6 +82,12 @@ const Index = () => {
             <CashbackPanel />
           ) : activeTab === "Клубы" ? (
             <AdminDashboard />
+          ) : activeTab === "Турниры" ? (
+            <TournamentPanel />
+          ) : activeTab === "Команда" ? (
+            <TeamCaptainPanel />
+          ) : activeTab === "Пользователи" ? (
+            <UserPrivilegesPanel />
           ) : activeTab === "Настройки" ? (
             <SettingsPanel />
           ) : activeTab === "Клиенты" || activeTab === "Менеджеры" ? (
