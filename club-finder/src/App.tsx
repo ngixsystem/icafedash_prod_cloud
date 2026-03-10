@@ -14,6 +14,7 @@ import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import BookingPage from "./pages/BookingPage";
 import TournamentsPage from "./pages/TournamentsPage";
 import TournamentGameRatingPage from "./pages/TournamentGameRatingPage";
+import TournamentDetailsPage from "./pages/TournamentDetailsPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/map" element={<MapPage />} />
               <Route path="/tournaments" element={<TournamentsPage />} />
               <Route path="/tournaments/:gameId" element={<TournamentGameRatingPage />} />
+              <Route path="/tournaments/details/:tournamentId" element={<TournamentDetailsPage />} />
               <Route path="/club/:id" element={<ClubPage />} />
               <Route path="/auth" element={<AuthPage />} />
 

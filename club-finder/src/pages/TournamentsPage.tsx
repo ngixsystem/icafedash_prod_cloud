@@ -3,30 +3,12 @@ import { Link } from "react-router-dom";
 import cs2Banner from "@/assets/tournamentsgcs.jpg";
 import dota2Banner from "@/assets/tournamentsgdota.jpg";
 import pubgBanner from "@/assets/tournamentsgpubg.jpg";
+import { tournaments } from "@/data/tournaments";
 
 const gameSections = [
   { id: "cs2", title: "CS2", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: cs2Banner },
   { id: "dota2", title: "Dota2", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: dota2Banner },
   { id: "pubg-mobile", title: "PUBG Mobile", subtitle: "\u0420\u0435\u0439\u0442\u0438\u043d\u0433 \u043a\u043e\u043c\u0430\u043d\u0434", image: pubgBanner },
-];
-
-const tournaments = [
-  {
-    id: 1,
-    title: "FRAG Night Cup",
-    date: "15 \u043c\u0430\u0440\u0442\u0430 2026, 19:00",
-    players: "5v5 \u2022 16 \u043a\u043e\u043c\u0430\u043d\u0434",
-    location: "TeamPro Sergeli",
-    prize: "20 000 000 \u0441\u0443\u043c",
-  },
-  {
-    id: 2,
-    title: "Cyber Weekend Showdown",
-    date: "22 \u043c\u0430\u0440\u0442\u0430 2026, 18:30",
-    players: "2v2 \u2022 24 \u043a\u043e\u043c\u0430\u043d\u0434\u044b",
-    location: "Energy Gaming",
-    prize: "12 000 000 \u0441\u0443\u043c",
-  },
 ];
 
 export default function TournamentsPage() {
@@ -83,7 +65,11 @@ export default function TournamentsPage() {
 
         <div className="space-y-4">
           {tournaments.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-[#2F3136] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-4">
+            <Link
+              key={item.id}
+              to={`/tournaments/details/${item.id}`}
+              className="group block rounded-2xl border border-[#2F3136] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-4 transition-colors hover:border-[#3A3E45] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7800]/50"
+            >
               <div className="flex items-start justify-between gap-3 mb-3">
                 <h3 className="font-display text-[24px] leading-none text-white">{item.title}</h3>
                 <span className="inline-flex items-center gap-1 rounded-full border border-[#3a2a12] bg-[#2a1b08] px-2 py-1 text-[10px] font-semibold text-[#FF9A2F] uppercase">
@@ -106,7 +92,12 @@ export default function TournamentsPage() {
                   <span>{item.location}</span>
                 </div>
               </div>
-            </div>
+
+              <div className="mt-4 flex items-center justify-end text-[#C4CAD2]">
+                <span className="text-[11px] uppercase tracking-wider mr-1">{"\u041f\u043e\u0434\u0440\u043e\u0431\u043d\u043e\u0435"}</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </Link>
           ))}
         </div>
       </section>
