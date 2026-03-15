@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,10 +52,28 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [faceitLoading, setFaceitLoading] = useState(false);
+  const popupRef = useRef<Window | null>(null);
 
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "FACEIT_AUTH_SUCCESS") {
+        login(event.data.access_token, event.data.user);
+        toast({ title: `Добро пожаловать, ${event.data.user.username}!` });
+        setFaceitLoading(false);
+      } else if (event.data?.type === "FACEIT_AUTH_ERROR") {
+        toast({ title: "Ошибка FACEIT", description: event.data.message, variant: "destructive" });
+        setFaceitLoading(false);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [login, toast]);
 
   if (isAuthenticated) {
     const fromPath = (location.state as any)?.from?.pathname || "/";
@@ -193,10 +211,12 @@ export default function AuthPage() {
 
               <button
                 type="button"
+                disabled={faceitLoading}
                 onClick={async () => {
+                  setFaceitLoading(true);
                   const verifier = generateCodeVerifier();
                   const challenge = await generateCodeChallenge(verifier);
-                  sessionStorage.setItem("faceit_code_verifier", verifier);
+                  localStorage.setItem("faceit_code_verifier", verifier);
                   const url =
                     `https://accounts.faceit.com/accounts` +
                     `?client_id=${FACEIT_CLIENT_ID}` +
@@ -205,14 +225,21 @@ export default function AuthPage() {
                     `&scope=openid%20profile%20email` +
                     `&code_challenge=${challenge}` +
                     `&code_challenge_method=S256`;
-                  window.location.href = url;
+                  const popup = window.open(url, "faceit_auth", "width=520,height=680,scrollbars=yes,resizable=yes");
+                  popupRef.current = popup;
+                  const timer = setInterval(() => {
+                    if (popup?.closed) {
+                      clearInterval(timer);
+                      setFaceitLoading(false);
+                    }
+                  }, 500);
                 }}
-                className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm"
+                className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] disabled:opacity-60 transition-colors font-bold text-white text-sm"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
                 </svg>
-                Войти через FACEIT
+                {faceitLoading ? "Ожидание авторизации..." : "Войти через FACEIT"}
               </button>
 
               <div className="mt-5 text-center">

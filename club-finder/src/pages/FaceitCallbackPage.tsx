@@ -1,13 +1,17 @@
 import { useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
+
+const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
+
+function sendToParent(data: object) {
+  if (window.opener && !window.opener.closed) {
+    window.opener.postMessage(data, window.location.origin);
+  }
+  window.close();
+}
 
 export default function FaceitCallbackPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  const { toast } = useToast();
   const called = useRef(false);
 
   useEffect(() => {
@@ -18,26 +22,20 @@ export default function FaceitCallbackPage() {
     const error = searchParams.get("error");
 
     if (error || !code) {
-      toast({
-        title: "Ошибка авторизации",
-        description: error === "access_denied" ? "Вы отменили вход через FACEIT" : "Код авторизации отсутствует",
-        variant: "destructive",
+      sendToParent({
+        type: "FACEIT_AUTH_ERROR",
+        message: error === "access_denied" ? "Вы отменили вход через FACEIT" : "Код авторизации отсутствует",
       });
-      navigate("/auth", { replace: true });
       return;
     }
 
-    const codeVerifier = sessionStorage.getItem("faceit_code_verifier") || "";
-    sessionStorage.removeItem("faceit_code_verifier");
+    const codeVerifier = localStorage.getItem("faceit_code_verifier") || "";
+    localStorage.removeItem("faceit_code_verifier");
 
     fetch("/api/auth/faceit/callback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        code,
-        redirect_uri: "https://cloud.icafedash.com/auth/faceit/callback",
-        code_verifier: codeVerifier,
-      }),
+      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI, code_verifier: codeVerifier }),
     })
       .then(async (res) => {
         const data = await res.json();
@@ -45,13 +43,10 @@ export default function FaceitCallbackPage() {
         return data;
       })
       .then((data) => {
-        login(data.access_token, data.user);
-        toast({ title: `Добро пожаловать, ${data.user.username}!` });
-        navigate("/", { replace: true });
+        sendToParent({ type: "FACEIT_AUTH_SUCCESS", access_token: data.access_token, user: data.user });
       })
       .catch((err) => {
-        toast({ title: "Ошибка", description: err.message, variant: "destructive" });
-        navigate("/auth", { replace: true });
+        sendToParent({ type: "FACEIT_AUTH_ERROR", message: err.message });
       });
   }, []);
 
