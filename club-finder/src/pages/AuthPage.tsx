@@ -6,12 +6,22 @@ import { useToast } from "@/hooks/use-toast";
 import { Navigate, useLocation } from "react-router-dom";
 import brandLogo from "@/assets/frag.png";
 
-const FACEIT_AUTH_URL =
-  "https://accounts.faceit.com/accounts" +
-  "?client_id=1f333c7f-938c-450c-ba0d-93c9dcd0747a" +
-  "&redirect_uri=https%3A%2F%2Fcloud.icafedash.com%2Fauth%2Ffaceit%2Fcallback" +
-  "&response_type=code" +
-  "&scope=openid%20profile%20email";
+const FACEIT_CLIENT_ID = "c9c71e0d-af23-4a75-8394-28709823b987";
+const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
+
+function generateCodeVerifier(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
 
 async function parseApiPayload(res: Response): Promise<any> {
   const contentType = (res.headers.get("content-type") || "").toLowerCase();
@@ -183,7 +193,20 @@ export default function AuthPage() {
 
               <button
                 type="button"
-                onClick={() => { window.location.href = FACEIT_AUTH_URL; }}
+                onClick={async () => {
+                  const verifier = generateCodeVerifier();
+                  const challenge = await generateCodeChallenge(verifier);
+                  sessionStorage.setItem("faceit_code_verifier", verifier);
+                  const url =
+                    `https://accounts.faceit.com/accounts` +
+                    `?client_id=${FACEIT_CLIENT_ID}` +
+                    `&redirect_uri=${encodeURIComponent(FACEIT_REDIRECT_URI)}` +
+                    `&response_type=code` +
+                    `&scope=openid%20profile%20email` +
+                    `&code_challenge=${challenge}` +
+                    `&code_challenge_method=S256`;
+                  window.location.href = url;
+                }}
                 className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

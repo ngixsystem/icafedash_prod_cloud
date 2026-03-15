@@ -27,12 +27,16 @@ export default function FaceitCallbackPage() {
       return;
     }
 
+    const codeVerifier = sessionStorage.getItem("faceit_code_verifier") || "";
+    sessionStorage.removeItem("faceit_code_verifier");
+
     fetch("/api/auth/faceit/callback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         code,
         redirect_uri: "https://cloud.icafedash.com/auth/faceit/callback",
+        code_verifier: codeVerifier,
       }),
     })
       .then(async (res) => {

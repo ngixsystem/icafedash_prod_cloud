@@ -39,8 +39,8 @@ SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
 
-# FACEIT OAuth
-FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "1f333c7f-938c-450c-ba0d-93c9dcd0747a")
+# FACEIT OAuth (Authorization Code + PKCE)
+FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "c9c71e0d-af23-4a75-8394-28709823b987")
 FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "03a87f47-0978-46e4-bde7-8e353dc5c703")
 
 db = SQLAlchemy(app)
@@ -1313,27 +1313,25 @@ def client_login():
 
 @app.post("/api/auth/faceit/callback")
 def faceit_oauth_callback():
-    import base64
     data = request.json or {}
     code = data.get("code")
     redirect_uri = data.get("redirect_uri", "https://cloud.icafedash.com/auth/faceit/callback")
+    code_verifier = data.get("code_verifier", "")
 
     if not code:
         return jsonify({"message": "Missing authorization code"}), 400
 
-    # Exchange code for access token
-    credentials = base64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
+    # Exchange code for access token (PKCE flow — no Basic Auth, use code_verifier)
     try:
         token_resp = requests.post(
             "https://api.faceit.com/auth/v1/oauth/token",
-            headers={
-                "Authorization": f"Basic {credentials}",
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
             data={
                 "grant_type": "authorization_code",
                 "code": code,
                 "redirect_uri": redirect_uri,
+                "client_id": FACEIT_CLIENT_ID,
+                "code_verifier": code_verifier,
             },
             timeout=10,
         )
