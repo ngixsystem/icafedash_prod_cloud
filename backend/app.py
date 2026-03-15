@@ -39,6 +39,10 @@ SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
 
+# FACEIT OAuth
+FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "1f333c7f-938c-450c-ba0d-93c9dcd0747a")
+FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "03a87f47-0978-46e4-bde7-8e353dc5c703")
+
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
@@ -116,6 +120,7 @@ class User(db.Model):
     role = db.Column(db.String(20), default="manager") # admin or manager
     is_verified = db.Column(db.Boolean, default=False)
     avatar_url = db.Column(db.String(255), nullable=True, default="")
+    faceit_id = db.Column(db.String(100), unique=True, nullable=True)
     club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -359,6 +364,8 @@ with app.app_context():
             _safe_migration(conn, "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1", "Added is_verified column to users table")
         if 'avatar_url' not in existing_columns:
             _safe_migration(conn, "ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) DEFAULT ''", "Added avatar_url column to users table")
+        if 'faceit_id' not in existing_columns:
+            _safe_migration(conn, "ALTER TABLE users ADD COLUMN faceit_id VARCHAR(100) NULL", "Added faceit_id column to users table")
             
     # Migration for clubs
     existing_club_columns_info = {col['name']: col for col in inspector.get_columns('clubs')}
@@ -1302,6 +1309,113 @@ def client_login():
             }
         })
     return jsonify({"message": "Неверный логин или пароль"}), 401
+
+
+@app.post("/api/auth/faceit/callback")
+def faceit_oauth_callback():
+    import base64
+    data = request.json or {}
+    code = data.get("code")
+    redirect_uri = data.get("redirect_uri", "https://cloud.icafedash.com/auth/faceit/callback")
+
+    if not code:
+        return jsonify({"message": "Missing authorization code"}), 400
+
+    # Exchange code for access token
+    credentials = base64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
+    try:
+        token_resp = requests.post(
+            "https://api.faceit.com/auth/v1/oauth/token",
+            headers={
+                "Authorization": f"Basic {credentials}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri,
+            },
+            timeout=10,
+        )
+    except Exception as e:
+        return jsonify({"message": f"Ошибка соединения с FACEIT: {e}"}), 502
+
+    if not token_resp.ok:
+        return jsonify({"message": "Ошибка обмена кода FACEIT на токен"}), 400
+
+    access_token = token_resp.json().get("access_token")
+    if not access_token:
+        return jsonify({"message": "Не удалось получить токен FACEIT"}), 400
+
+    # Get user profile from FACEIT
+    try:
+        userinfo_resp = requests.get(
+            "https://api.faceit.com/auth/v1/resources/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+    except Exception as e:
+        return jsonify({"message": f"Ошибка получения профиля FACEIT: {e}"}), 502
+
+    if not userinfo_resp.ok:
+        return jsonify({"message": "Не удалось получить профиль FACEIT"}), 400
+
+    faceit_user = userinfo_resp.json()
+    faceit_id = faceit_user.get("sub") or faceit_user.get("guid")
+    nickname = (faceit_user.get("nickname") or faceit_user.get("preferred_username") or "").strip()
+    email = (faceit_user.get("email") or "").strip().lower() or None
+    avatar = faceit_user.get("picture") or faceit_user.get("avatar") or ""
+
+    if not faceit_id:
+        return jsonify({"message": "Не удалось получить FACEIT ID"}), 400
+
+    # Find or create local user
+    user = User.query.filter_by(faceit_id=faceit_id).first()
+    if not user:
+        # Generate unique username based on FACEIT nickname
+        base_username = nickname or f"faceit_{faceit_id[:8]}"
+        username = base_username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}_{counter}"
+            counter += 1
+
+        # Check if email is already taken by another account
+        if email and User.query.filter_by(email=email).first():
+            email = None
+
+        user = User(
+            username=username,
+            email=email,
+            role="member",
+            is_verified=True,
+            faceit_id=faceit_id,
+            avatar_url=avatar,
+        )
+        # Set a random unusable password (FACEIT users don't log in with password)
+        user.password_hash = bcrypt.generate_password_hash(os.urandom(32).hex()).decode("utf-8")
+        db.session.add(user)
+        db.session.commit()
+    else:
+        # Update avatar if changed
+        changed = False
+        if avatar and user.avatar_url != avatar:
+            user.avatar_url = avatar
+            changed = True
+        if changed:
+            db.session.commit()
+
+    jwt_token = create_access_token(identity=str(user.id))
+    return jsonify({
+        "access_token": jwt_token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email or "",
+            "role": user.role,
+            "avatar_url": user.avatar_url or "",
+        },
+    })
 
 
 @app.get("/api/public/clubs")

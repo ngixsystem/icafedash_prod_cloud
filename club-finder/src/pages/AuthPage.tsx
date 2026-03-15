@@ -6,6 +6,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Navigate, useLocation } from "react-router-dom";
 import brandLogo from "@/assets/frag.png";
 
+const FACEIT_AUTH_URL =
+  "https://accounts.faceit.com/accounts" +
+  "?client_id=1f333c7f-938c-450c-ba0d-93c9dcd0747a" +
+  "&redirect_uri=https%3A%2F%2Fcloud.icafedash.com%2Fauth%2Ffaceit%2Fcallback" +
+  "&response_type=code" +
+  "&scope=openid%20profile%20email";
+
 async function parseApiPayload(res: Response): Promise<any> {
   const contentType = (res.headers.get("content-type") || "").toLowerCase();
   const raw = await res.text();
@@ -167,11 +174,30 @@ export default function AuthPage() {
           </form>
 
           {!showVerify && (
-            <div className="mt-7 text-center">
-              <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-[#FF7800] transition-colors">
-                {isLogin ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти"}
+            <>
+              <div className="relative my-5 flex items-center gap-3">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">или</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => { window.location.href = FACEIT_AUTH_URL; }}
+                className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
+                </svg>
+                Войти через FACEIT
               </button>
-            </div>
+
+              <div className="mt-5 text-center">
+                <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-[#FF7800] transition-colors">
+                  {isLogin ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти"}
+                </button>
+              </div>
+            </>
           )}
 
           {showVerify && (
