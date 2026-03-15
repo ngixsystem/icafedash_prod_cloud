@@ -18,8 +18,8 @@ services:
       - SMTP_USER=support@icafedash.com
       - SMTP_PASSWORD=rydn kkct edss ygrw
       - SMTP_FROM=support@icafedash.com
-      - FACEIT_CLIENT_ID=c9c71e0d-af23-4a75-8394-28709823b987
-      - FACEIT_CLIENT_SECRET=Iuscyls5oN6Ds7h5dvaw6KcKoYjKvihYQt42hef1
+      - FACEIT_CLIENT_ID=bc6ce110-f2e7-4c58-96f7-c40dd5782e62
+      - FACEIT_CLIENT_SECRET=2j5T61mfuH6c5WkaEkqoW1UbZYVfkftVOlVEcA0r
     ports:
       - "5000:5000"
     depends_on:

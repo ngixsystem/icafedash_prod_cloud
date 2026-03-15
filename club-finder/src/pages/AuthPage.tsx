@@ -6,8 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Navigate, useLocation } from "react-router-dom";
 import brandLogo from "@/assets/frag.png";
 
-const FACEIT_CLIENT_ID = "c9c71e0d-af23-4a75-8394-28709823b987";
-const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
+const FACEIT_CLIENT_ID = "bc6ce110-f2e7-4c58-96f7-c40dd5782e62";
+const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com";
 
 function generateCodeVerifier(): string {
   const array = new Uint8Array(32);
