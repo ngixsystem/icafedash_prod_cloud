@@ -1316,12 +1316,10 @@ def faceit_oauth_callback():
     data = request.json or {}
     code = data.get("code")
     redirect_uri = data.get("redirect_uri", "https://cloud.icafedash.com/auth/faceit/callback")
-    code_verifier = data.get("code_verifier", "")
-
     if not code:
         return jsonify({"message": "Missing authorization code"}), 400
 
-    # Exchange code for access token (PKCE + client_secret via Basic Auth)
+    # Exchange code for access token (Basic Auth, no PKCE)
     import base64
     credentials = base64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
     try:
@@ -1335,8 +1333,6 @@ def faceit_oauth_callback():
                 "grant_type": "authorization_code",
                 "code": code,
                 "redirect_uri": redirect_uri,
-                "client_id": FACEIT_CLIENT_ID,
-                "code_verifier": code_verifier,
             },
             timeout=10,
         )

@@ -9,20 +9,6 @@ import brandLogo from "@/assets/frag.png";
 const FACEIT_CLIENT_ID = "bc6ce110-f2e7-4c58-96f7-c40dd5782e62";
 const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com";
 
-function generateCodeVerifier(): string {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return btoa(String.fromCharCode(...array))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
-async function generateCodeChallenge(verifier: string): Promise<string> {
-  const data = new TextEncoder().encode(verifier);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
 async function parseApiPayload(res: Response): Promise<any> {
   const contentType = (res.headers.get("content-type") || "").toLowerCase();
   const raw = await res.text();
@@ -193,18 +179,13 @@ export default function AuthPage() {
 
               <button
                 type="button"
-                onClick={async () => {
-                  const verifier = generateCodeVerifier();
-                  const challenge = await generateCodeChallenge(verifier);
-                  localStorage.setItem("faceit_code_verifier", verifier);
+                onClick={() => {
                   const url =
                     `https://accounts.faceit.com/accounts` +
                     `?client_id=${FACEIT_CLIENT_ID}` +
                     `&redirect_uri=${encodeURIComponent(FACEIT_REDIRECT_URI)}` +
                     `&response_type=code` +
-                    `&scope=openid%20profile%20email` +
-                    `&code_challenge=${challenge}` +
-                    `&code_challenge_method=S256`;
+                    `&scope=openid%20profile%20email`;
                   window.location.href = url;
                 }}
                 className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm"

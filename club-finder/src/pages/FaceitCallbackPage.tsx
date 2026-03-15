@@ -29,13 +29,10 @@ export default function FaceitCallbackPage() {
       return;
     }
 
-    const codeVerifier = localStorage.getItem("faceit_code_verifier") || "";
-    localStorage.removeItem("faceit_code_verifier");
-
     fetch("/api/auth/faceit/callback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI, code_verifier: codeVerifier }),
+      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI }),
     })
       .then(async (res) => {
         const data = await res.json();
