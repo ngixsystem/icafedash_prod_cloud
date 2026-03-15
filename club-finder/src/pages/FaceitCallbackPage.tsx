@@ -3,13 +3,6 @@ import { useSearchParams } from "react-router-dom";
 
 const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
 
-function sendToParent(data: object) {
-  if (window.opener && !window.opener.closed) {
-    window.opener.postMessage(data, window.location.origin);
-  }
-  window.close();
-}
-
 export default function FaceitCallbackPage() {
   const [searchParams] = useSearchParams();
   const called = useRef(false);
@@ -22,10 +15,8 @@ export default function FaceitCallbackPage() {
     const error = searchParams.get("error");
 
     if (error || !code) {
-      sendToParent({
-        type: "FACEIT_AUTH_ERROR",
-        message: error === "access_denied" ? "Вы отменили вход через FACEIT" : "Код авторизации отсутствует",
-      });
+      localStorage.setItem("faceit_auth_error", error === "access_denied" ? "Вы отменили вход через FACEIT" : "Код авторизации отсутствует");
+      window.close();
       return;
     }
 
@@ -43,10 +34,15 @@ export default function FaceitCallbackPage() {
         return data;
       })
       .then((data) => {
-        sendToParent({ type: "FACEIT_AUTH_SUCCESS", access_token: data.access_token, user: data.user });
+        // Write auth to localStorage — parent window picks it up via storage event
+        localStorage.setItem("icafe_client_token", data.access_token);
+        localStorage.setItem("icafe_client_user", JSON.stringify(data.user));
+        localStorage.setItem("faceit_auth_complete", "1");
+        window.close();
       })
       .catch((err) => {
-        sendToParent({ type: "FACEIT_AUTH_ERROR", message: err.message });
+        localStorage.setItem("faceit_auth_error", err.message);
+        window.close();
       });
   }, []);
 

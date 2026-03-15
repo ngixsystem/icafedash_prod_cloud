@@ -60,19 +60,27 @@ export default function AuthPage() {
   const location = useLocation();
 
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "FACEIT_AUTH_SUCCESS") {
-        login(event.data.access_token, event.data.user);
-        toast({ title: `Добро пожаловать, ${event.data.user.username}!` });
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "faceit_auth_complete" && e.newValue === "1") {
+        localStorage.removeItem("faceit_auth_complete");
+        const token = localStorage.getItem("icafe_client_token");
+        const userStr = localStorage.getItem("icafe_client_user");
+        if (token && userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            login(token, user);
+            toast({ title: `Добро пожаловать, ${user.username}!` });
+          } catch {}
+        }
         setFaceitLoading(false);
-      } else if (event.data?.type === "FACEIT_AUTH_ERROR") {
-        toast({ title: "Ошибка FACEIT", description: event.data.message, variant: "destructive" });
+      } else if (e.key === "faceit_auth_error" && e.newValue) {
+        localStorage.removeItem("faceit_auth_error");
+        toast({ title: "Ошибка FACEIT", description: e.newValue, variant: "destructive" });
         setFaceitLoading(false);
       }
     };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, [login, toast]);
 
   if (isAuthenticated) {
