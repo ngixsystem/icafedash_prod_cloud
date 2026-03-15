@@ -41,7 +41,7 @@ SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
 
 # FACEIT OAuth (Authorization Code + PKCE)
 FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "c9c71e0d-af23-4a75-8394-28709823b987")
-FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "03a87f47-0978-46e4-bde7-8e353dc5c703")
+FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "Iuscyls5oN6Ds7h5dvaw6KcKoYjKvihYQt42hef1")
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
@@ -1321,11 +1321,16 @@ def faceit_oauth_callback():
     if not code:
         return jsonify({"message": "Missing authorization code"}), 400
 
-    # Exchange code for access token (PKCE flow — no Basic Auth, use code_verifier)
+    # Exchange code for access token (PKCE + client_secret via Basic Auth)
+    import base64
+    credentials = base64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
     try:
         token_resp = requests.post(
             "https://api.faceit.com/auth/v1/oauth/token",
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={
+                "Authorization": f"Basic {credentials}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
             data={
                 "grant_type": "authorization_code",
                 "code": code,
