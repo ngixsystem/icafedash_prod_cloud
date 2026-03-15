@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+﻿import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,36 +52,10 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [faceitLoading, setFaceitLoading] = useState(false);
-  const popupRef = useRef<Window | null>(null);
 
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
-
-  useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === "faceit_auth_complete" && e.newValue === "1") {
-        localStorage.removeItem("faceit_auth_complete");
-        const token = localStorage.getItem("icafe_client_token");
-        const userStr = localStorage.getItem("icafe_client_user");
-        if (token && userStr) {
-          try {
-            const user = JSON.parse(userStr);
-            login(token, user);
-            toast({ title: `Добро пожаловать, ${user.username}!` });
-          } catch {}
-        }
-        setFaceitLoading(false);
-      } else if (e.key === "faceit_auth_error" && e.newValue) {
-        localStorage.removeItem("faceit_auth_error");
-        toast({ title: "Ошибка FACEIT", description: e.newValue, variant: "destructive" });
-        setFaceitLoading(false);
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, [login, toast]);
 
   if (isAuthenticated) {
     const fromPath = (location.state as any)?.from?.pathname || "/";
@@ -219,9 +193,7 @@ export default function AuthPage() {
 
               <button
                 type="button"
-                disabled={faceitLoading}
                 onClick={async () => {
-                  setFaceitLoading(true);
                   const verifier = generateCodeVerifier();
                   const challenge = await generateCodeChallenge(verifier);
                   localStorage.setItem("faceit_code_verifier", verifier);
@@ -233,21 +205,14 @@ export default function AuthPage() {
                     `&scope=openid%20profile%20email` +
                     `&code_challenge=${challenge}` +
                     `&code_challenge_method=S256`;
-                  const popup = window.open(url, "faceit_auth", "width=520,height=680,scrollbars=yes,resizable=yes");
-                  popupRef.current = popup;
-                  const timer = setInterval(() => {
-                    if (popup?.closed) {
-                      clearInterval(timer);
-                      setFaceitLoading(false);
-                    }
-                  }, 500);
+                  window.location.href = url;
                 }}
-                className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] disabled:opacity-60 transition-colors font-bold text-white text-sm"
+                className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
                 </svg>
-                {faceitLoading ? "Ожидание авторизации..." : "Войти через FACEIT"}
+                Войти через FACEIT
               </button>
 
               <div className="mt-5 text-center">

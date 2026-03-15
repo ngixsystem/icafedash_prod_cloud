@@ -1,10 +1,15 @@
 import { useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
 
 const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
 
 export default function FaceitCallbackPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const { toast } = useToast();
   const called = useRef(false);
 
   useEffect(() => {
@@ -15,8 +20,12 @@ export default function FaceitCallbackPage() {
     const error = searchParams.get("error");
 
     if (error || !code) {
-      localStorage.setItem("faceit_auth_error", error === "access_denied" ? "Вы отменили вход через FACEIT" : "Код авторизации отсутствует");
-      window.close();
+      toast({
+        title: "Ошибка авторизации",
+        description: error === "access_denied" ? "Вы отменили вход через FACEIT" : "Код авторизации отсутствует",
+        variant: "destructive",
+      });
+      navigate("/auth", { replace: true });
       return;
     }
 
@@ -34,15 +43,13 @@ export default function FaceitCallbackPage() {
         return data;
       })
       .then((data) => {
-        // Write auth to localStorage — parent window picks it up via storage event
-        localStorage.setItem("icafe_client_token", data.access_token);
-        localStorage.setItem("icafe_client_user", JSON.stringify(data.user));
-        localStorage.setItem("faceit_auth_complete", "1");
-        window.close();
+        login(data.access_token, data.user);
+        toast({ title: `Добро пожаловать, ${data.user.username}!` });
+        navigate("/", { replace: true });
       })
       .catch((err) => {
-        localStorage.setItem("faceit_auth_error", err.message);
-        window.close();
+        toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+        navigate("/auth", { replace: true });
       });
   }, []);
 
