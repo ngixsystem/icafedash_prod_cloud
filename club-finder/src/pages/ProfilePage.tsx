@@ -1,5 +1,6 @@
-import { ChevronRight, Settings, LogOut, Wallet, Shield } from "lucide-react";
+import { ChevronRight, Settings, LogOut, Wallet, Shield, Unlink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useFaceitLogin } from "@/hooks/useFaceitLogin";
 
@@ -18,10 +19,29 @@ const FACEIT_LEVEL_COLORS: Record<number, { bg: string; text: string; border: st
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, token, updateUser, logout } = useAuth();
   const { start: startFaceit, loading: faceitLoading } = useFaceitLogin();
+  const [unlinking, setUnlinking] = useState(false);
 
   const levelColors = user?.faceit_level ? FACEIT_LEVEL_COLORS[user.faceit_level] ?? FACEIT_LEVEL_COLORS[1] : null;
+  const faceitConnected = !!user?.faceit_id;
+
+  const handleUnlinkFaceit = async () => {
+    setUnlinking(true);
+    try {
+      const res = await fetch("/api/public/profile/faceit", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Ошибка отвязки");
+      const data = await res.json();
+      updateUser({ faceit_id: null, faceit_elo: null, faceit_level: null, avatar_url: data.avatar_url });
+    } catch {
+      // silently ignore
+    } finally {
+      setUnlinking(false);
+    }
+  };
 
   return (
     <div className="min-h-screen pb-24">
@@ -118,7 +138,22 @@ export default function ProfilePage() {
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
 
-        {!user?.faceit_level && (
+        {faceitConnected ? (
+          <button
+            type="button"
+            onClick={handleUnlinkFaceit}
+            disabled={unlinking}
+            className="w-full flex items-center gap-3 rounded-2xl glass border border-white/8 px-4 py-3.5 hover:bg-white/5 transition-colors disabled:opacity-60"
+          >
+            <div className="w-8 h-8 rounded-xl bg-white/8 flex items-center justify-center">
+              <Unlink className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-medium">{unlinking ? "Отвязка..." : "Отвязать FACEIT"}</p>
+              <p className="text-xs text-muted-foreground">Сменить аккаунт FACEIT</p>
+            </div>
+          </button>
+        ) : (
           <button
             type="button"
             onClick={startFaceit}

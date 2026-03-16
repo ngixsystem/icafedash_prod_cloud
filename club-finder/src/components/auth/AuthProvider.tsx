@@ -6,6 +6,7 @@ interface ClientUser {
     email: string;
     role: string;
     avatar_url?: string;
+    faceit_id?: string | null;
     faceit_elo?: number | null;
     faceit_level?: number | null;
 }

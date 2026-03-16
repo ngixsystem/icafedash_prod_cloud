@@ -1311,7 +1311,10 @@ def client_login():
                 "username": user.username,
                 "email": user.email,
                 "role": user.role,
-                "avatar_url": user.avatar_url or ""
+                "avatar_url": user.avatar_url or "",
+                "faceit_id": user.faceit_id,
+                "faceit_elo": user.faceit_elo,
+                "faceit_level": user.faceit_level,
             }
         })
     return jsonify({"message": "Неверный логин или пароль"}), 401
@@ -2881,6 +2884,32 @@ def public_profile_me():
         "email": user.email,
         "role": user.role,
         "avatar_url": user.avatar_url or "",
+        "faceit_id": user.faceit_id,
+        "faceit_elo": user.faceit_elo,
+        "faceit_level": user.faceit_level,
+    })
+
+
+@app.delete("/api/public/profile/faceit")
+@jwt_required()
+def public_profile_unlink_faceit():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    user.faceit_id = None
+    user.faceit_elo = None
+    user.faceit_level = None
+    db.session.commit()
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "avatar_url": user.avatar_url or "",
+        "faceit_id": None,
+        "faceit_elo": None,
+        "faceit_level": None,
     })
 
 
