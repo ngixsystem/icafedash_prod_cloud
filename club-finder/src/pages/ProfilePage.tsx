@@ -4,18 +4,53 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useFaceitLink } from "@/hooks/useFaceitLink";
 
-const FACEIT_LEVEL_COLORS: Record<number, { bg: string; text: string; border: string }> = {
-  1:  { bg: "#ffffff0f", text: "#888888", border: "#ffffff18" },
-  2:  { bg: "#ffffff0f", text: "#888888", border: "#ffffff18" },
-  3:  { bg: "#ffffff0f", text: "#888888", border: "#ffffff18" },
-  4:  { bg: "#e6b80015", text: "#e6b800", border: "#e6b80030" },
-  5:  { bg: "#e6b80015", text: "#e6b800", border: "#e6b80030" },
-  6:  { bg: "#FF780015", text: "#FF7800", border: "#FF780030" },
-  7:  { bg: "#FF780015", text: "#FF7800", border: "#FF780030" },
-  8:  { bg: "#e74c3c15", text: "#e74c3c", border: "#e74c3c30" },
-  9:  { bg: "#e74c3c15", text: "#e74c3c", border: "#e74c3c30" },
-  10: { bg: "#e74c3c15", text: "#e74c3c", border: "#e74c3c30" },
+const LEVEL_COLORS: Record<number, string> = {
+  1: "#808080", 2: "#808080", 3: "#808080",
+  4: "#FFD000", 5: "#FFD000",
+  6: "#FF8C00", 7: "#FF8C00",
+  8: "#FE3F00", 9: "#FE3F00",
+  10: "#FE0000",
 };
+
+const LEVEL_BG: Record<number, string> = {
+  1: "#80808015", 2: "#80808015", 3: "#80808015",
+  4: "#FFD00015", 5: "#FFD00015",
+  6: "#FF8C0015", 7: "#FF8C0015",
+  8: "#FE3F0015", 9: "#FE3F0015",
+  10: "#FE000015",
+};
+
+function FaceitLevelIcon({ level, size = 32 }: { level: number; size?: number }) {
+  const color = LEVEL_COLORS[level] ?? "#808080";
+  const fontSize = size * 0.38;
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      {/* Shield shape */}
+      <path
+        d="M16 2L4 7v9c0 6.6 5.1 12.8 12 14.3C22.9 28.8 28 22.6 28 16V7L16 2z"
+        fill={color}
+        opacity="0.15"
+      />
+      <path
+        d="M16 2L4 7v9c0 6.6 5.1 12.8 12 14.3C22.9 28.8 28 22.6 28 16V7L16 2z"
+        stroke={color}
+        strokeWidth="1.5"
+        fill="none"
+      />
+      <text
+        x="16"
+        y={size * 0.62}
+        textAnchor="middle"
+        fontSize={fontSize}
+        fontWeight="bold"
+        fontFamily="system-ui, sans-serif"
+        fill={color}
+      >
+        {level}
+      </text>
+    </svg>
+  );
+}
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -23,8 +58,10 @@ export default function ProfilePage() {
   const { start: startFaceit, loading: faceitLoading } = useFaceitLink();
   const [unlinking, setUnlinking] = useState(false);
 
-  const levelColors = user?.faceit_level ? FACEIT_LEVEL_COLORS[user.faceit_level] ?? FACEIT_LEVEL_COLORS[1] : null;
   const faceitConnected = !!user?.faceit_id;
+  const level = user?.faceit_level ?? null;
+  const levelColor = level ? (LEVEL_COLORS[level] ?? "#808080") : null;
+  const levelBg = level ? (LEVEL_BG[level] ?? "#80808015") : null;
 
   const handleUnlinkFaceit = async () => {
     setUnlinking(true);
@@ -61,12 +98,8 @@ export default function ProfilePage() {
           </div>
           {faceitConnected && (
             <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#121315] flex items-center justify-center ring-1 ring-white/10">
-              {user?.faceit_level != null ? (
-                <img
-                  src={`https://assets.faceit-cdn.net/frontend/561/assets/images-compress/skill_level/skill_level_${user.faceit_level}_lg.png`}
-                  alt={`level ${user.faceit_level}`}
-                  className="w-5 h-5 object-contain"
-                />
+              {level != null ? (
+                <FaceitLevelIcon level={level} size={20} />
               ) : (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="#FF5500">
                   <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
@@ -80,7 +113,7 @@ export default function ProfilePage() {
         {user?.email && <p className="text-xs text-muted-foreground mb-4">{user.email}</p>}
 
         {/* FACEIT stat badges */}
-        {faceitConnected && !user?.faceit_level && (
+        {faceitConnected && level == null && (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
             style={{ background: "#FF550015", color: "#FF5500", border: "1px solid #FF550030" }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
@@ -89,36 +122,30 @@ export default function ProfilePage() {
             FACEIT подключён
           </div>
         )}
-        {faceitConnected && user?.faceit_level != null && levelColors && (
+
+        {faceitConnected && level != null && levelColor && levelBg && (
           <div className="flex items-stretch gap-2.5 w-full max-w-[260px]">
             {/* Level badge */}
             <div
               className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl"
-              style={{ background: levelColors.bg, border: `1px solid ${levelColors.border}` }}
+              style={{ background: levelBg, border: `1px solid ${levelColor}30` }}
             >
-              <img
-                src={`https://assets.faceit-cdn.net/frontend/561/assets/images-compress/skill_level/skill_level_${user.faceit_level}_lg.png`}
-                alt={`level ${user.faceit_level}`}
-                className="w-8 h-8 object-contain"
-              />
-              <span className="text-lg font-display font-bold leading-none" style={{ color: levelColors.text }}>
-                {user.faceit_level}
-              </span>
-              <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColors.text, opacity: 0.5 }}>
+              <FaceitLevelIcon level={level} size={36} />
+              <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColor, opacity: 0.6 }}>
                 Уровень
               </span>
             </div>
 
             {/* ELO badge */}
-            {user.faceit_elo != null && (
+            {user?.faceit_elo != null && (
               <div
                 className="flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-2xl"
-                style={{ background: levelColors.bg, border: `1px solid ${levelColors.border}` }}
+                style={{ background: levelBg, border: `1px solid ${levelColor}30` }}
               >
-                <span className="text-lg font-display font-bold leading-none" style={{ color: levelColors.text }}>
+                <span className="text-2xl font-display font-bold leading-none" style={{ color: levelColor }}>
                   {user.faceit_elo}
                 </span>
-                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColors.text, opacity: 0.5 }}>
+                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColor, opacity: 0.6 }}>
                   ELO
                 </span>
               </div>
