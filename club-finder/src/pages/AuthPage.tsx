@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Navigate, useLocation } from "react-router-dom";
 import brandLogo from "@/assets/frag.png";
 
-const FACEIT_CLIENT_ID = "0da47f41-e39b-4719-bebc-1d35f8065a26";
+const FACEIT_CLIENT_ID = "38961025-aebd-41f7-8424-86879eb9f6af";
 const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/api/auth/faceit/oauth-callback";
 
 async function parseApiPayload(res: Response): Promise<any> {
