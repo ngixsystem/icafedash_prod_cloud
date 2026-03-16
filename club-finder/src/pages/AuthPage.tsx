@@ -7,7 +7,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import brandLogo from "@/assets/frag.png";
 
 const FACEIT_CLIENT_ID = "0da47f41-e39b-4719-bebc-1d35f8065a26";
-const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
+const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/api/auth/faceit/oauth-callback";
 
 async function parseApiPayload(res: Response): Promise<any> {
   const contentType = (res.headers.get("content-type") || "").toLowerCase();
@@ -105,11 +105,9 @@ export default function AuthPage() {
     const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
-    const state = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))))
+    // Encode verifier in state so backend can retrieve it from FACEIT's callback
+    const state = btoa(JSON.stringify({ v: verifier }))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-
-    sessionStorage.setItem("faceit_code_verifier", verifier);
-    sessionStorage.setItem("faceit_state", state);
 
     const url =
       `https://accounts.faceit.com/accounts` +

@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 
-const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
-
 export default function FaceitCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -15,26 +13,28 @@ export default function FaceitCallbackPage() {
     if (called.current) return;
     called.current = true;
 
-    const code = searchParams.get("code");
-    const errorParam = searchParams.get("error");
+    const at = searchParams.get("at");
+    const uEncoded = searchParams.get("u");
+    const faceitError = searchParams.get("faceit_error");
 
-    if (errorParam || !code) {
-      setError(errorParam || "Код авторизации отсутствует");
+    if (faceitError) {
+      setError(`Ошибка FACEIT: ${faceitError}`);
       return;
     }
 
-    const codeVerifier = sessionStorage.getItem("faceit_code_verifier") || undefined;
-    sessionStorage.removeItem("faceit_code_verifier");
-    sessionStorage.removeItem("faceit_state");
+    if (!at || !uEncoded) {
+      navigate("/auth", { replace: true });
+      return;
+    }
 
-    fetch("/api/auth/faceit/callback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI, code_verifier: codeVerifier }),
-    })
-      .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
-      .then((d) => { login(d.access_token, d.user); navigate("/", { replace: true }); })
-      .catch((e) => setError(e.message));
+    try {
+      const padding = (4 - uEncoded.length % 4) % 4;
+      const user = JSON.parse(atob((uEncoded + "=".repeat(padding)).replace(/-/g, "+").replace(/_/g, "/")));
+      login(at, user);
+      navigate("/", { replace: true });
+    } catch {
+      setError("Ошибка обработки данных авторизации");
+    }
   }, []);
 
   if (error) {

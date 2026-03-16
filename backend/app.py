@@ -1425,6 +1425,111 @@ def faceit_oauth_callback():
     })
 
 
+@app.route("/api/auth/faceit/oauth-callback", methods=["GET", "POST"])
+def faceit_oauth_redirect_callback():
+    """Server-side FACEIT OAuth2 callback — handles both GET and POST redirects from FACEIT."""
+    import base64 as _b64, json as _json
+    from flask import redirect as _redirect
+
+    FRONTEND = "https://cloud.icafedash.com"
+    REDIRECT_URI = f"{FRONTEND}/api/auth/faceit/oauth-callback"
+
+    code  = request.args.get("code")  or request.form.get("code")
+    state = request.args.get("state") or request.form.get("state")
+    error = request.args.get("error") or request.form.get("error")
+
+    if error or not code:
+        return _redirect(f"{FRONTEND}/auth?faceit_error={error or 'missing_code'}")
+
+    # Decode code_verifier from state
+    code_verifier = None
+    if state:
+        try:
+            padding = (4 - len(state) % 4) % 4
+            decoded = _b64.urlsafe_b64decode(state + "=" * padding).decode()
+            code_verifier = _json.loads(decoded).get("v")
+        except Exception:
+            pass
+
+    # Exchange code for FACEIT access token
+    credentials = _b64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
+    token_data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": REDIRECT_URI,
+        "client_id": FACEIT_CLIENT_ID,
+    }
+    if code_verifier:
+        token_data["code_verifier"] = code_verifier
+
+    try:
+        token_resp = requests.post(
+            "https://api.faceit.com/auth/v1/oauth/token",
+            headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded"},
+            data=token_data, timeout=10,
+        )
+    except Exception as e:
+        return _redirect(f"{FRONTEND}/auth?faceit_error=connection_error")
+
+    if not token_resp.ok:
+        return _redirect(f"{FRONTEND}/auth?faceit_error=token_exchange_failed")
+
+    faceit_access_token = token_resp.json().get("access_token")
+    if not faceit_access_token:
+        return _redirect(f"{FRONTEND}/auth?faceit_error=no_token")
+
+    # Get user profile
+    try:
+        userinfo_resp = requests.get(
+            "https://api.faceit.com/auth/v1/resources/userinfo",
+            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=10,
+        )
+    except Exception:
+        return _redirect(f"{FRONTEND}/auth?faceit_error=userinfo_failed")
+
+    if not userinfo_resp.ok:
+        return _redirect(f"{FRONTEND}/auth?faceit_error=userinfo_failed")
+
+    faceit_user = userinfo_resp.json()
+    faceit_id = faceit_user.get("sub") or faceit_user.get("guid")
+    nickname = (faceit_user.get("nickname") or faceit_user.get("preferred_username") or "").strip()
+    email = (faceit_user.get("email") or "").strip().lower() or None
+    avatar = faceit_user.get("picture") or faceit_user.get("avatar") or ""
+
+    if not faceit_id:
+        return _redirect(f"{FRONTEND}/auth?faceit_error=no_faceit_id")
+
+    user = User.query.filter_by(faceit_id=faceit_id).first()
+    if not user:
+        base_username = nickname or f"faceit_{faceit_id[:8]}"
+        username = base_username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}_{counter}"
+            counter += 1
+        if email and User.query.filter_by(email=email).first():
+            email = None
+        user = User(
+            username=username, email=email, role="member",
+            is_verified=True, faceit_id=faceit_id, avatar_url=avatar,
+        )
+        user.password_hash = bcrypt.generate_password_hash(os.urandom(32).hex()).decode("utf-8")
+        db.session.add(user)
+        db.session.commit()
+    else:
+        if avatar and user.avatar_url != avatar:
+            user.avatar_url = avatar
+            db.session.commit()
+
+    jwt_token = create_access_token(identity=str(user.id))
+    user_encoded = _b64.urlsafe_b64encode(_json.dumps({
+        "id": user.id, "username": user.username,
+        "email": user.email or "", "role": user.role, "avatar_url": user.avatar_url or "",
+    }).encode()).decode().rstrip("=")
+
+    return _redirect(f"{FRONTEND}/auth/faceit/callback?at={jwt_token}&u={user_encoded}")
+
+
 @app.get("/api/public/clubs")
 def public_clubs():
     """Return an aggregated list of clubs with some basic stats based on iCafeCloud API"""
