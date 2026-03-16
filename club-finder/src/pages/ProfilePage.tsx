@@ -59,13 +59,19 @@ export default function ProfilePage() {
               user?.username?.[0]?.toUpperCase() || "?"
             )}
           </div>
-          {user?.faceit_level != null && (
+          {faceitConnected && (
             <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#121315] flex items-center justify-center ring-1 ring-white/10">
-              <img
-                src={`https://assets.faceit-cdn.net/frontend/561/assets/images-compress/skill_level/skill_level_${user.faceit_level}_lg.png`}
-                alt={`level ${user.faceit_level}`}
-                className="w-5 h-5 object-contain"
-              />
+              {user?.faceit_level != null ? (
+                <img
+                  src={`https://assets.faceit-cdn.net/frontend/561/assets/images-compress/skill_level/skill_level_${user.faceit_level}_lg.png`}
+                  alt={`level ${user.faceit_level}`}
+                  className="w-5 h-5 object-contain"
+                />
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#FF5500">
+                  <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
+                </svg>
+              )}
             </div>
           )}
         </div>
@@ -74,7 +80,16 @@ export default function ProfilePage() {
         {user?.email && <p className="text-xs text-muted-foreground mb-4">{user.email}</p>}
 
         {/* FACEIT stat badges */}
-        {user?.faceit_level != null && levelColors && (
+        {faceitConnected && !user?.faceit_level && (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
+            style={{ background: "#FF550015", color: "#FF5500", border: "1px solid #FF550030" }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
+            </svg>
+            FACEIT подключён
+          </div>
+        )}
+        {faceitConnected && user?.faceit_level != null && levelColors && (
           <div className="flex items-stretch gap-2.5 w-full max-w-[260px]">
             {/* Level badge */}
             <div

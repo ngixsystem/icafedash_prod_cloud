@@ -42,10 +42,54 @@ SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
 # FACEIT OAuth (Authorization Code + PKCE)
 FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "0da47f41-e39b-4719-bebc-1d35f8065a26")
 FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "TZmgOodyh0qG2y48aRXSADP7qVMeySQdS0MoI9PM")
+FACEIT_DATA_API_KEY = os.environ.get("FACEIT_DATA_API_KEY", "")
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
+
+def _fetch_faceit_game_stats(faceit_id: str, access_token: str) -> tuple:
+    """Return (faceit_elo, faceit_level) for CS2 or CSGO. Tries multiple endpoints."""
+    # 1. Try FACEIT Data API v4 (open.faceit.com) — works with OAuth token OR Data API key
+    auth_header = f"Bearer {FACEIT_DATA_API_KEY}" if FACEIT_DATA_API_KEY else f"Bearer {access_token}"
+    try:
+        resp = requests.get(
+            f"https://open.faceit.com/data/v4/players/{faceit_id}",
+            headers={"Authorization": auth_header, "User-Agent": "Mozilla/5.0"},
+            timeout=8,
+        )
+        app.logger.info(f"FACEIT Data API v4 status={resp.status_code} body={resp.text[:300]}")
+        if resp.ok:
+            games = resp.json().get("games", {})
+            game = games.get("cs2") or games.get("csgo") or {}
+            elo = game.get("faceit_elo")
+            lvl = game.get("skill_level")
+            if elo or lvl:
+                return elo, lvl
+    except Exception as e:
+        app.logger.warning(f"FACEIT Data API v4 failed: {e}")
+
+    # 2. Fallback: api.faceit.com users endpoint
+    try:
+        resp2 = requests.get(
+            f"https://api.faceit.com/users/v1/users/{faceit_id}",
+            headers={"Authorization": f"Bearer {access_token}", "User-Agent": "Mozilla/5.0"},
+            timeout=8,
+        )
+        app.logger.info(f"FACEIT users/v1 status={resp2.status_code} body={resp2.text[:300]}")
+        if resp2.ok:
+            payload = resp2.json().get("payload", {})
+            games = payload.get("games", {})
+            game = games.get("cs2") or games.get("csgo") or {}
+            elo = game.get("faceit_elo")
+            lvl = game.get("skill_level")
+            if elo or lvl:
+                return elo, lvl
+    except Exception as e:
+        app.logger.warning(f"FACEIT users/v1 failed: {e}")
+
+    return None, None
+
 
 # JWT Debugging
 app.config["PROPAGATE_EXCEPTIONS"] = True
@@ -1488,21 +1532,7 @@ def faceit_oauth_callback_json():
         return jsonify({"message": "No FACEIT ID"}), 400
 
     # Fetch CS2/CSGO ELO and skill level from FACEIT Data API
-    faceit_elo = None
-    faceit_level = None
-    try:
-        player_resp = requests.get(
-            f"https://open.faceit.com/data/v4/players/{faceit_id}",
-            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=8,
-        )
-        if player_resp.ok:
-            pdata = player_resp.json()
-            games = pdata.get("games", {})
-            game = games.get("cs2") or games.get("csgo") or {}
-            faceit_elo = game.get("faceit_elo")
-            faceit_level = game.get("skill_level")
-    except Exception:
-        pass
+    faceit_elo, faceit_level = _fetch_faceit_game_stats(faceit_id, faceit_access_token)
 
     user = User.query.filter_by(faceit_id=faceit_id).first()
     if not user:
@@ -1622,21 +1652,7 @@ def faceit_oauth_redirect_callback():
         return _redirect(f"{FRONTEND}/auth?faceit_error=no_faceit_id")
 
     # Fetch CS2/CSGO ELO and skill level (used by both link and login flows)
-    faceit_elo = None
-    faceit_level = None
-    try:
-        player_resp = requests.get(
-            f"https://open.faceit.com/data/v4/players/{faceit_id}",
-            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=8,
-        )
-        if player_resp.ok:
-            pdata = player_resp.json()
-            games = pdata.get("games", {})
-            game = games.get("cs2") or games.get("csgo") or {}
-            faceit_elo = game.get("faceit_elo")
-            faceit_level = game.get("skill_level")
-    except Exception:
-        pass
+    faceit_elo, faceit_level = _fetch_faceit_game_stats(faceit_id, faceit_access_token)
 
     # If link_token is present — link FACEIT to existing user instead of login
     if link_token:
@@ -3025,21 +3041,7 @@ def public_profile_link_faceit():
         return jsonify({"message": "Этот FACEIT аккаунт уже привязан к другому пользователю"}), 409
 
     # Fetch CS2/CSGO ELO and skill level
-    faceit_elo = None
-    faceit_level = None
-    try:
-        player_resp = requests.get(
-            f"https://open.faceit.com/data/v4/players/{faceit_id}",
-            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=8,
-        )
-        if player_resp.ok:
-            pdata = player_resp.json()
-            games = pdata.get("games", {})
-            game = games.get("cs2") or games.get("csgo") or {}
-            faceit_elo = game.get("faceit_elo")
-            faceit_level = game.get("skill_level")
-    except Exception:
-        pass
+    faceit_elo, faceit_level = _fetch_faceit_game_stats(faceit_id, faceit_access_token)
 
     user.faceit_id = faceit_id
     user.faceit_elo = faceit_elo
