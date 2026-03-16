@@ -1443,8 +1443,8 @@ def faceit_oauth_callback_json():
 
     try:
         token_resp = requests.post(
-            "https://accounts.faceit.com/auth/v1/oauth/token",
-            headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded"},
+            "https://api.faceit.com/auth/v1/oauth/token",
+            headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "Mozilla/5.0"},
             data=token_data, timeout=10,
         )
         app.logger.error(f"FACEIT token json resp {token_resp.status_code}: {token_resp.text[:300]}")
@@ -1540,8 +1540,8 @@ def faceit_oauth_redirect_callback():
 
     try:
         token_resp = requests.post(
-            "https://accounts.faceit.com/auth/v1/oauth/token",
-            headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded"},
+            "https://api.faceit.com/auth/v1/oauth/token",
+            headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "Mozilla/5.0"},
             data=token_data, timeout=10,
         )
         app.logger.error(f"FACEIT token resp {token_resp.status_code}: {token_resp.text[:500]}")
