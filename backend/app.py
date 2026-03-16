@@ -55,7 +55,7 @@ def _fetch_faceit_game_stats(faceit_id: str, access_token: str, nickname: str = 
         game = games.get("cs2") or games.get("csgo") or {}
         return game.get("faceit_elo"), game.get("skill_level")
 
-    # 1. FACEIT Data API v4 — requires Data API key (best source)
+    # 1. FACEIT Data API v4 by player_id — best source, requires Data API key
     if FACEIT_DATA_API_KEY:
         try:
             resp = requests.get(
@@ -63,15 +63,31 @@ def _fetch_faceit_game_stats(faceit_id: str, access_token: str, nickname: str = 
                 headers={"Authorization": f"Bearer {FACEIT_DATA_API_KEY}", "User-Agent": "Mozilla/5.0"},
                 timeout=8,
             )
-            app.logger.info(f"FACEIT Data API v4 status={resp.status_code} body={resp.text[:300]}")
+            app.logger.info(f"FACEIT Data API v4 by id status={resp.status_code} body={resp.text[:300]}")
             if resp.ok:
                 elo, lvl = _parse_games(resp.json().get("games", {}))
                 if elo or lvl:
                     return elo, lvl
         except Exception as e:
-            app.logger.warning(f"FACEIT Data API v4 failed: {e}")
+            app.logger.warning(f"FACEIT Data API v4 by id failed: {e}")
 
-    # 2. FACEIT core API by nickname (no special key needed, uses OAuth token)
+    # 2. FACEIT Data API v4 by nickname — fallback if player_id lookup returns no games
+    if FACEIT_DATA_API_KEY and nickname:
+        try:
+            resp = requests.get(
+                f"https://open.faceit.com/data/v4/players?nickname={nickname}",
+                headers={"Authorization": f"Bearer {FACEIT_DATA_API_KEY}", "User-Agent": "Mozilla/5.0"},
+                timeout=8,
+            )
+            app.logger.info(f"FACEIT Data API v4 by nickname status={resp.status_code} body={resp.text[:300]}")
+            if resp.ok:
+                elo, lvl = _parse_games(resp.json().get("games", {}))
+                if elo or lvl:
+                    return elo, lvl
+        except Exception as e:
+            app.logger.warning(f"FACEIT Data API v4 by nickname failed: {e}")
+
+    # 3. FACEIT core API by nickname (no special key needed, uses OAuth token)
     if nickname:
         try:
             resp2 = requests.get(
@@ -88,7 +104,7 @@ def _fetch_faceit_game_stats(faceit_id: str, access_token: str, nickname: str = 
         except Exception as e:
             app.logger.warning(f"FACEIT core/v1 failed: {e}")
 
-    # 3. FACEIT core API by player_id
+    # 4. FACEIT core API by player_id
     try:
         resp3 = requests.get(
             f"https://api.faceit.com/core/v1/users/{faceit_id}",
