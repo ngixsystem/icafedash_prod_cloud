@@ -17,6 +17,7 @@ import TournamentGameRatingPage from "./pages/TournamentGameRatingPage";
 import TournamentDetailsPage from "./pages/TournamentDetailsPage";
 import AuthPage from "./pages/AuthPage";
 import FaceitCallbackPage from "./pages/FaceitCallbackPage";
+import CashbackPage from "./pages/CashbackPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,14 @@ const App = () => (
                 element={
                   <AuthGuard>
                     <ProfileSettingsPage />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/profile/cashback"
+                element={
+                  <AuthGuard>
+                    <CashbackPage />
                   </AuthGuard>
                 }
               />

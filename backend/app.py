@@ -121,6 +121,8 @@ class User(db.Model):
     is_verified = db.Column(db.Boolean, default=False)
     avatar_url = db.Column(db.String(255), nullable=True, default="")
     faceit_id = db.Column(db.String(100), unique=True, nullable=True)
+    faceit_elo = db.Column(db.Integer, nullable=True)
+    faceit_level = db.Column(db.Integer, nullable=True)
     club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -366,6 +368,10 @@ with app.app_context():
             _safe_migration(conn, "ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) DEFAULT ''", "Added avatar_url column to users table")
         if 'faceit_id' not in existing_columns:
             _safe_migration(conn, "ALTER TABLE users ADD COLUMN faceit_id VARCHAR(100) NULL", "Added faceit_id column to users table")
+        if 'faceit_elo' not in existing_columns:
+            _safe_migration(conn, "ALTER TABLE users ADD COLUMN faceit_elo INT NULL", "Added faceit_elo column to users table")
+        if 'faceit_level' not in existing_columns:
+            _safe_migration(conn, "ALTER TABLE users ADD COLUMN faceit_level INT NULL", "Added faceit_level column to users table")
             
     # Migration for clubs
     existing_club_columns_info = {col['name']: col for col in inspector.get_columns('clubs')}
@@ -1478,6 +1484,23 @@ def faceit_oauth_callback_json():
     if not faceit_id:
         return jsonify({"message": "No FACEIT ID"}), 400
 
+    # Fetch CS2/CSGO ELO and skill level from FACEIT Data API
+    faceit_elo = None
+    faceit_level = None
+    try:
+        player_resp = requests.get(
+            f"https://open.faceit.com/data/v4/players/{faceit_id}",
+            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=8,
+        )
+        if player_resp.ok:
+            pdata = player_resp.json()
+            games = pdata.get("games", {})
+            game = games.get("cs2") or games.get("csgo") or {}
+            faceit_elo = game.get("faceit_elo")
+            faceit_level = game.get("skill_level")
+    except Exception:
+        pass
+
     user = User.query.filter_by(faceit_id=faceit_id).first()
     if not user:
         base_username = nickname or f"faceit_{faceit_id[:8]}"
@@ -1488,17 +1511,32 @@ def faceit_oauth_callback_json():
             counter += 1
         if email and User.query.filter_by(email=email).first():
             email = None
-        user = User(username=username, email=email, role="member", is_verified=True, faceit_id=faceit_id, avatar_url=avatar)
+        user = User(username=username, email=email, role="member", is_verified=True,
+                    faceit_id=faceit_id, avatar_url=avatar,
+                    faceit_elo=faceit_elo, faceit_level=faceit_level)
         user.password_hash = bcrypt.generate_password_hash(os.urandom(32).hex()).decode("utf-8")
         db.session.add(user)
         db.session.commit()
     else:
+        changed = False
         if avatar and user.avatar_url != avatar:
             user.avatar_url = avatar
+            changed = True
+        if faceit_elo is not None and user.faceit_elo != faceit_elo:
+            user.faceit_elo = faceit_elo
+            changed = True
+        if faceit_level is not None and user.faceit_level != faceit_level:
+            user.faceit_level = faceit_level
+            changed = True
+        if changed:
             db.session.commit()
 
     jwt_token = create_access_token(identity=str(user.id))
-    return jsonify({"access_token": jwt_token, "user": {"id": user.id, "username": user.username, "email": user.email or "", "role": user.role, "avatar_url": user.avatar_url or ""}})
+    return jsonify({"access_token": jwt_token, "user": {
+        "id": user.id, "username": user.username, "email": user.email or "",
+        "role": user.role, "avatar_url": user.avatar_url or "",
+        "faceit_elo": user.faceit_elo, "faceit_level": user.faceit_level,
+    }})
 
 
 @app.route("/api/auth/faceit/oauth-callback", methods=["GET", "POST"])
