@@ -133,9 +133,9 @@ export default function ProfilePage() {
             )}
           </div>
           {faceitConnected && (
-            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#121315] flex items-center justify-center ring-1 ring-white/10">
+            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-[#121315] flex items-center justify-center ring-1 ring-white/10">
               {level != null ? (
-                <FaceitLevelIcon level={level} elo={user?.faceit_elo} size={20} />
+                <FaceitLevelIcon level={level} elo={user?.faceit_elo} size={36} />
               ) : (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="#FF5500">
                   <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
