@@ -146,9 +146,26 @@ export default function AuthPage() {
       `&code_challenge_method=S256` +
       `&state=${state}`;
 
-    // Store verifier in sessionStorage for callback page
-    sessionStorage.setItem("faceit_code_verifier", verifier);
-    window.location.href = url;
+    const w = 480, h = 640;
+    const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
+    const top = Math.round(window.screenY + (window.outerHeight - h) / 2);
+    const popup = window.open(url, "faceit_auth",
+      `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no,location=no,status=no,scrollbars=yes`);
+    popupRef.current = popup;
+
+    pollRef.current = setInterval(() => {
+      if (!popup || popup.closed) { stopPoll(); return; }
+      try {
+        const href = popup.location.href;
+        const params = new URL(href).searchParams;
+        const code = params.get("code");
+        const error = params.get("error");
+        if (!code && !error) return;
+        stopPoll();
+        if (error) { toast({ title: "Ошибка FACEIT", description: "Авторизация отменена", variant: "destructive" }); return; }
+        exchangeCode(code!);
+      } catch { /* cross-origin */ }
+    }, 300);
   };
 
   return (
