@@ -2913,6 +2913,103 @@ def public_profile_unlink_faceit():
     })
 
 
+@app.post("/api/public/profile/faceit/link")
+@jwt_required()
+def public_profile_link_faceit():
+    """Link FACEIT account to the currently authenticated user."""
+    import base64 as _b64
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    data = request.json or {}
+    code = data.get("code")
+    redirect_uri = data.get("redirect_uri", "https://cloud.icafedash.com/api/auth/faceit/oauth-callback")
+    code_verifier = data.get("code_verifier")
+    if not code:
+        return jsonify({"message": "Missing code"}), 400
+
+    credentials = _b64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
+    token_data = {"grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri, "client_id": FACEIT_CLIENT_ID}
+    if code_verifier:
+        token_data["code_verifier"] = code_verifier
+
+    try:
+        token_resp = requests.post(
+            "https://api.faceit.com/auth/v1/oauth/token",
+            headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "Mozilla/5.0"},
+            data=token_data, timeout=10,
+        )
+    except Exception as e:
+        return jsonify({"message": f"Connection error: {e}"}), 502
+
+    if not token_resp.ok:
+        return jsonify({"message": f"Token exchange failed: {token_resp.text[:200]}"}), 400
+
+    faceit_access_token = token_resp.json().get("access_token")
+    if not faceit_access_token:
+        return jsonify({"message": "No access token in response"}), 400
+
+    try:
+        userinfo_resp = requests.get(
+            "https://api.faceit.com/auth/v1/resources/userinfo",
+            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=10,
+        )
+    except Exception as e:
+        return jsonify({"message": f"Userinfo error: {e}"}), 502
+
+    if not userinfo_resp.ok:
+        return jsonify({"message": "Failed to get FACEIT profile"}), 400
+
+    faceit_user_info = userinfo_resp.json()
+    faceit_id = faceit_user_info.get("sub") or faceit_user_info.get("guid")
+    avatar = faceit_user_info.get("picture") or faceit_user_info.get("avatar") or ""
+
+    if not faceit_id:
+        return jsonify({"message": "No FACEIT ID"}), 400
+
+    # Check if this FACEIT account is already linked to a different user
+    existing = User.query.filter(User.faceit_id == faceit_id, User.id != user_id).first()
+    if existing:
+        return jsonify({"message": "Этот FACEIT аккаунт уже привязан к другому пользователю"}), 409
+
+    # Fetch CS2/CSGO ELO and skill level
+    faceit_elo = None
+    faceit_level = None
+    try:
+        player_resp = requests.get(
+            f"https://open.faceit.com/data/v4/players/{faceit_id}",
+            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=8,
+        )
+        if player_resp.ok:
+            pdata = player_resp.json()
+            games = pdata.get("games", {})
+            game = games.get("cs2") or games.get("csgo") or {}
+            faceit_elo = game.get("faceit_elo")
+            faceit_level = game.get("skill_level")
+    except Exception:
+        pass
+
+    user.faceit_id = faceit_id
+    user.faceit_elo = faceit_elo
+    user.faceit_level = faceit_level
+    if avatar and not user.avatar_url:
+        user.avatar_url = avatar
+    db.session.commit()
+
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email or "",
+        "role": user.role,
+        "avatar_url": user.avatar_url or "",
+        "faceit_id": user.faceit_id,
+        "faceit_elo": user.faceit_elo,
+        "faceit_level": user.faceit_level,
+    })
+
+
 @app.post("/api/public/profile/avatar")
 @jwt_required()
 def public_profile_avatar_upload():

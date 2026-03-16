@@ -2,7 +2,7 @@ import { ChevronRight, Settings, LogOut, Wallet, Shield, Unlink } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useFaceitLogin } from "@/hooks/useFaceitLogin";
+import { useFaceitLink } from "@/hooks/useFaceitLink";
 
 const FACEIT_LEVEL_COLORS: Record<number, { bg: string; text: string; border: string }> = {
   1:  { bg: "#ffffff0f", text: "#888888", border: "#ffffff18" },
@@ -20,7 +20,7 @@ const FACEIT_LEVEL_COLORS: Record<number, { bg: string; text: string; border: st
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, token, updateUser, logout } = useAuth();
-  const { start: startFaceit, loading: faceitLoading } = useFaceitLogin();
+  const { start: startFaceit, loading: faceitLoading } = useFaceitLink();
   const [unlinking, setUnlinking] = useState(false);
 
   const levelColors = user?.faceit_level ? FACEIT_LEVEL_COLORS[user.faceit_level] ?? FACEIT_LEVEL_COLORS[1] : null;
