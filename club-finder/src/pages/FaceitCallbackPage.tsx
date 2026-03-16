@@ -16,15 +16,16 @@ export default function FaceitCallbackPage() {
     if (called.current) return;
     called.current = true;
 
+    // If opened in popup — parent is polling our URL and will handle the code.
+    // Just stay as loading screen until parent closes us.
+    if (localStorage.getItem("faceit_popup_active") === "1") return;
+
+    // Standalone redirect flow (fallback)
     const code = searchParams.get("code");
     const error = searchParams.get("error");
 
     if (error || !code) {
-      toast({
-        title: "Ошибка авторизации",
-        description: error === "access_denied" ? "Вы отменили вход через FACEIT" : "Код авторизации отсутствует",
-        variant: "destructive",
-      });
+      toast({ title: "Ошибка авторизации", description: "Код авторизации отсутствует", variant: "destructive" });
       navigate("/auth", { replace: true });
       return;
     }
@@ -34,20 +35,9 @@ export default function FaceitCallbackPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI }),
     })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Ошибка авторизации");
-        return data;
-      })
-      .then((data) => {
-        login(data.access_token, data.user);
-        toast({ title: `Добро пожаловать, ${data.user.username}!` });
-        navigate("/", { replace: true });
-      })
-      .catch((err) => {
-        toast({ title: "Ошибка", description: err.message, variant: "destructive" });
-        navigate("/auth", { replace: true });
-      });
+      .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
+      .then((d) => { login(d.access_token, d.user); toast({ title: `Добро пожаловать, ${d.user.username}!` }); navigate("/", { replace: true }); })
+      .catch((e) => { toast({ title: "Ошибка", description: e.message, variant: "destructive" }); navigate("/auth", { replace: true }); });
   }, []);
 
   return (
