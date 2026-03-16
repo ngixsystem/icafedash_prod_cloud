@@ -105,7 +105,11 @@ export default function AuthPage() {
     const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
+    const state = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
     sessionStorage.setItem("faceit_code_verifier", verifier);
+    sessionStorage.setItem("faceit_state", state);
 
     const url =
       `https://accounts.faceit.com/accounts` +
@@ -114,7 +118,8 @@ export default function AuthPage() {
       `&response_type=code` +
       `&scope=openid%20profile%20email` +
       `&code_challenge=${challenge}` +
-      `&code_challenge_method=S256`;
+      `&code_challenge_method=S256` +
+      `&state=${state}`;
     window.location.href = url;
   };
 
