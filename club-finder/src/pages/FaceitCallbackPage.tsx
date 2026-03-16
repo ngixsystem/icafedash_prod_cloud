@@ -5,7 +5,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 export default function FaceitCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, updateUser } = useAuth();
   const called = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,14 +13,37 @@ export default function FaceitCallbackPage() {
     if (called.current) return;
     called.current = true;
 
-    const at = searchParams.get("at");
-    const uEncoded = searchParams.get("u");
+    const linked = searchParams.get("linked");
     const faceitError = searchParams.get("faceit_error") || searchParams.get("error");
 
     if (faceitError) {
       setError(`Ошибка FACEIT: ${faceitError}`);
       return;
     }
+
+    // Link flow: server linked FACEIT to existing user
+    if (linked === "true") {
+      const data = {
+        faceit_id: searchParams.get("faceit_id") ?? null,
+        faceit_elo: searchParams.get("faceit_elo") ? parseInt(searchParams.get("faceit_elo")!) : null,
+        faceit_level: searchParams.get("faceit_level") ? parseInt(searchParams.get("faceit_level")!) : null,
+        avatar_url: searchParams.get("avatar_url") ?? undefined,
+      };
+      // If in popup — notify parent and close
+      if (window.opener) {
+        window.opener.postMessage({ type: "faceit_linked", ...data }, window.location.origin);
+        window.close();
+      } else {
+        // Opened directly (e.g. mobile redirect) — update and go to profile
+        updateUser(data);
+        navigate("/profile", { replace: true });
+      }
+      return;
+    }
+
+    // Normal login flow
+    const at = searchParams.get("at");
+    const uEncoded = searchParams.get("u");
 
     if (!at || !uEncoded) {
       navigate("/auth", { replace: true });

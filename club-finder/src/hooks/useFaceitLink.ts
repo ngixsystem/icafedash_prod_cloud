@@ -9,7 +9,6 @@ export function useFaceitLink() {
   const [error, setError] = useState<string | null>(null);
   const popupRef = useRef<Window | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const verifierRef = useRef<string>("");
   const { token, updateUser } = useAuth();
 
   const stopPoll = () => {
@@ -18,39 +17,22 @@ export function useFaceitLink() {
     setLoading(false);
   };
 
-  const exchangeCode = (code: string) => {
-    fetch("/api/public/profile/faceit/link", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI, code_verifier: verifierRef.current }),
-    })
-      .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
-      .then((d) => {
-        updateUser({
-          faceit_id: d.faceit_id,
-          faceit_elo: d.faceit_elo,
-          faceit_level: d.faceit_level,
-          avatar_url: d.avatar_url,
-        });
-      })
-      .catch((e) => setError(e.message));
-  };
-
+  // Listen for postMessage fallback (FaceitCallbackPage sends this if polling misses)
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
-      if (!e.origin.includes("faceit.com")) return;
-      const data = e.data;
-      if (!data) return;
-      const code = data.code || (typeof data === "string" && data.includes("code=")
-        ? new URLSearchParams(data).get("code") : null);
-      if (code) { stopPoll(); exchangeCode(code); }
+      if (e.origin !== window.location.origin) return;
+      if (!e.data || e.data.type !== "faceit_linked") return;
+      stopPoll();
+      updateUser({
+        faceit_id: e.data.faceit_id ?? null,
+        faceit_elo: e.data.faceit_elo ?? null,
+        faceit_level: e.data.faceit_level ?? null,
+        avatar_url: e.data.avatar_url ?? undefined,
+      });
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [token]);
+  }, []);
 
   const start = async () => {
     setLoading(true);
@@ -60,13 +42,13 @@ export function useFaceitLink() {
     crypto.getRandomValues(array);
     const verifier = btoa(String.fromCharCode(...array))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-    verifierRef.current = verifier;
 
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
     const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
-    const state = btoa(JSON.stringify({ v: verifier }))
+    // Encode link_token so server knows to link, not login
+    const state = btoa(JSON.stringify({ v: verifier, link_token: token }))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
     const url =
@@ -91,12 +73,21 @@ export function useFaceitLink() {
       try {
         const href = popup.location.href;
         const params = new URL(href).searchParams;
-        const code = params.get("code");
-        const err = params.get("error");
-        if (!code && !err) return;
-        stopPoll();
-        if (err) { setError("Авторизация отменена"); return; }
-        exchangeCode(code!);
+
+        // Server linked successfully — read data from URL params
+        if (params.get("linked") === "true") {
+          stopPoll();
+          updateUser({
+            faceit_id: params.get("faceit_id") ?? null,
+            faceit_elo: params.get("faceit_elo") ? parseInt(params.get("faceit_elo")!) : null,
+            faceit_level: params.get("faceit_level") ? parseInt(params.get("faceit_level")!) : null,
+            avatar_url: params.get("avatar_url") ?? undefined,
+          });
+          return;
+        }
+
+        const err = params.get("faceit_error") || params.get("error");
+        if (err) { stopPoll(); setError(err === "already_linked_to_another_account" ? "Этот FACEIT аккаунт уже привязан к другому пользователю" : "Авторизация отменена"); return; }
       } catch { /* cross-origin */ }
     }, 300);
   };

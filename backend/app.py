@@ -1558,13 +1558,15 @@ def faceit_oauth_redirect_callback():
     if error or not code:
         return _redirect(f"{FRONTEND}/auth?faceit_error={error or 'missing_code'}")
 
-    # Decode code_verifier from state
+    # Decode code_verifier and optional link_token from state
     code_verifier = None
+    link_token = None
     if state:
         try:
             padding = (4 - len(state) % 4) % 4
-            decoded = _b64.urlsafe_b64decode(state + "=" * padding).decode()
-            code_verifier = _json.loads(decoded).get("v")
+            state_data = _json.loads(_b64.urlsafe_b64decode(state + "=" * padding).decode())
+            code_verifier = state_data.get("v")
+            link_token = state_data.get("link_token")
         except Exception:
             pass
 
@@ -1619,6 +1621,53 @@ def faceit_oauth_redirect_callback():
     if not faceit_id:
         return _redirect(f"{FRONTEND}/auth?faceit_error=no_faceit_id")
 
+    # Fetch CS2/CSGO ELO and skill level (used by both link and login flows)
+    faceit_elo = None
+    faceit_level = None
+    try:
+        player_resp = requests.get(
+            f"https://open.faceit.com/data/v4/players/{faceit_id}",
+            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=8,
+        )
+        if player_resp.ok:
+            pdata = player_resp.json()
+            games = pdata.get("games", {})
+            game = games.get("cs2") or games.get("csgo") or {}
+            faceit_elo = game.get("faceit_elo")
+            faceit_level = game.get("skill_level")
+    except Exception:
+        pass
+
+    # If link_token is present — link FACEIT to existing user instead of login
+    if link_token:
+        import urllib.parse as _urlparse
+        try:
+            from flask_jwt_extended import decode_token as _decode_token
+            decoded_jwt = _decode_token(link_token)
+            link_user_id = int(decoded_jwt["sub"])
+            link_user = User.query.get(link_user_id)
+            if link_user:
+                existing = User.query.filter(User.faceit_id == faceit_id, User.id != link_user_id).first()
+                if existing:
+                    return _redirect(f"{FRONTEND}/auth/faceit/callback?faceit_error=already_linked_to_another_account")
+                link_user.faceit_id = faceit_id
+                link_user.faceit_elo = faceit_elo
+                link_user.faceit_level = faceit_level
+                if avatar and not link_user.avatar_url:
+                    link_user.avatar_url = avatar
+                db.session.commit()
+                qs = f"linked=true&faceit_id={_urlparse.quote(faceit_id)}"
+                if faceit_elo is not None:
+                    qs += f"&faceit_elo={faceit_elo}"
+                if faceit_level is not None:
+                    qs += f"&faceit_level={faceit_level}"
+                if link_user.avatar_url:
+                    qs += f"&avatar_url={_urlparse.quote(link_user.avatar_url)}"
+                return _redirect(f"{FRONTEND}/auth/faceit/callback?{qs}")
+        except Exception:
+            pass
+        return _redirect(f"{FRONTEND}/auth/faceit/callback?faceit_error=link_failed")
+
     user = User.query.filter_by(faceit_id=faceit_id).first()
     if not user:
         base_username = nickname or f"faceit_{faceit_id[:8]}"
@@ -1645,6 +1694,7 @@ def faceit_oauth_redirect_callback():
     user_encoded = _b64.urlsafe_b64encode(_json.dumps({
         "id": user.id, "username": user.username,
         "email": user.email or "", "role": user.role, "avatar_url": user.avatar_url or "",
+        "faceit_id": user.faceit_id, "faceit_elo": user.faceit_elo, "faceit_level": user.faceit_level,
     }).encode()).decode().rstrip("=")
 
     return _redirect(f"{FRONTEND}/auth/faceit/callback?at={jwt_token}&u={user_encoded}")
