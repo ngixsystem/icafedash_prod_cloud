@@ -1464,15 +1464,18 @@ def faceit_oauth_redirect_callback():
 
     try:
         token_resp = requests.post(
-            "https://api.faceit.com/auth/v1/oauth/token",
+            "https://accounts.faceit.com/auth/v1/oauth/token",
             headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded"},
             data=token_data, timeout=10,
         )
+        app.logger.error(f"FACEIT token resp {token_resp.status_code}: {token_resp.text[:500]}")
     except Exception as e:
         return _redirect(f"{FRONTEND}/auth?faceit_error=connection_error")
 
     if not token_resp.ok:
-        return _redirect(f"{FRONTEND}/auth?faceit_error=token_exchange_failed")
+        import urllib.parse
+        err_msg = urllib.parse.quote(token_resp.text[:200])
+        return _redirect(f"{FRONTEND}/auth/faceit/callback?faceit_error={err_msg}")
 
     faceit_access_token = token_resp.json().get("access_token")
     if not faceit_access_token:

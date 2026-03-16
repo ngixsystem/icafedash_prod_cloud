@@ -15,7 +15,7 @@ export default function FaceitCallbackPage() {
 
     const at = searchParams.get("at");
     const uEncoded = searchParams.get("u");
-    const faceitError = searchParams.get("faceit_error");
+    const faceitError = searchParams.get("faceit_error") || searchParams.get("error");
 
     if (faceitError) {
       setError(`Ошибка FACEIT: ${faceitError}`);
