@@ -1425,6 +1425,82 @@ def faceit_oauth_callback():
     })
 
 
+@app.post("/api/auth/faceit/oauth-callback-json")
+def faceit_oauth_callback_json():
+    """JSON endpoint for popup flow — receives code from frontend, returns JWT."""
+    data = request.json or {}
+    code = data.get("code")
+    redirect_uri = data.get("redirect_uri", "https://cloud.icafedash.com/api/auth/faceit/oauth-callback")
+    code_verifier = data.get("code_verifier")
+    if not code:
+        return jsonify({"message": "Missing code"}), 400
+
+    import base64 as _b64, json as _json
+    credentials = _b64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
+    token_data = {"grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri, "client_id": FACEIT_CLIENT_ID}
+    if code_verifier:
+        token_data["code_verifier"] = code_verifier
+
+    try:
+        token_resp = requests.post(
+            "https://accounts.faceit.com/auth/v1/oauth/token",
+            headers={"Authorization": f"Basic {credentials}", "Content-Type": "application/x-www-form-urlencoded"},
+            data=token_data, timeout=10,
+        )
+        app.logger.error(f"FACEIT token json resp {token_resp.status_code}: {token_resp.text[:300]}")
+    except Exception as e:
+        return jsonify({"message": f"Connection error: {e}"}), 502
+
+    if not token_resp.ok:
+        return jsonify({"message": f"Token exchange failed: {token_resp.text[:200]}"}), 400
+
+    faceit_access_token = token_resp.json().get("access_token")
+    if not faceit_access_token:
+        return jsonify({"message": "No access token in response"}), 400
+
+    try:
+        userinfo_resp = requests.get(
+            "https://api.faceit.com/auth/v1/resources/userinfo",
+            headers={"Authorization": f"Bearer {faceit_access_token}"}, timeout=10,
+        )
+    except Exception as e:
+        return jsonify({"message": f"Userinfo error: {e}"}), 502
+
+    if not userinfo_resp.ok:
+        return jsonify({"message": "Failed to get FACEIT profile"}), 400
+
+    faceit_user = userinfo_resp.json()
+    faceit_id = faceit_user.get("sub") or faceit_user.get("guid")
+    nickname = (faceit_user.get("nickname") or faceit_user.get("preferred_username") or "").strip()
+    email = (faceit_user.get("email") or "").strip().lower() or None
+    avatar = faceit_user.get("picture") or faceit_user.get("avatar") or ""
+
+    if not faceit_id:
+        return jsonify({"message": "No FACEIT ID"}), 400
+
+    user = User.query.filter_by(faceit_id=faceit_id).first()
+    if not user:
+        base_username = nickname or f"faceit_{faceit_id[:8]}"
+        username = base_username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}_{counter}"
+            counter += 1
+        if email and User.query.filter_by(email=email).first():
+            email = None
+        user = User(username=username, email=email, role="member", is_verified=True, faceit_id=faceit_id, avatar_url=avatar)
+        user.password_hash = bcrypt.generate_password_hash(os.urandom(32).hex()).decode("utf-8")
+        db.session.add(user)
+        db.session.commit()
+    else:
+        if avatar and user.avatar_url != avatar:
+            user.avatar_url = avatar
+            db.session.commit()
+
+    jwt_token = create_access_token(identity=str(user.id))
+    return jsonify({"access_token": jwt_token, "user": {"id": user.id, "username": user.username, "email": user.email or "", "role": user.role, "avatar_url": user.avatar_url or ""}})
+
+
 @app.route("/api/auth/faceit/oauth-callback", methods=["GET", "POST"])
 def faceit_oauth_redirect_callback():
     """Server-side FACEIT OAuth2 callback — handles both GET and POST redirects from FACEIT."""

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,20 +12,13 @@ const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/api/auth/faceit/oauth-c
 async function parseApiPayload(res: Response): Promise<any> {
   const contentType = (res.headers.get("content-type") || "").toLowerCase();
   const raw = await res.text();
-
   if (contentType.includes("application/json")) {
-    try {
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
+    try { return raw ? JSON.parse(raw) : {}; } catch { return {}; }
   }
   if (raw && raw.trim().startsWith("<")) {
     throw new Error(`Server returned HTML (HTTP ${res.status}). Check backend/proxy.`);
   }
-  try {
-    return raw ? JSON.parse(raw) : {};
-  } catch {
+  try { return raw ? JSON.parse(raw) : {}; } catch {
     return raw ? { message: raw.slice(0, 200) } : {};
   }
 }
@@ -38,10 +31,49 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [faceitLoading, setFaceitLoading] = useState(false);
+  const popupRef = useRef<Window | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const verifierRef = useRef<string>("");
 
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+
+  // Listen for postMessage from FACEIT popup
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (!e.origin.includes("faceit.com")) return;
+      const data = e.data;
+      if (!data) return;
+      // FACEIT may send code directly or as part of an object
+      const code = data.code || (typeof data === "string" && data.includes("code=")
+        ? new URLSearchParams(data).get("code") : null);
+      if (code) {
+        stopPoll();
+        exchangeCode(code);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  const stopPoll = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    if (popupRef.current && !popupRef.current.closed) popupRef.current.close();
+    setFaceitLoading(false);
+  };
+
+  const exchangeCode = (code: string) => {
+    fetch("/api/auth/faceit/oauth-callback-json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI, code_verifier: verifierRef.current }),
+    })
+      .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
+      .then((d) => { login(d.access_token, d.user); toast({ title: `Добро пожаловать, ${d.user.username}!` }); })
+      .catch((e) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }));
+  };
 
   if (isAuthenticated) {
     const fromPath = (location.state as any)?.from?.pathname || "/";
@@ -52,7 +84,6 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       if (showVerify) {
         const res = await fetch("/api/auth/verify-email", {
@@ -62,24 +93,19 @@ export default function AuthPage() {
         });
         const data = await parseApiPayload(res);
         if (!res.ok) throw new Error(data.message || `Verify failed (HTTP ${res.status})`);
-
         login(data.access_token, data.user);
         toast({ title: "Email подтвержден", description: "Добро пожаловать" });
         return;
       }
-
       const endpoint = isLogin ? "/api/clients/login" : "/api/clients/register";
       const payload = isLogin ? { username, password } : { username, email, password };
-
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await parseApiPayload(res);
-
       if (!res.ok) throw new Error(data.message || `Auth failed (HTTP ${res.status})`);
-
       if (isLogin) {
         login(data.access_token, data.user);
         toast({ title: "С возвращением" });
@@ -95,17 +121,18 @@ export default function AuthPage() {
   };
 
   const handleFaceitLogin = async () => {
-    // Generate PKCE code_verifier and code_challenge
+    setFaceitLoading(true);
+
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     const verifier = btoa(String.fromCharCode(...array))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    verifierRef.current = verifier;
 
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
     const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
-    // Encode verifier in state so backend can retrieve it from FACEIT's callback
     const state = btoa(JSON.stringify({ v: verifier }))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
@@ -118,7 +145,24 @@ export default function AuthPage() {
       `&code_challenge=${challenge}` +
       `&code_challenge_method=S256` +
       `&state=${state}`;
-    window.location.href = url;
+
+    const popup = window.open(url, "faceit_auth", "width=520,height=700,scrollbars=yes,resizable=yes");
+    popupRef.current = popup;
+
+    // Fallback: poll popup URL (catches redirect to our domain)
+    pollRef.current = setInterval(() => {
+      if (!popup || popup.closed) { stopPoll(); return; }
+      try {
+        const href = popup.location.href;
+        const params = new URL(href).searchParams;
+        const code = params.get("code");
+        const error = params.get("error");
+        if (!code && !error) return;
+        stopPoll();
+        if (error) { toast({ title: "Ошибка FACEIT", description: "Авторизация отменена", variant: "destructive" }); return; }
+        exchangeCode(code!);
+      } catch { /* cross-origin */ }
+    }, 300);
   };
 
   return (
@@ -142,55 +186,30 @@ export default function AuthPage() {
             {showVerify ? (
               <div className="space-y-2">
                 <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 ml-1">Код подтверждения</label>
-                <Input
-                  placeholder="000000"
-                  value={verifyCode}
-                  onChange={(e) => setVerifyCode(e.target.value)}
-                  className="h-14 bg-white/5 border-white/10 rounded-2xl text-center text-xl tracking-[0.45em] font-bold"
-                  required
-                />
+                <Input placeholder="000000" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)}
+                  className="h-14 bg-white/5 border-white/10 rounded-2xl text-center text-xl tracking-[0.45em] font-bold" required />
               </div>
             ) : (
               <>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 ml-1">Логин</label>
-                  <Input
-                    placeholder="Ваш никнейм"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="h-12 bg-white/5 border-white/10 rounded-xl"
-                    required
-                  />
+                  <Input placeholder="Ваш никнейм" value={username} onChange={(e) => setUsername(e.target.value)}
+                    className="h-12 bg-white/5 border-white/10 rounded-xl" required />
                 </div>
-
                 {!isLogin && (
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 ml-1">Email</label>
-                    <Input
-                      type="email"
-                      placeholder="example@mail.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 bg-white/5 border-white/10 rounded-xl"
-                      required
-                    />
+                    <Input type="email" placeholder="example@mail.com" value={email} onChange={(e) => setEmail(e.target.value)}
+                      className="h-12 bg-white/5 border-white/10 rounded-xl" required />
                   </div>
                 )}
-
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 ml-1">Пароль</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 bg-white/5 border-white/10 rounded-xl"
-                    required
-                  />
+                  <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)}
+                    className="h-12 bg-white/5 border-white/10 rounded-xl" required />
                 </div>
               </>
             )}
-
             <Button type="submit" className="w-full h-13 rounded-2xl text-white font-semibold text-base" disabled={loading}>
               {loading ? "Загрузка..." : showVerify ? "Подтвердить" : isLogin ? "Войти" : "Создать аккаунт"}
             </Button>
@@ -203,29 +222,25 @@ export default function AuthPage() {
                 <span className="text-[10px] uppercase tracking-widest text-white/25 font-bold">или</span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
-
-              <button
-                type="button"
-                onClick={handleFaceitLogin}
-                className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm"
-              >
+              <button type="button" onClick={handleFaceitLogin} disabled={faceitLoading}
+                className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
                 </svg>
-                Войти через FACEIT
+                {faceitLoading ? "Ожидание..." : "Войти через FACEIT"}
               </button>
-
               <div className="mt-5 text-center">
-                <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-[#FF7800] transition-colors">
+                <button type="button" onClick={() => setIsLogin(!isLogin)}
+                  className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-[#FF7800] transition-colors">
                   {isLogin ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти"}
                 </button>
               </div>
             </>
           )}
-
           {showVerify && (
             <div className="mt-6 text-center">
-              <button type="button" onClick={() => setShowVerify(false)} className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-white transition-colors">
+              <button type="button" onClick={() => setShowVerify(false)}
+                className="text-xs font-bold uppercase tracking-widest text-white/35 hover:text-white transition-colors">
                 Назад к регистрации
               </button>
             </div>
