@@ -51,25 +51,42 @@ export default function ProfilePage() {
         </div>
 
         <h1 className="text-xl font-display font-bold mb-0.5">{user?.username}</h1>
-        {user?.email && <p className="text-xs text-muted-foreground mb-3">{user.email}</p>}
+        {user?.email && <p className="text-xs text-muted-foreground mb-4">{user.email}</p>}
 
-        {/* FACEIT stats pill */}
+        {/* FACEIT stat badges */}
         {user?.faceit_level != null && levelColors && (
-          <div
-            className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full text-xs font-bold"
-            style={{ background: levelColors.bg, color: levelColors.text, border: `1px solid ${levelColors.border}` }}
-          >
-            <img
-              src={`https://assets.faceit-cdn.net/frontend/561/assets/images-compress/skill_level/skill_level_${user.faceit_level}_lg.png`}
-              alt=""
-              className="w-4 h-4 object-contain"
-            />
-            <span>Уровень {user.faceit_level}</span>
+          <div className="flex items-stretch gap-2.5 w-full max-w-[260px]">
+            {/* Level badge */}
+            <div
+              className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl"
+              style={{ background: levelColors.bg, border: `1px solid ${levelColors.border}` }}
+            >
+              <img
+                src={`https://assets.faceit-cdn.net/frontend/561/assets/images-compress/skill_level/skill_level_${user.faceit_level}_lg.png`}
+                alt={`level ${user.faceit_level}`}
+                className="w-8 h-8 object-contain"
+              />
+              <span className="text-lg font-display font-bold leading-none" style={{ color: levelColors.text }}>
+                {user.faceit_level}
+              </span>
+              <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColors.text, opacity: 0.5 }}>
+                Уровень
+              </span>
+            </div>
+
+            {/* ELO badge */}
             {user.faceit_elo != null && (
-              <>
-                <span style={{ color: levelColors.text, opacity: 0.4 }}>·</span>
-                <span>{user.faceit_elo} ELO</span>
-              </>
+              <div
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-2xl"
+                style={{ background: levelColors.bg, border: `1px solid ${levelColors.border}` }}
+              >
+                <span className="text-lg font-display font-bold leading-none" style={{ color: levelColors.text }}>
+                  {user.faceit_elo}
+                </span>
+                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColors.text, opacity: 0.5 }}>
+                  ELO
+                </span>
+              </div>
             )}
           </div>
         )}
