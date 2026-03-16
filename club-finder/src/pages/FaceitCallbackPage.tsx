@@ -19,16 +19,6 @@ export default function FaceitCallbackPage() {
     const code = searchParams.get("code");
     const error = searchParams.get("error");
 
-    // If opened in popup — broadcast code to parent and close
-    if (localStorage.getItem("faceit_popup_active") === "1") {
-      const ch = new BroadcastChannel("faceit_auth");
-      ch.postMessage({ code: code || null, error: error || null });
-      ch.close();
-      setTimeout(() => window.close(), 300);
-      return;
-    }
-
-    // Standalone redirect flow (fallback)
     if (error || !code) {
       toast({ title: "Ошибка авторизации", description: "Код авторизации отсутствует", variant: "destructive" });
       navigate("/auth", { replace: true });

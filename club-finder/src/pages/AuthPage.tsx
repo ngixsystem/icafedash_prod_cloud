@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react";
+import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,8 +38,6 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [faceitLoading, setFaceitLoading] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -94,6 +92,16 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFaceitLogin = () => {
+    const url =
+      `https://accounts.faceit.com/accounts` +
+      `?client_id=${FACEIT_CLIENT_ID}` +
+      `&redirect_uri=${encodeURIComponent(FACEIT_REDIRECT_URI)}` +
+      `&response_type=code` +
+      `&scope=openid%20profile%20email`;
+    window.location.href = url;
   };
 
   return (
@@ -181,71 +189,13 @@ export default function AuthPage() {
 
               <button
                 type="button"
-                disabled={faceitLoading}
-                onClick={() => {
-                  setFaceitLoading(true);
-                  const url =
-                    `https://accounts.faceit.com/accounts` +
-                    `?client_id=${FACEIT_CLIENT_ID}` +
-                    `&redirect_uri=${encodeURIComponent(FACEIT_REDIRECT_URI)}` +
-                    `&response_type=code` +
-                    `&scope=openid%20profile%20email`;
-
-                  localStorage.setItem("faceit_popup_active", "1");
-                  const popup = window.open(url, "faceit_auth", "width=520,height=700,scrollbars=yes,resizable=yes");
-
-                  const handleCode = (code: string) => {
-                    if (popup && !popup.closed) popup.close();
-                    stopPoll();
-                    fetch("/api/auth/faceit/callback", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI }),
-                    })
-                      .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
-                      .then((d) => { login(d.access_token, d.user); toast({ title: `Добро пожаловать, ${d.user.username}!` }); })
-                      .catch((e) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }));
-                  };
-
-                  // Primary: BroadcastChannel (FaceitCallbackPage sends code from popup)
-                  const ch = new BroadcastChannel("faceit_auth");
-                  ch.onmessage = (e) => {
-                    ch.close();
-                    if (e.data?.error || !e.data?.code) {
-                      stopPoll();
-                      toast({ title: "Ошибка FACEIT", description: "Авторизация отменена", variant: "destructive" });
-                      return;
-                    }
-                    handleCode(e.data.code);
-                  };
-
-                  const stopPoll = () => {
-                    if (pollRef.current) clearInterval(pollRef.current);
-                    ch.close();
-                    localStorage.removeItem("faceit_popup_active");
-                    setFaceitLoading(false);
-                  };
-
-                  // Fallback: URL polling
-                  pollRef.current = setInterval(() => {
-                    if (!popup || popup.closed) { stopPoll(); return; }
-                    try {
-                      const href = popup.location.href;
-                      const params = new URL(href).searchParams;
-                      const code = params.get("code");
-                      const error = params.get("error");
-                      if (!code && !error) return;
-                      if (error) { toast({ title: "Ошибка FACEIT", description: "Авторизация отменена", variant: "destructive" }); stopPoll(); return; }
-                      handleCode(code!);
-                    } catch { /* cross-origin — popup still on faceit.com */ }
-                  }, 200);
-                }}
+                onClick={handleFaceitLogin}
                 className="w-full h-12 rounded-xl flex items-center justify-center gap-3 bg-[#FF5500] hover:bg-[#FF6620] transition-colors font-bold text-white text-sm"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
                 </svg>
-                {faceitLoading ? "Ожидание..." : "Войти через FACEIT"}
+                Войти через FACEIT
               </button>
 
               <div className="mt-5 text-center">
