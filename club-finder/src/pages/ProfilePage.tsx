@@ -5,7 +5,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useFaceitLink } from "@/hooks/useFaceitLink";
 
 const LEVEL_COLORS: Record<number, string> = {
-  1: "#808080", 2: "#808080", 3: "#808080",
+  1: "#CCCCCC",
+  2: "#1EE600", 3: "#1EE600",
   4: "#FFD000", 5: "#FFD000",
   6: "#FF8C00", 7: "#FF8C00",
   8: "#FE3F00", 9: "#FE3F00",
@@ -13,35 +14,70 @@ const LEVEL_COLORS: Record<number, string> = {
 };
 
 const LEVEL_BG: Record<number, string> = {
-  1: "#80808015", 2: "#80808015", 3: "#80808015",
+  1: "#CCCCCC15",
+  2: "#1EE60015", 3: "#1EE60015",
   4: "#FFD00015", 5: "#FFD00015",
   6: "#FF8C0015", 7: "#FF8C0015",
   8: "#FE3F0015", 9: "#FE3F0015",
   10: "#FE000015",
 };
 
-function FaceitLevelIcon({ level, size = 32 }: { level: number; size?: number }) {
-  const color = LEVEL_COLORS[level] ?? "#808080";
-  const fontSize = size * 0.38;
+// ELO thresholds for progress arc within level
+const LEVEL_ELO_RANGE: Record<number, [number, number]> = {
+  1: [100, 500], 2: [501, 750], 3: [751, 900],
+  4: [901, 1050], 5: [1051, 1200], 6: [1201, 1350],
+  7: [1351, 1530], 8: [1531, 1750], 9: [1751, 2000],
+  10: [2001, 3000],
+};
+
+function FaceitLevelIcon({ level, elo, size = 40 }: { level: number; elo?: number | null; size?: number }) {
+  const color = LEVEL_COLORS[level] ?? "#CCCCCC";
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size * 0.34;
+  const sw = size * 0.08;
+  const circ = 2 * Math.PI * r;
+  const totalArc = circ * 0.75; // 270° sweep
+  const gap = circ * 0.25;
+
+  // Progress within level (0–1)
+  let progress = 1;
+  if (elo != null && LEVEL_ELO_RANGE[level]) {
+    const [min, max] = LEVEL_ELO_RANGE[level];
+    progress = Math.min(1, Math.max(0, (elo - min) / (max - min)));
+  }
+  const filledArc = totalArc * progress;
+
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      {/* Shield shape */}
-      <path
-        d="M16 2L4 7v9c0 6.6 5.1 12.8 12 14.3C22.9 28.8 28 22.6 28 16V7L16 2z"
-        fill={color}
-        opacity="0.15"
-      />
-      <path
-        d="M16 2L4 7v9c0 6.6 5.1 12.8 12 14.3C22.9 28.8 28 22.6 28 16V7L16 2z"
-        stroke={color}
-        strokeWidth="1.5"
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Dark background */}
+      <circle cx={cx} cy={cy} r={size * 0.44} fill="#1a1b1e" />
+      {/* Track arc (dim) */}
+      <circle
+        cx={cx} cy={cy} r={r}
         fill="none"
+        stroke={color}
+        strokeOpacity={0.15}
+        strokeWidth={sw}
+        strokeDasharray={`${totalArc} ${gap}`}
+        transform={`rotate(225, ${cx}, ${cy})`}
+        strokeLinecap="round"
       />
+      {/* Filled arc */}
+      <circle
+        cx={cx} cy={cy} r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth={sw}
+        strokeDasharray={`${filledArc} ${circ - filledArc}`}
+        transform={`rotate(225, ${cx}, ${cy})`}
+        strokeLinecap="round"
+      />
+      {/* Level number */}
       <text
-        x="16"
-        y={size * 0.62}
+        x={cx} y={cy + size * 0.1}
         textAnchor="middle"
-        fontSize={fontSize}
+        fontSize={size * 0.27}
         fontWeight="bold"
         fontFamily="system-ui, sans-serif"
         fill={color}
@@ -99,7 +135,7 @@ export default function ProfilePage() {
           {faceitConnected && (
             <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#121315] flex items-center justify-center ring-1 ring-white/10">
               {level != null ? (
-                <FaceitLevelIcon level={level} size={20} />
+                <FaceitLevelIcon level={level} elo={user?.faceit_elo} size={20} />
               ) : (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="#FF5500">
                   <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
@@ -130,7 +166,7 @@ export default function ProfilePage() {
               className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl"
               style={{ background: levelBg, border: `1px solid ${levelColor}30` }}
             >
-              <FaceitLevelIcon level={level} size={36} />
+              <FaceitLevelIcon level={level} elo={user?.faceit_elo} size={36} />
               <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColor, opacity: 0.6 }}>
                 Уровень
               </span>
