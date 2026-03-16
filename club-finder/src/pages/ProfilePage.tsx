@@ -1,6 +1,7 @@
 import { ChevronRight, Settings, LogOut, Wallet, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useFaceitLogin } from "@/hooks/useFaceitLogin";
 
 const FACEIT_LEVEL_COLORS: Record<number, { bg: string; text: string; border: string }> = {
   1:  { bg: "#ffffff0f", text: "#888888", border: "#ffffff18" },
@@ -18,6 +19,7 @@ const FACEIT_LEVEL_COLORS: Record<number, { bg: string; text: string; border: st
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { start: startFaceit, loading: faceitLoading } = useFaceitLogin();
 
   const levelColors = user?.faceit_level ? FACEIT_LEVEL_COLORS[user.faceit_level] ?? FACEIT_LEVEL_COLORS[1] : null;
 
@@ -102,14 +104,15 @@ export default function ProfilePage() {
         {!user?.faceit_level && (
           <button
             type="button"
-            onClick={() => navigate("/auth")}
-            className="w-full flex items-center gap-3 rounded-2xl glass border border-[#FF5500]/20 px-4 py-3.5 hover:bg-[#FF5500]/5 transition-colors"
+            onClick={startFaceit}
+            disabled={faceitLoading}
+            className="w-full flex items-center gap-3 rounded-2xl glass border border-[#FF5500]/20 px-4 py-3.5 hover:bg-[#FF5500]/5 transition-colors disabled:opacity-60"
           >
             <div className="w-8 h-8 rounded-xl bg-[#FF5500]/15 flex items-center justify-center">
               <Shield className="w-4 h-4 text-[#FF5500]" />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-medium">Привязать FACEIT</p>
+              <p className="text-sm font-medium">{faceitLoading ? "Ожидание..." : "Привязать FACEIT"}</p>
               <p className="text-xs text-muted-foreground">Показывать ELO и уровень</p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
