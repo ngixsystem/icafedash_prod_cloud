@@ -20,6 +20,7 @@ services:
       - SMTP_FROM=support@icafedash.com
       - FACEIT_CLIENT_ID=38961025-aebd-41f7-8424-86879eb9f6af
       - FACEIT_CLIENT_SECRET=MG2NYQMsaru1KG7JEeil5ra0Nmlviq1PmptO8wo2
+      - FACEIT_DATA_API_KEY=6129ac9d-e1df-4c39-a1e9-8088ca9636d6
     ports:
       - "5000:5000"
     depends_on:
