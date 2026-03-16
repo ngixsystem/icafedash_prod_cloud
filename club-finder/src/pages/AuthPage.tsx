@@ -194,12 +194,39 @@ export default function AuthPage() {
                   localStorage.setItem("faceit_popup_active", "1");
                   const popup = window.open(url, "faceit_auth", "width=520,height=700,scrollbars=yes,resizable=yes");
 
+                  const handleCode = (code: string) => {
+                    if (popup && !popup.closed) popup.close();
+                    stopPoll();
+                    fetch("/api/auth/faceit/callback", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI }),
+                    })
+                      .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
+                      .then((d) => { login(d.access_token, d.user); toast({ title: `Добро пожаловать, ${d.user.username}!` }); })
+                      .catch((e) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }));
+                  };
+
+                  // Primary: BroadcastChannel (FaceitCallbackPage sends code from popup)
+                  const ch = new BroadcastChannel("faceit_auth");
+                  ch.onmessage = (e) => {
+                    ch.close();
+                    if (e.data?.error || !e.data?.code) {
+                      stopPoll();
+                      toast({ title: "Ошибка FACEIT", description: "Авторизация отменена", variant: "destructive" });
+                      return;
+                    }
+                    handleCode(e.data.code);
+                  };
+
                   const stopPoll = () => {
                     if (pollRef.current) clearInterval(pollRef.current);
+                    ch.close();
                     localStorage.removeItem("faceit_popup_active");
                     setFaceitLoading(false);
                   };
 
+                  // Fallback: URL polling
                   pollRef.current = setInterval(() => {
                     if (!popup || popup.closed) { stopPoll(); return; }
                     try {
@@ -208,20 +235,8 @@ export default function AuthPage() {
                       const code = params.get("code");
                       const error = params.get("error");
                       if (!code && !error) return;
-                      popup.close();
-                      stopPoll();
-                      if (error) {
-                        toast({ title: "Ошибка FACEIT", description: "Авторизация отменена", variant: "destructive" });
-                        return;
-                      }
-                      fetch("/api/auth/faceit/callback", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI }),
-                      })
-                        .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
-                        .then((d) => { login(d.access_token, d.user); toast({ title: `Добро пожаловать, ${d.user.username}!` }); })
-                        .catch((e) => toast({ title: "Ошибка", description: e.message, variant: "destructive" }));
+                      if (error) { toast({ title: "Ошибка FACEIT", description: "Авторизация отменена", variant: "destructive" }); stopPoll(); return; }
+                      handleCode(code!);
                     } catch { /* cross-origin — popup still on faceit.com */ }
                   }, 200);
                 }}
