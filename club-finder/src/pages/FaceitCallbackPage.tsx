@@ -25,10 +25,13 @@ export default function FaceitCallbackPage() {
       return;
     }
 
+    const codeVerifier = sessionStorage.getItem("faceit_code_verifier") || undefined;
+    sessionStorage.removeItem("faceit_code_verifier");
+
     fetch("/api/auth/faceit/callback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI }),
+      body: JSON.stringify({ code, redirect_uri: FACEIT_REDIRECT_URI, code_verifier: codeVerifier }),
     })
       .then(async (res) => { const d = await res.json(); if (!res.ok) throw new Error(d.message); return d; })
       .then((d) => { login(d.access_token, d.user); toast({ title: `Добро пожаловать, ${d.user.username}!` }); navigate("/", { replace: true }); })

@@ -94,13 +94,27 @@ export default function AuthPage() {
     }
   };
 
-  const handleFaceitLogin = () => {
+  const handleFaceitLogin = async () => {
+    // Generate PKCE code_verifier and code_challenge
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const verifier = btoa(String.fromCharCode(...array))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+    sessionStorage.setItem("faceit_code_verifier", verifier);
+
     const url =
       `https://accounts.faceit.com/accounts` +
       `?client_id=${FACEIT_CLIENT_ID}` +
       `&redirect_uri=${encodeURIComponent(FACEIT_REDIRECT_URI)}` +
       `&response_type=code` +
-      `&scope=openid%20profile%20email`;
+      `&scope=openid%20profile%20email` +
+      `&code_challenge=${challenge}` +
+      `&code_challenge_method=S256`;
     window.location.href = url;
   };
 

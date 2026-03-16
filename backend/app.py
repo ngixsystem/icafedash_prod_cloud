@@ -1319,8 +1319,19 @@ def faceit_oauth_callback():
     if not code:
         return jsonify({"message": "Missing authorization code"}), 400
 
-    # Exchange code for access token (Basic Auth, no PKCE)
+    code_verifier = data.get("code_verifier")
+
+    # Exchange code for access token (PKCE flow)
     import base64
+    token_data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "client_id": FACEIT_CLIENT_ID,
+    }
+    if code_verifier:
+        token_data["code_verifier"] = code_verifier
+
     credentials = base64.b64encode(f"{FACEIT_CLIENT_ID}:{FACEIT_CLIENT_SECRET}".encode()).decode()
     try:
         token_resp = requests.post(
@@ -1329,18 +1340,15 @@ def faceit_oauth_callback():
                 "Authorization": f"Basic {credentials}",
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": redirect_uri,
-            },
+            data=token_data,
             timeout=10,
         )
     except Exception as e:
         return jsonify({"message": f"Ошибка соединения с FACEIT: {e}"}), 502
 
     if not token_resp.ok:
-        return jsonify({"message": "Ошибка обмена кода FACEIT на токен"}), 400
+        err = token_resp.text[:200]
+        return jsonify({"message": f"Ошибка обмена кода FACEIT: {err}"}), 400
 
     access_token = token_resp.json().get("access_token")
     if not access_token:
