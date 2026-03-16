@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 
-const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com";
+const FACEIT_REDIRECT_URI = "https://cloud.icafedash.com/auth/faceit/callback";
 
 export default function FaceitCallbackPage() {
   const [searchParams] = useSearchParams();

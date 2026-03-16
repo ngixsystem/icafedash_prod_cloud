@@ -40,8 +40,8 @@ SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
 
 # FACEIT OAuth (Authorization Code + PKCE)
-FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "bc6ce110-f2e7-4c58-96f7-c40dd5782e62")
-FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "2j5T61mfuH6c5WkaEkqoW1UbZYVfkftVOlVEcA0r")
+FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "0da47f41-e39b-4719-bebc-1d35f8065a26")
+FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "TZmgOodyh0qG2y48aRXSADP7qVMeySQdS0MoI9PM")
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
