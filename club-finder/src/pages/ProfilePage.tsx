@@ -37,8 +37,8 @@ function FaceitLevelIcon({ level, elo, size = 40 }: { level: number; elo?: numbe
   const r = size * 0.34;
   const sw = size * 0.08;
   const circ = 2 * Math.PI * r;
-  const totalArc = circ * 0.75; // 270° sweep
-  const gap = circ * 0.25;
+  const totalArc = circ; // full 360°
+  const gap = 0;
 
   // Progress within level (0–1)
   let progress = 1;
@@ -60,7 +60,7 @@ function FaceitLevelIcon({ level, elo, size = 40 }: { level: number; elo?: numbe
         strokeOpacity={0.15}
         strokeWidth={sw}
         strokeDasharray={`${totalArc} ${gap}`}
-        transform={`rotate(225, ${cx}, ${cy})`}
+        transform={`rotate(-90, ${cx}, ${cy})`}
         strokeLinecap="round"
       />
       {/* Filled arc */}
@@ -70,7 +70,7 @@ function FaceitLevelIcon({ level, elo, size = 40 }: { level: number; elo?: numbe
         stroke={color}
         strokeWidth={sw}
         strokeDasharray={`${filledArc} ${circ - filledArc}`}
-        transform={`rotate(225, ${cx}, ${cy})`}
+        transform={`rotate(-90, ${cx}, ${cy})`}
         strokeLinecap="round"
       />
       {/* Level number */}
