@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, CalendarDays, ChevronDown, ChevronUp, Crosshair, Crown, Loader2,
-  MapPin, Medal, ScrollText, Swords, Target, Timer, Trophy, Users, X,
+  ArrowLeft, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clock, Crosshair, Crown, Loader2,
+  MapPin, Medal, ScrollText, Swords, Target, Timer, Trophy, Users, X, XCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -166,15 +166,19 @@ function TeamCard({ reg, onPlayerClick }: {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">
-              {reg.team_name} {reg.team_tag && <span className="text-slate-500 font-normal">[{reg.team_tag}]</span>}
+              {reg.team_name}
             </p>
             <p className="text-[11px] text-slate-500">{reg.members.length} участник(ов)</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${st.bg} ${st.text}`}>
-            {STATUS_LABELS[reg.status] || reg.status}
-          </span>
+          {reg.status === "approved" ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+          ) : reg.status === "rejected" ? (
+            <XCircle className="w-5 h-5 text-red-400" />
+          ) : (
+            <Clock className="w-4 h-4 text-amber-400" />
+          )}
           {open ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
         </div>
       </button>
