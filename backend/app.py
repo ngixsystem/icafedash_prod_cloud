@@ -1461,8 +1461,12 @@ def faceit_oauth_callback():
     if not faceit_id:
         return jsonify({"message": "Не удалось получить FACEIT ID"}), 400
 
-    # Find or create local user
+    # Find or create local user (match by faceit_id, then email, then username)
     user = User.query.filter_by(faceit_id=faceit_id).first()
+    if not user and email:
+        user = User.query.filter_by(email=email).first()
+    if not user and nickname:
+        user = User.query.filter_by(username=nickname).first()
     if not user:
         # Generate unique username based on FACEIT nickname
         base_username = nickname or f"faceit_{faceit_id[:8]}"
@@ -1471,10 +1475,6 @@ def faceit_oauth_callback():
         while User.query.filter_by(username=username).first():
             username = f"{base_username}_{counter}"
             counter += 1
-
-        # Check if email is already taken by another account
-        if email and User.query.filter_by(email=email).first():
-            email = None
 
         user = User(
             username=username,
@@ -1489,8 +1489,11 @@ def faceit_oauth_callback():
         db.session.add(user)
         db.session.commit()
     else:
-        # Update avatar if changed
+        # Link FACEIT and update fields on existing user
         changed = False
+        if user.faceit_id != faceit_id:
+            user.faceit_id = faceit_id
+            changed = True
         if avatar and user.avatar_url != avatar:
             user.avatar_url = avatar
             changed = True
@@ -1566,7 +1569,12 @@ def faceit_oauth_callback_json():
     # Fetch CS2/CSGO ELO and skill level from FACEIT Data API
     faceit_elo, faceit_level = _fetch_faceit_game_stats(faceit_id, faceit_access_token, nickname)
 
+    # Find existing user by faceit_id, then email, then username
     user = User.query.filter_by(faceit_id=faceit_id).first()
+    if not user and email:
+        user = User.query.filter_by(email=email).first()
+    if not user and nickname:
+        user = User.query.filter_by(username=nickname).first()
     if not user:
         base_username = nickname or f"faceit_{faceit_id[:8]}"
         username = base_username
@@ -1574,8 +1582,6 @@ def faceit_oauth_callback_json():
         while User.query.filter_by(username=username).first():
             username = f"{base_username}_{counter}"
             counter += 1
-        if email and User.query.filter_by(email=email).first():
-            email = None
         user = User(username=username, email=email, role="member", is_verified=True,
                     faceit_id=faceit_id, avatar_url=avatar,
                     faceit_elo=faceit_elo, faceit_level=faceit_level)
@@ -1584,6 +1590,9 @@ def faceit_oauth_callback_json():
         db.session.commit()
     else:
         changed = False
+        if user.faceit_id != faceit_id:
+            user.faceit_id = faceit_id
+            changed = True
         if avatar and user.avatar_url != avatar:
             user.avatar_url = avatar
             changed = True
@@ -1716,7 +1725,12 @@ def faceit_oauth_redirect_callback():
             pass
         return _redirect(f"{FRONTEND}/auth/faceit/callback?faceit_error=link_failed")
 
+    # Find existing user by faceit_id, then email, then username
     user = User.query.filter_by(faceit_id=faceit_id).first()
+    if not user and email:
+        user = User.query.filter_by(email=email).first()
+    if not user and nickname:
+        user = User.query.filter_by(username=nickname).first()
     if not user:
         base_username = nickname or f"faceit_{faceit_id[:8]}"
         username = base_username
@@ -1724,18 +1738,29 @@ def faceit_oauth_redirect_callback():
         while User.query.filter_by(username=username).first():
             username = f"{base_username}_{counter}"
             counter += 1
-        if email and User.query.filter_by(email=email).first():
-            email = None
         user = User(
             username=username, email=email, role="member",
             is_verified=True, faceit_id=faceit_id, avatar_url=avatar,
+            faceit_elo=faceit_elo, faceit_level=faceit_level,
         )
         user.password_hash = bcrypt.generate_password_hash(os.urandom(32).hex()).decode("utf-8")
         db.session.add(user)
         db.session.commit()
     else:
+        changed = False
+        if user.faceit_id != faceit_id:
+            user.faceit_id = faceit_id
+            changed = True
         if avatar and user.avatar_url != avatar:
             user.avatar_url = avatar
+            changed = True
+        if faceit_elo is not None and user.faceit_elo != faceit_elo:
+            user.faceit_elo = faceit_elo
+            changed = True
+        if faceit_level is not None and user.faceit_level != faceit_level:
+            user.faceit_level = faceit_level
+            changed = True
+        if changed:
             db.session.commit()
 
     jwt_token = create_access_token(identity=str(user.id))
