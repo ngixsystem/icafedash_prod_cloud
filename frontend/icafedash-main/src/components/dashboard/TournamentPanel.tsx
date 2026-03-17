@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Medal, Plus, ShieldCheck, Swords, Trash2, X } from "lucide-react";
+import { Eye, Medal, Pencil, Plus, ShieldCheck, Swords, Trash2, X } from "lucide-react";
+import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { api } from "@/lib/api";
@@ -78,6 +79,7 @@ export default function TournamentPanel() {
     prize_pool: "",
     max_teams: 16,
     stream_url: "",
+    description: "",
   });
   const [editData, setEditData] = useState({
     title: "",
@@ -92,7 +94,10 @@ export default function TournamentPanel() {
     max_teams: 16,
     status: "draft",
     stream_url: "",
+    description: "",
   });
+  const [editDescPreview, setEditDescPreview] = useState(false);
+  const [createDescPreview, setCreateDescPreview] = useState(false);
 
   const tournamentsQuery = useQuery({ queryKey: ["public_tournaments"], queryFn: api.publicTournaments });
 
@@ -117,6 +122,7 @@ export default function TournamentPanel() {
       max_teams: selectedFromList.max_teams || 16,
       status: selectedFromList.status || "draft",
       stream_url: selectedFromList.stream_url || "",
+      description: selectedFromList.description || "",
     });
   }, [selectedFromList?.id]);
 
@@ -154,6 +160,7 @@ export default function TournamentPanel() {
         prize_pool: createData.prize_pool,
         max_teams: Number(createData.max_teams),
         stream_url: createData.stream_url,
+        description: createData.description,
         status: "open",
       }),
     onSuccess: () => {
@@ -170,6 +177,7 @@ export default function TournamentPanel() {
         prize_pool: "",
         max_teams: 16,
         stream_url: "",
+        description: "",
       });
       refreshAll();
     },
@@ -219,6 +227,7 @@ export default function TournamentPanel() {
         max_teams: Number(editData.max_teams),
         status: editData.status,
         stream_url: editData.stream_url,
+        description: editData.description,
       }),
     onSuccess: () => {
       toast.success("Турнир обновлен");
@@ -296,6 +305,21 @@ export default function TournamentPanel() {
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Призовой фонд" value={createData.prize_pool} onChange={(e) => setCreateData((p) => ({ ...p, prize_pool: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="number" min={2} placeholder="Команд" value={createData.max_teams} onChange={(e) => setCreateData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Ссылка на стрим (Twitch/YouTube)" value={createData.stream_url} onChange={(e) => setCreateData((p) => ({ ...p, stream_url: e.target.value }))} />
+          </div>
+          <div className="mt-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xs text-slate-400">Описание (Markdown)</span>
+              <button type="button" className="text-[10px] px-1.5 py-0.5 rounded border border-white/10 text-slate-400 hover:text-white flex items-center gap-1" onClick={() => setCreateDescPreview(!createDescPreview)}>
+                {createDescPreview ? <><Pencil className="w-3 h-3" /> Редактор</> : <><Eye className="w-3 h-3" /> Превью</>}
+              </button>
+            </div>
+            {createDescPreview ? (
+              <div className="min-h-[100px] rounded-xl bg-white/5 border border-white/10 p-3 prose prose-invert prose-sm max-w-none">
+                <Markdown>{createData.description || "*Описание пусто*"}</Markdown>
+              </div>
+            ) : (
+              <textarea className="w-full min-h-[100px] rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm resize-y" placeholder="# Правила&#10;- Карты: Mirage, Inferno, Dust2&#10;- Формат: BO3&#10;- Античит обязателен" value={createData.description} onChange={(e) => setCreateData((p) => ({ ...p, description: e.target.value }))} />
+            )}
           </div>
           <button className="mt-3 h-10 px-4 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/40 text-[#00E5FF]" onClick={() => createMutation.mutate()} disabled={isCreateDisabled}>
             Создать турнир
@@ -396,6 +420,21 @@ export default function TournamentPanel() {
                       <option value="finished">Завершен</option>
                       <option value="cancelled">Отменен</option>
                     </select>
+                  </div>
+                  <div className="mt-2 mb-2">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs text-slate-400">Описание (Markdown)</span>
+                      <button type="button" className="text-[10px] px-1.5 py-0.5 rounded border border-white/10 text-slate-400 hover:text-white flex items-center gap-1" onClick={() => setEditDescPreview(!editDescPreview)}>
+                        {editDescPreview ? <><Pencil className="w-3 h-3" /> Редактор</> : <><Eye className="w-3 h-3" /> Превью</>}
+                      </button>
+                    </div>
+                    {editDescPreview ? (
+                      <div className="min-h-[100px] rounded-lg bg-black/30 border border-white/10 p-3 prose prose-invert prose-sm max-w-none">
+                        <Markdown>{editData.description || "*Описание пусто*"}</Markdown>
+                      </div>
+                    ) : (
+                      <textarea className="w-full min-h-[100px] rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm resize-y" placeholder="# Правила&#10;- Карты: Mirage, Inferno&#10;- Формат: BO3" value={editData.description} onChange={(e) => setEditData((p) => ({ ...p, description: e.target.value }))} />
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button className="h-9 px-3 rounded-lg border border-[#00E5FF]/40 bg-[#00E5FF]/10 text-[#00E5FF]" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>

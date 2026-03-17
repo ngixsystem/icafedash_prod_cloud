@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
+import Markdown from "react-markdown";
 import { usePublicTournamentDetails, type TournamentMember } from "@/hooks/use-tournaments";
 import { FaceitLevelIcon } from "@/components/FaceitLevelIcon";
 
@@ -285,7 +286,9 @@ export default function TournamentDetailsPage() {
             {selected.prize_pool || "Приз не указан"}
           </span>
         </div>
-        <p className="text-sm leading-relaxed text-[#B5BAC1]">{selected.description || "Описание пока не добавлено."}</p>
+        <div className="text-sm leading-relaxed text-[#B5BAC1] prose prose-invert prose-sm max-w-none">
+          <Markdown>{selected.description || "Описание пока не добавлено."}</Markdown>
+        </div>
       </div>
 
       {/* Info */}
