@@ -3371,6 +3371,27 @@ def public_profile_change_password():
     return jsonify({"message": "Password changed successfully"})
 
 
+@app.post("/api/public/profile/set-password")
+@jwt_required()
+def public_profile_set_password():
+    """Set password for FACEIT-only users who never had a real password."""
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if not user.faceit_id:
+        return jsonify({"message": "Эта функция доступна только для FACEIT пользователей"}), 403
+
+    body = request.get_json(force=True) or {}
+    new_password = str(body.get("new_password") or "")
+    if not new_password or len(new_password) < 6:
+        return jsonify({"message": "Пароль должен быть минимум 6 символов"}), 400
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({"message": "Пароль установлен"})
+
+
 @app.put("/api/public/bookings/<int:booking_id>/cancel")
 @jwt_required()
 def cancel_public_booking(booking_id):

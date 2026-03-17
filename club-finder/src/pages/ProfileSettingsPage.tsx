@@ -43,11 +43,22 @@ export default function ProfileSettingsPage() {
     }
   };
 
+  const isFaceitUser = !!user?.faceit_id;
+
   const onChangePassword = async () => {
     if (!token) return;
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("Заполните все поля пароля");
-      return;
+
+    if (isFaceitUser) {
+      // FACEIT users: set password without current password
+      if (!newPassword || !confirmPassword) {
+        toast.error("Заполните все поля пароля");
+        return;
+      }
+    } else {
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        toast.error("Заполните все поля пароля");
+        return;
+      }
     }
     if (newPassword !== confirmPassword) {
       toast.error("Новый пароль и подтверждение не совпадают");
@@ -60,23 +71,26 @@ export default function ProfileSettingsPage() {
 
     setIsSavingPassword(true);
     try {
-      const resp = await fetch("/api/public/profile/password", {
-        method: "PUT",
+      const url = isFaceitUser ? "/api/public/profile/set-password" : "/api/public/profile/password";
+      const method = isFaceitUser ? "POST" : "PUT";
+      const body = isFaceitUser
+        ? { new_password: newPassword }
+        : { current_password: currentPassword, new_password: newPassword };
+
+      const resp = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          current_password: currentPassword,
-          new_password: newPassword,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data?.message || "Failed to change password");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success("Пароль успешно обновлен");
+      toast.success(isFaceitUser ? "Пароль установлен" : "Пароль успешно обновлен");
     } catch (err: any) {
       toast.error(err?.message || "Не удалось сменить пароль");
     } finally {
@@ -134,16 +148,23 @@ export default function ProfileSettingsPage() {
 
       <div className="mx-4 rounded-lg glass p-4">
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <KeyRound className="w-4 h-4 text-primary" /> Смена пароля
+          <KeyRound className="w-4 h-4 text-primary" /> {isFaceitUser ? "Установить пароль" : "Смена пароля"}
         </h2>
+        {isFaceitUser && (
+          <p className="text-xs text-muted-foreground mb-3">
+            Вы вошли через FACEIT. Установите пароль, чтобы входить также по логину.
+          </p>
+        )}
         <div className="space-y-3">
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Текущий пароль"
-            className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm"
-          />
+          {!isFaceitUser && (
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Текущий пароль"
+              className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm"
+            />
+          )}
           <input
             type="password"
             value={newPassword}
@@ -164,7 +185,7 @@ export default function ProfileSettingsPage() {
             disabled={isSavingPassword}
             className="w-full h-11 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60"
           >
-            {isSavingPassword ? "Сохранение..." : "Сменить пароль"}
+            {isSavingPassword ? "Сохранение..." : isFaceitUser ? "Установить пароль" : "Сменить пароль"}
           </button>
         </div>
       </div>
