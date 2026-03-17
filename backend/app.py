@@ -276,6 +276,7 @@ class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False, unique=True, index=True)
     tag = db.Column(db.String(12), nullable=True)
+    logo_url = db.Column(db.String(500), nullable=True)
     captain_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
     created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
@@ -1913,6 +1914,7 @@ def serialize_team(item: Team) -> dict:
         "id": item.id,
         "name": item.name,
         "tag": item.tag or "",
+        "logo_url": item.logo_url or "",
         "captain_user_id": item.captain_user_id,
         "captain_username": item.captain.username if item.captain else None,
         "created_by_user_id": item.created_by_user_id,
@@ -2178,6 +2180,103 @@ def admin_assign_team_captain(team_id):
 
     db.session.commit()
     return jsonify({"message": "Captain assigned", "team": serialize_team(team)})
+
+
+@app.put("/api/admin/teams/<int:team_id>")
+@admin_required
+def admin_update_team(team_id):
+    team = Team.query.get_or_404(team_id)
+    data = request.get_json(force=True) or {}
+    if "name" in data and data["name"].strip():
+        team.name = data["name"].strip()
+    if "tag" in data:
+        team.tag = str(data["tag"]).strip().upper()[:12] or None
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"message": "Команда с таким именем уже существует"}), 409
+    return jsonify({"message": "Команда обновлена", "team": serialize_team(team)})
+
+
+@app.delete("/api/admin/teams/<int:team_id>")
+@admin_required
+def admin_delete_team(team_id):
+    team = Team.query.get_or_404(team_id)
+    db.session.delete(team)
+    db.session.commit()
+    return jsonify({"message": "Команда удалена"})
+
+
+@app.get("/api/admin/teams/<int:team_id>/members")
+@admin_required
+def admin_team_members(team_id):
+    team = Team.query.get_or_404(team_id)
+    members = []
+    for m in TeamMember.query.filter_by(team_id=team.id).all():
+        if not m.user:
+            continue
+        members.append({
+            "user_id": m.user_id,
+            "username": m.user.username,
+            "avatar_url": m.user.avatar_url or "",
+            "email": m.user.email or "",
+            "role_in_team": m.role_in_team,
+            "faceit_elo": m.user.faceit_elo,
+            "faceit_level": m.user.faceit_level,
+        })
+    return jsonify({"team": serialize_team(team), "members": members})
+
+
+@app.post("/api/admin/teams/<int:team_id>/members")
+@admin_required
+def admin_add_team_member(team_id):
+    team = Team.query.get_or_404(team_id)
+    data = request.get_json(force=True) or {}
+    username = str(data.get("username") or "").strip()
+    if not username:
+        return jsonify({"message": "username обязателен"}), 400
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"message": "Пользователь не найден"}), 404
+    existing = TeamMember.query.filter_by(team_id=team.id, user_id=user.id).first()
+    if existing:
+        return jsonify({"message": "Пользователь уже в команде"}), 409
+    db.session.add(TeamMember(team_id=team.id, user_id=user.id, role_in_team="player"))
+    db.session.commit()
+    return jsonify({"message": "Участник добавлен"})
+
+
+@app.delete("/api/admin/teams/<int:team_id>/members/<int:user_id>")
+@admin_required
+def admin_remove_team_member(team_id, user_id):
+    member = TeamMember.query.filter_by(team_id=team_id, user_id=user_id).first()
+    if not member:
+        return jsonify({"message": "Участник не найден"}), 404
+    db.session.delete(member)
+    db.session.commit()
+    return jsonify({"message": "Участник удалён"})
+
+
+@app.post("/api/admin/teams/<int:team_id>/logo")
+@admin_required
+def admin_upload_team_logo(team_id):
+    team = Team.query.get_or_404(team_id)
+    if "file" not in request.files:
+        return jsonify({"message": "Файл не найден"}), 400
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"message": "Пустое имя файла"}), 400
+    ext = f.filename.rsplit(".", 1)[-1].lower() if "." in f.filename else ""
+    if ext not in ("png", "jpg", "jpeg", "webp", "gif", "svg"):
+        return jsonify({"message": "Неверный формат изображения"}), 400
+    filename = f"team_{team.id}_logo.{ext}"
+    upload_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    f.save(os.path.join(upload_dir, filename))
+    team.logo_url = f"/api/uploads/{filename}"
+    db.session.commit()
+    return jsonify({"message": "Логотип загружен", "logo_url": team.logo_url})
 
 
 @app.get("/api/captain/team/me")

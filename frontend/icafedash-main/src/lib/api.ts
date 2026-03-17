@@ -261,6 +261,7 @@ export interface Team {
     id: number;
     name: string;
     tag: string;
+    logo_url: string;
     captain_user_id: number | null;
     captain_username: string | null;
     created_by_user_id: number;
@@ -272,8 +273,11 @@ export interface Team {
 export interface TeamMember {
     user_id: number;
     username: string;
+    avatar_url: string;
     email: string;
     role_in_team: string;
+    faceit_elo: number | null;
+    faceit_level: number | null;
 }
 
 export interface TournamentMatch {
@@ -446,6 +450,22 @@ export const api = {
     deleteTournament: (tournamentId: number) => del<{ message: string }>(`/admin/tournaments/${tournamentId}`),
     adminTeams: () => get<Team[]>("/admin/teams"),
     createTeam: (data: { name: string; tag?: string }) => post<{ message: string; team: Team }>("/admin/teams", data),
+    updateTeam: (teamId: number, data: { name?: string; tag?: string }) => put<{ message: string; team: Team }>(`/admin/teams/${teamId}`, data),
+    deleteTeam: (teamId: number) => del<{ message: string }>(`/admin/teams/${teamId}`),
+    adminTeamMembers: (teamId: number) => get<{ team: Team; members: TeamMember[] }>(`/admin/teams/${teamId}/members`),
+    adminAddTeamMember: (teamId: number, username: string) => post<{ message: string }>(`/admin/teams/${teamId}/members`, { username }),
+    adminRemoveTeamMember: (teamId: number, userId: number) => del<{ message: string }>(`/admin/teams/${teamId}/members/${userId}`),
+    adminUploadTeamLogo: async (teamId: number, file: File) => {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch(`${BASE}/admin/teams/${teamId}/logo`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${localStorage.getItem("icafe_token")}` },
+            body: form,
+        });
+        if (!res.ok) throw await toApiError(res);
+        return res.json() as Promise<{ message: string; logo_url: string }>;
+    },
     assignCaptain: (teamId: number, userId: number) =>
         post<{ message: string; team: Team }>(`/admin/teams/${teamId}/assign-captain`, { user_id: userId }),
     captainTeamMe: () => get<{ team: Team; members: TeamMember[] }>("/captain/team/me"),
