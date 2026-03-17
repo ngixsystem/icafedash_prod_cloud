@@ -151,46 +151,6 @@ export default function ProfilePage() {
         <h1 className="text-xl font-display font-bold mb-0.5">{user?.username}</h1>
         {user?.email && <p className="text-xs text-muted-foreground mb-4">{user.email}</p>}
 
-        {/* FACEIT stat badges */}
-        {faceitConnected && level == null && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
-            style={{ background: "#FF550015", color: "#FF5500", border: "1px solid #FF550030" }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3.234 15.93L0 12.696l8.055-8.055 3.234 3.234L3.234 15.93zm9.512-9.512l3.234-3.234L24 11.304l-3.234 3.234-8.02-8.12zM3.234 8.07L11.29 0l3.234 3.234-8.055 8.055L3.234 8.07zM12.746 24l-3.234-3.234 8.055-8.055L20.8 15.93 12.746 24z"/>
-            </svg>
-            FACEIT подключён
-          </div>
-        )}
-
-        {faceitConnected && level != null && levelColor && levelBg && (
-          <div className="flex items-stretch gap-2.5 w-full max-w-[260px]">
-            {/* Level badge */}
-            <div
-              className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl"
-              style={{ background: levelBg, border: `1px solid ${levelColor}30` }}
-            >
-              <FaceitLevelIcon level={level} elo={user?.faceit_elo} size={36} />
-              <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColor, opacity: 0.6 }}>
-                Уровень
-              </span>
-            </div>
-
-            {/* ELO badge */}
-            {user?.faceit_elo != null && (
-              <div
-                className="flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-2xl"
-                style={{ background: levelBg, border: `1px solid ${levelColor}30` }}
-              >
-                <span className="text-2xl font-display font-bold leading-none" style={{ color: levelColor }}>
-                  {user.faceit_elo}
-                </span>
-                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: levelColor, opacity: 0.6 }}>
-                  ELO
-                </span>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Tabs */}
