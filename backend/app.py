@@ -315,6 +315,7 @@ class Tournament(db.Model):
     prize_pool = db.Column(db.String(80), nullable=True)
     entry_fee = db.Column(db.String(80), nullable=True, default="")
     stream_url = db.Column(db.String(500), nullable=True)
+    faceit_championship_id = db.Column(db.String(100), nullable=True)
     created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -519,6 +520,8 @@ with app.app_context():
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN entry_fee VARCHAR(80) DEFAULT ''")
             if 'stream_url' not in existing_tournament_columns:
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN stream_url VARCHAR(500) NULL", "Added stream_url column to tournaments table")
+            if 'faceit_championship_id' not in existing_tournament_columns:
+                _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN faceit_championship_id VARCHAR(100) NULL", "Added faceit_championship_id column to tournaments table")
 
     # Migration for teams
     if 'teams' in existing_tables:
@@ -1913,6 +1916,7 @@ def serialize_tournament(item: Tournament) -> dict:
         "prize_pool": item.prize_pool or "",
         "entry_fee": item.entry_fee or "",
         "stream_url": item.stream_url or "",
+        "faceit_championship_id": item.faceit_championship_id or "",
         "created_by_user_id": item.created_by_user_id,
         "created_at": item.created_at.isoformat() if item.created_at else None,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
@@ -2082,6 +2086,7 @@ def admin_create_tournament():
         prize_pool=str(data.get("prize_pool") or "").strip(),
         entry_fee=entry_fee,
         stream_url=str(data.get("stream_url") or "").strip() or None,
+        faceit_championship_id=str(data.get("faceit_championship_id") or "").strip() or None,
         created_by_user_id=user.id if user else 1,
     )
     db.session.add(tournament)
@@ -2124,6 +2129,8 @@ def admin_update_tournament(tournament_id):
         item.entry_fee = str(data.get("entry_fee") or "").strip()
     if "stream_url" in data:
         item.stream_url = str(data.get("stream_url") or "").strip() or None
+    if "faceit_championship_id" in data:
+        item.faceit_championship_id = str(data.get("faceit_championship_id") or "").strip() or None
 
     db.session.commit()
     return jsonify({"message": "Tournament updated", "tournament": serialize_tournament(item)})
@@ -2494,6 +2501,169 @@ def admin_generate_bracket(tournament_id):
     tournament.status = "live"
     db.session.commit()
     return jsonify({"message": "Bracket generated", "matches_count": len(pairs)})
+
+
+# ── FACEIT Championship Integration ──────────────────────────────────────────
+
+def _faceit_api_get(path: str) -> dict | None:
+    """Helper to call FACEIT Data API v4."""
+    if not FACEIT_DATA_API_KEY:
+        return None
+    try:
+        resp = requests.get(
+            f"https://open.faceit.com/data/v4{path}",
+            headers={"Authorization": f"Bearer {FACEIT_DATA_API_KEY}", "User-Agent": "Mozilla/5.0"},
+            timeout=12,
+        )
+        if resp.ok:
+            return resp.json()
+        app.logger.warning(f"FACEIT API {path} returned {resp.status_code}: {resp.text[:300]}")
+    except Exception as e:
+        app.logger.warning(f"FACEIT API {path} failed: {e}")
+    return None
+
+
+@app.post("/api/admin/tournaments/<int:tournament_id>/faceit-sync")
+@admin_required
+def admin_faceit_sync_tournament(tournament_id):
+    """Sync tournament data from FACEIT Championship API."""
+    tournament = Tournament.query.get_or_404(tournament_id)
+    champ_id = tournament.faceit_championship_id
+    if not champ_id:
+        return jsonify({"message": "FACEIT Championship ID не указан"}), 400
+    if not FACEIT_DATA_API_KEY:
+        return jsonify({"message": "FACEIT Data API Key не настроен на сервере"}), 500
+
+    # Fetch championship info
+    champ = _faceit_api_get(f"/championships/{champ_id}")
+    if not champ:
+        return jsonify({"message": "Не удалось получить данные чемпионата FACEIT"}), 502
+
+    # Update tournament fields from FACEIT
+    if champ.get("name"):
+        tournament.title = champ["name"]
+    if champ.get("description"):
+        tournament.description = champ["description"]
+    if champ.get("prize_type") and champ.get("total_prize"):
+        tournament.prize_pool = f"{champ['total_prize']} {champ.get('prize_type', '')}"
+    if champ.get("slots"):
+        tournament.max_teams = champ["slots"]
+    faceit_status = champ.get("status", "").lower()
+    status_map = {"created": "draft", "join": "open", "check_in": "open", "ongoing": "live", "finished": "finished", "cancelled": "cancelled"}
+    if faceit_status in status_map:
+        tournament.status = status_map[faceit_status]
+    if champ.get("championship_start"):
+        try:
+            tournament.starts_at = datetime.fromtimestamp(champ["championship_start"])
+        except Exception:
+            pass
+    if champ.get("checkin_start"):
+        try:
+            tournament.check_in_at = datetime.fromtimestamp(champ["checkin_start"])
+        except Exception:
+            pass
+    if champ.get("stream") and champ["stream"].get("url"):
+        tournament.stream_url = champ["stream"]["url"]
+
+    db.session.commit()
+
+    # Sync matches/bracket
+    matches_data = _faceit_api_get(f"/championships/{champ_id}/matches?type=all&offset=0&limit=100")
+    faceit_matches = matches_data.get("items", []) if matches_data else []
+
+    synced_count = 0
+    if faceit_matches:
+        # Clear existing matches and rebuild from FACEIT
+        TournamentMatch.query.filter_by(tournament_id=tournament.id).delete()
+        db.session.flush()
+
+        for fm in faceit_matches:
+            round_num = fm.get("round", 1)
+            match_order = fm.get("match_id", "")
+            teams_data = fm.get("teams", {})
+            faction1 = teams_data.get("faction1", {})
+            faction2 = teams_data.get("faction2", {})
+            results = fm.get("results", {})
+            winner_id = results.get("winner")
+            score_data = results.get("score", {})
+            score_str = f"{score_data.get('faction1', 0)}:{score_data.get('faction2', 0)}" if score_data else None
+
+            fm_status = fm.get("status", "").lower()
+            match_status = "finished" if fm_status in ("finished", "cancelled") else "live" if fm_status == "ongoing" else "scheduled"
+
+            # Try to find matching local teams by FACEIT team names
+            t1_name = faction1.get("name")
+            t2_name = faction2.get("name")
+            t1 = Team.query.filter_by(name=t1_name).first() if t1_name else None
+            t2 = Team.query.filter_by(name=t2_name).first() if t2_name else None
+            winner_team = None
+            if winner_id == "faction1" and t1:
+                winner_team = t1
+            elif winner_id == "faction2" and t2:
+                winner_team = t2
+
+            match = TournamentMatch(
+                tournament_id=tournament.id,
+                round_number=round_num,
+                match_order=synced_count + 1,
+                team1_id=t1.id if t1 else None,
+                team2_id=t2.id if t2 else None,
+                winner_team_id=winner_team.id if winner_team else None,
+                status=match_status,
+                score=score_str,
+            )
+            db.session.add(match)
+            synced_count += 1
+
+        db.session.commit()
+
+    return jsonify({
+        "message": f"Синхронизировано: инфо + {synced_count} матчей",
+        "tournament": serialize_tournament(tournament),
+        "matches_synced": synced_count,
+    })
+
+
+@app.get("/api/public/tournaments/<int:tournament_id>/faceit-bracket")
+def public_faceit_bracket(tournament_id):
+    """Fetch live bracket directly from FACEIT API (no caching)."""
+    tournament = Tournament.query.get_or_404(tournament_id)
+    champ_id = tournament.faceit_championship_id
+    if not champ_id:
+        return jsonify({"message": "Турнир не привязан к FACEIT", "matches": []}), 200
+
+    matches_data = _faceit_api_get(f"/championships/{champ_id}/matches?type=all&offset=0&limit=100")
+    if not matches_data:
+        return jsonify({"message": "Не удалось получить сетку FACEIT", "matches": []}), 502
+
+    matches = []
+    for fm in matches_data.get("items", []):
+        teams_data = fm.get("teams", {})
+        faction1 = teams_data.get("faction1", {})
+        faction2 = teams_data.get("faction2", {})
+        results = fm.get("results", {})
+        score_data = results.get("score", {})
+
+        fm_status = fm.get("status", "").lower()
+        match_status = "finished" if fm_status in ("finished", "cancelled") else "live" if fm_status == "ongoing" else "scheduled"
+
+        matches.append({
+            "faceit_match_id": fm.get("match_id"),
+            "round_number": fm.get("round", 1),
+            "match_order": fm.get("best_of", 1),
+            "team1_name": faction1.get("name"),
+            "team1_avatar": faction1.get("avatar"),
+            "team2_name": faction2.get("name"),
+            "team2_avatar": faction2.get("avatar"),
+            "winner": results.get("winner"),
+            "score": f"{score_data.get('faction1', 0)}:{score_data.get('faction2', 0)}" if score_data else None,
+            "status": match_status,
+            "faceit_url": fm.get("faceit_url"),
+            "started_at": fm.get("started_at"),
+            "finished_at": fm.get("finished_at"),
+        })
+
+    return jsonify({"matches": matches, "championship_id": champ_id})
 
 @app.get("/api/admin/clubs")
 @admin_required

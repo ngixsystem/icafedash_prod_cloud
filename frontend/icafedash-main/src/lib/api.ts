@@ -252,6 +252,7 @@ export interface Tournament {
     prize_pool: string;
     entry_fee: string;
     stream_url: string;
+    faceit_championship_id: string;
     created_by_user_id: number;
     created_at: string | null;
     updated_at: string | null;
@@ -446,12 +447,14 @@ export const api = {
         max_teams?: number;
         prize_pool?: string;
         stream_url?: string;
+        faceit_championship_id?: string;
     }) => post<{ message: string; tournament: Tournament }>("/admin/tournaments", data),
     updateTournament: (tournamentId: number, data: Partial<Tournament>) =>
         put<{ message: string; tournament: Tournament }>(`/admin/tournaments/${tournamentId}`, data),
     deleteTournament: (tournamentId: number) => del<{ message: string }>(`/admin/tournaments/${tournamentId}`),
     addTournamentTeam: (tournamentId: number, teamId: number) => post<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations`, { team_id: teamId }),
     removeTournamentTeam: (tournamentId: number, registrationId: number) => del<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations/${registrationId}`),
+    faceitSyncTournament: (tournamentId: number) => post<{ message: string; tournament: Tournament; matches_synced: number }>(`/admin/tournaments/${tournamentId}/faceit-sync`, {}),
     adminTeams: () => get<Team[]>("/admin/teams"),
     createTeam: (data: { name: string; tag?: string }) => post<{ message: string; team: Team }>("/admin/teams", data),
     updateTeam: (teamId: number, data: { name?: string; tag?: string }) => put<{ message: string; team: Team }>(`/admin/teams/${teamId}`, data),

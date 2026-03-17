@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Medal, Pencil, Plus, ShieldCheck, Swords, Trash2, X } from "lucide-react";
+import { Eye, Medal, Pencil, Plus, RefreshCw, ShieldCheck, Swords, Trash2, X } from "lucide-react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -80,6 +80,7 @@ export default function TournamentPanel() {
     max_teams: 16,
     stream_url: "",
     description: "",
+    faceit_championship_id: "",
   });
   const [editData, setEditData] = useState({
     title: "",
@@ -95,6 +96,7 @@ export default function TournamentPanel() {
     status: "draft",
     stream_url: "",
     description: "",
+    faceit_championship_id: "",
   });
   const [editDescPreview, setEditDescPreview] = useState(false);
   const [createDescPreview, setCreateDescPreview] = useState(false);
@@ -123,6 +125,7 @@ export default function TournamentPanel() {
       status: selectedFromList.status || "draft",
       stream_url: selectedFromList.stream_url || "",
       description: selectedFromList.description || "",
+      faceit_championship_id: selectedFromList.faceit_championship_id || "",
     });
   }, [selectedFromList?.id]);
 
@@ -161,6 +164,7 @@ export default function TournamentPanel() {
         max_teams: Number(createData.max_teams),
         stream_url: createData.stream_url,
         description: createData.description,
+        faceit_championship_id: createData.faceit_championship_id,
         status: "open",
       }),
     onSuccess: () => {
@@ -178,6 +182,7 @@ export default function TournamentPanel() {
         max_teams: 16,
         stream_url: "",
         description: "",
+        faceit_championship_id: "",
       });
       refreshAll();
     },
@@ -228,6 +233,7 @@ export default function TournamentPanel() {
         status: editData.status,
         stream_url: editData.stream_url,
         description: editData.description,
+        faceit_championship_id: editData.faceit_championship_id,
       }),
     onSuccess: () => {
       toast.success("Турнир обновлен");
@@ -253,6 +259,15 @@ export default function TournamentPanel() {
       refreshAll();
     },
     onError: (e: any) => toast.error(e?.message || "Не удалось обновить статус регистрации"),
+  });
+
+  const faceitSyncMutation = useMutation({
+    mutationFn: (tournamentId: number) => api.faceitSyncTournament(tournamentId),
+    onSuccess: (data) => {
+      toast.success(data.message || "Синхронизировано");
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Не удалось синхронизировать с FACEIT"),
   });
 
   const teamsQuery = useQuery({ queryKey: ["admin_teams"], queryFn: api.adminTeams, enabled: isAdmin });
@@ -305,6 +320,7 @@ export default function TournamentPanel() {
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Призовой фонд" value={createData.prize_pool} onChange={(e) => setCreateData((p) => ({ ...p, prize_pool: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="number" min={2} placeholder="Команд" value={createData.max_teams} onChange={(e) => setCreateData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Ссылка на стрим (Twitch/YouTube)" value={createData.stream_url} onChange={(e) => setCreateData((p) => ({ ...p, stream_url: e.target.value }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-[#FF5500]/30 px-3" placeholder="FACEIT Championship ID" value={createData.faceit_championship_id} onChange={(e) => setCreateData((p) => ({ ...p, faceit_championship_id: e.target.value }))} />
           </div>
           <div className="mt-3">
             <div className="flex items-center gap-2 mb-1.5">
@@ -392,9 +408,17 @@ export default function TournamentPanel() {
               ) : null}
 
               {isAdmin && selectedFromList ? (
-                <button className="h-10 px-4 rounded-xl bg-[#00E5FF]/12 border border-[#00E5FF]/40 text-[#00E5FF] mb-4 ml-2" onClick={() => generateBracketMutation.mutate(selectedFromList.id)} disabled={generateBracketMutation.isPending}>
-                  Сгенерировать сетку
-                </button>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <button className="h-10 px-4 rounded-xl bg-[#00E5FF]/12 border border-[#00E5FF]/40 text-[#00E5FF]" onClick={() => generateBracketMutation.mutate(selectedFromList.id)} disabled={generateBracketMutation.isPending}>
+                    Сгенерировать сетку
+                  </button>
+                  {selectedFromList.faceit_championship_id && (
+                    <button className="h-10 px-4 rounded-xl bg-[#FF5500]/12 border border-[#FF5500]/40 text-[#FF5500] flex items-center gap-2" onClick={() => faceitSyncMutation.mutate(selectedFromList.id)} disabled={faceitSyncMutation.isPending}>
+                      <RefreshCw className={`w-4 h-4 ${faceitSyncMutation.isPending ? "animate-spin" : ""}`} />
+                      Синхронизировать с FACEIT
+                    </button>
+                  )}
+                </div>
               ) : null}
 
               {isAdmin && selectedFromList ? (
@@ -412,6 +436,7 @@ export default function TournamentPanel() {
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Призовой фонд" value={editData.prize_pool} onChange={(e) => setEditData((p) => ({ ...p, prize_pool: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="number" min={2} value={editData.max_teams} onChange={(e) => setEditData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Ссылка на стрим" value={editData.stream_url} onChange={(e) => setEditData((p) => ({ ...p, stream_url: e.target.value }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-[#FF5500]/30 px-3" placeholder="FACEIT Championship ID" value={editData.faceit_championship_id} onChange={(e) => setEditData((p) => ({ ...p, faceit_championship_id: e.target.value }))} />
                     <select className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" value={editData.status} onChange={(e) => setEditData((p) => ({ ...p, status: e.target.value }))}>
                       <option value="draft">Черновик</option>
                       <option value="open">Открыт</option>

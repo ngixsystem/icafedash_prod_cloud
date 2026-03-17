@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clock, Crosshair, Crown, Loader2,
-  MapPin, Medal, MonitorPlay, ScrollText, Swords, Target, Timer, Trophy, Users, X, XCircle,
+  ArrowLeft, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clock, Crosshair, Crown, ExternalLink,
+  Loader2, MapPin, Medal, MonitorPlay, ScrollText, Swords, Target, Timer, Trophy, Users, X, XCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -153,6 +153,75 @@ function StatCard({ icon, label, value, color }: { icon: ReactNode; label: strin
         <p className="text-[11px] text-slate-500">{label}</p>
         <p className="text-sm font-bold text-white">{value}</p>
       </div>
+    </div>
+  );
+}
+
+/* ── FACEIT Bracket ──────────────────────────────────────────── */
+
+function FaceitBracket({ tournamentId }: { tournamentId: number }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["faceit_bracket", tournamentId],
+    queryFn: async () => {
+      const resp = await fetch(`/api/public/tournaments/${tournamentId}/faceit-bracket`);
+      if (!resp.ok) throw new Error("Failed");
+      return resp.json() as Promise<{ matches: Array<{
+        faceit_match_id: string; round_number: number; team1_name: string | null;
+        team1_avatar: string | null; team2_name: string | null; team2_avatar: string | null;
+        winner: string | null; score: string | null; status: string; faceit_url: string | null;
+      }>; championship_id: string }>;
+    },
+    staleTime: 30_000,
+  });
+
+  if (isLoading) return <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-[#FF5500]" /></div>;
+  if (!data?.matches?.length) return <p className="text-sm text-slate-500 text-center py-4">Матчи пока не начались</p>;
+
+  const rounds = new Map<number, typeof data.matches>();
+  for (const m of data.matches) {
+    const r = m.round_number;
+    if (!rounds.has(r)) rounds.set(r, []);
+    rounds.get(r)!.push(m);
+  }
+
+  return (
+    <div className="space-y-4">
+      {[...rounds.entries()].sort((a, b) => a[0] - b[0]).map(([round, matches]) => (
+        <div key={round}>
+          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Раунд {round}</p>
+          <div className="space-y-2">
+            {matches.map((m) => {
+              const isFinished = m.status === "finished";
+              const isLive = m.status === "live";
+              return (
+                <div key={m.faceit_match_id} className={`rounded-xl border ${isLive ? "border-[#FF5500]/40" : "border-[#25272B]"} bg-[#16181C] p-3`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {m.team1_avatar && <img src={m.team1_avatar} alt="" className="w-5 h-5 rounded" />}
+                        <span className={`text-sm truncate ${m.winner === "faction1" ? "text-emerald-400 font-bold" : "text-white"}`}>{m.team1_name || "TBD"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {m.team2_avatar && <img src={m.team2_avatar} alt="" className="w-5 h-5 rounded" />}
+                        <span className={`text-sm truncate ${m.winner === "faction2" ? "text-emerald-400 font-bold" : "text-white"}`}>{m.team2_name || "TBD"}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {m.score && isFinished && <span className="text-sm font-bold text-white">{m.score}</span>}
+                      {isLive && <span className="text-[10px] uppercase font-bold text-[#FF5500] animate-pulse">LIVE</span>}
+                      {m.faceit_url && (
+                        <a href={m.faceit_url} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-[#FF5500]">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -355,6 +424,16 @@ export default function TournamentDetailsPage() {
           </section>
         );
       })()}
+
+      {/* FACEIT Bracket */}
+      {selected.faceit_championship_id && (
+        <section className="mb-4 rounded-2xl border border-[#2F3136] bg-[#121315] p-4">
+          <h2 className="mb-3 font-display text-[24px] leading-none flex items-center gap-2">
+            <Swords className="h-5 w-5 text-[#FF5500]" /> Сетка FACEIT
+          </h2>
+          <FaceitBracket tournamentId={Number(tournamentId)} />
+        </section>
+      )}
 
       {/* Registered teams */}
       <section className="rounded-2xl border border-[#2F3136] bg-[#121315] p-4">
