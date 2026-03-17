@@ -19,6 +19,7 @@ import ManagerHyperOverview from "@/components/dashboard/ManagerHyperOverview";
 import TournamentPanel from "@/components/dashboard/TournamentPanel";
 import TeamCaptainPanel from "@/components/dashboard/TeamCaptainPanel";
 import UserPrivilegesPanel from "@/components/dashboard/UserPrivilegesPanel";
+import UsersPanel from "@/components/dashboard/UsersPanel";
 
 const Index = () => {
   const { isAdmin, isCaptain, user } = useAuth();
@@ -87,6 +88,8 @@ const Index = () => {
           ) : activeTab === "Команда" ? (
             <TeamCaptainPanel />
           ) : activeTab === "Пользователи" ? (
+            <UsersPanel />
+          ) : activeTab === "Команды" ? (
             <UserPrivilegesPanel />
           ) : activeTab === "Настройки" ? (
             <SettingsPanel />

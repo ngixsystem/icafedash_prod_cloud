@@ -109,6 +109,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         { icon: UserCheck, label: "Менеджеры", section: "main", color: "text-[#6C5CE7]" },
         { icon: Trophy, label: "Турниры", section: "main", color: "text-[#FF9A2F]" },
         { icon: Users, label: "Пользователи", section: "ops", color: "text-[#58d68d]" },
+        { icon: Shield, label: "Команды", section: "ops", color: "text-[#FF9A2F]" },
         { icon: MessageSquare, label: "Отзывы", section: "ops", color: "text-[#00E5FF]" },
       ]
     : isCaptain
