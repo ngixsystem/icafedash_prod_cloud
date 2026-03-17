@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Clock, Crosshair, Crown, Loader2,
-  MapPin, Medal, ScrollText, Swords, Target, Timer, Trophy, Users, X, XCircle,
+  MapPin, Medal, MonitorPlay, ScrollText, Swords, Target, Timer, Trophy, Users, X, XCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -35,6 +35,17 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "На рассмотрении",
   rejected: "Отклонена",
 };
+
+function getStreamEmbed(url: string): { type: "twitch" | "youtube"; embedUrl: string } | null {
+  if (!url) return null;
+  // YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/live/ID
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([\w-]{11})/);
+  if (ytMatch) return { type: "youtube", embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1` };
+  // Twitch: twitch.tv/channelName
+  const twMatch = url.match(/twitch\.tv\/(\w+)/);
+  if (twMatch) return { type: "twitch", embedUrl: `https://player.twitch.tv/?channel=${twMatch[1]}&parent=${window.location.hostname}` };
+  return null;
+}
 
 /* ── Player profile modal (FACEIT stats) ─────────────────────── */
 
@@ -287,6 +298,39 @@ export default function TournamentDetailsPage() {
           <InfoRow icon={<ScrollText className="h-4 w-4 text-[#FF7800]" />} label="Сетка" value={selected.format || "Не указано"} />
         </div>
       </section>
+
+      {/* Stream */}
+      {selected.stream_url && (() => {
+        const embed = getStreamEmbed(selected.stream_url);
+        return (
+          <section className="mb-4 rounded-2xl border border-[#2F3136] bg-[#121315] p-4">
+            <h2 className="mb-3 font-display text-[24px] leading-none flex items-center gap-2">
+              <MonitorPlay className="h-5 w-5 text-[#FF7800]" /> Трансляция
+            </h2>
+            {embed ? (
+              <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingBottom: "56.25%" }}>
+                <iframe
+                  src={embed.embedUrl}
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="Stream"
+                />
+              </div>
+            ) : (
+              <a
+                href={selected.stream_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#FF7800]/20 bg-[#FF7800]/10 px-4 py-3 text-sm font-medium text-[#FF7800] hover:bg-[#FF7800]/15 transition-colors"
+              >
+                <MonitorPlay className="h-4 w-4" />
+                Смотреть трансляцию
+              </a>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Registered teams */}
       <section className="rounded-2xl border border-[#2F3136] bg-[#121315] p-4">

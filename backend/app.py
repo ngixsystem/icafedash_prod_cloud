@@ -314,6 +314,7 @@ class Tournament(db.Model):
     max_teams = db.Column(db.Integer, nullable=False, default=16)
     prize_pool = db.Column(db.String(80), nullable=True)
     entry_fee = db.Column(db.String(80), nullable=True, default="")
+    stream_url = db.Column(db.String(500), nullable=True)
     created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -516,6 +517,8 @@ with app.app_context():
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN team_format VARCHAR(80) DEFAULT ''")
             if 'entry_fee' not in existing_tournament_columns:
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN entry_fee VARCHAR(80) DEFAULT ''")
+            if 'stream_url' not in existing_tournament_columns:
+                _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN stream_url VARCHAR(500) NULL", "Added stream_url column to tournaments table")
 
     # Migration for teams
     if 'teams' in existing_tables:
@@ -1909,6 +1912,7 @@ def serialize_tournament(item: Tournament) -> dict:
         "max_teams": item.max_teams,
         "prize_pool": item.prize_pool or "",
         "entry_fee": item.entry_fee or "",
+        "stream_url": item.stream_url or "",
         "created_by_user_id": item.created_by_user_id,
         "created_at": item.created_at.isoformat() if item.created_at else None,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
@@ -2076,6 +2080,7 @@ def admin_create_tournament():
         max_teams=max(int(data.get("max_teams") or 16), 2),
         prize_pool=str(data.get("prize_pool") or "").strip(),
         entry_fee=entry_fee,
+        stream_url=str(data.get("stream_url") or "").strip() or None,
         created_by_user_id=user.id if user else 1,
     )
     db.session.add(tournament)
@@ -2116,6 +2121,8 @@ def admin_update_tournament(tournament_id):
         item.prize_pool = str(data.get("prize_pool") or "").strip()
     if "entry_fee" in data:
         item.entry_fee = str(data.get("entry_fee") or "").strip()
+    if "stream_url" in data:
+        item.stream_url = str(data.get("stream_url") or "").strip() or None
 
     db.session.commit()
     return jsonify({"message": "Tournament updated", "tournament": serialize_tournament(item)})
@@ -2278,9 +2285,7 @@ def admin_upload_team_logo(team_id):
     if ext not in ("png", "jpg", "jpeg", "webp", "gif", "svg"):
         return jsonify({"message": "Неверный формат изображения"}), 400
     filename = f"team_{team.id}_logo.{ext}"
-    upload_dir = os.path.join(os.path.dirname(__file__), "uploads")
-    os.makedirs(upload_dir, exist_ok=True)
-    f.save(os.path.join(upload_dir, filename))
+    f.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
     team.logo_url = f"/api/uploads/{filename}"
     db.session.commit()
     return jsonify({"message": "Логотип загружен", "logo_url": team.logo_url})

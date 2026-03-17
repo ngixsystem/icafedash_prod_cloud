@@ -251,6 +251,7 @@ export interface Tournament {
     max_teams: number;
     prize_pool: string;
     entry_fee: string;
+    stream_url: string;
     created_by_user_id: number;
     created_at: string | null;
     updated_at: string | null;
@@ -444,6 +445,7 @@ export const api = {
         status?: string;
         max_teams?: number;
         prize_pool?: string;
+        stream_url?: string;
     }) => post<{ message: string; tournament: Tournament }>("/admin/tournaments", data),
     updateTournament: (tournamentId: number, data: Partial<Tournament>) =>
         put<{ message: string; tournament: Tournament }>(`/admin/tournaments/${tournamentId}`, data),

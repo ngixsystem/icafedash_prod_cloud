@@ -75,6 +75,7 @@ export default function TournamentPanel() {
     format: "",
     prize_pool: "",
     max_teams: 16,
+    stream_url: "",
   });
   const [editData, setEditData] = useState({
     title: "",
@@ -88,6 +89,7 @@ export default function TournamentPanel() {
     prize_pool: "",
     max_teams: 16,
     status: "draft",
+    stream_url: "",
   });
 
   const tournamentsQuery = useQuery({ queryKey: ["public_tournaments"], queryFn: api.publicTournaments });
@@ -112,6 +114,7 @@ export default function TournamentPanel() {
       prize_pool: selectedFromList.prize_pool || "",
       max_teams: selectedFromList.max_teams || 16,
       status: selectedFromList.status || "draft",
+      stream_url: selectedFromList.stream_url || "",
     });
   }, [selectedFromList?.id]);
 
@@ -148,6 +151,7 @@ export default function TournamentPanel() {
         format: createData.format,
         prize_pool: createData.prize_pool,
         max_teams: Number(createData.max_teams),
+        stream_url: createData.stream_url,
         status: "open",
       }),
     onSuccess: () => {
@@ -163,6 +167,7 @@ export default function TournamentPanel() {
         format: "",
         prize_pool: "",
         max_teams: 16,
+        stream_url: "",
       });
       refreshAll();
     },
@@ -211,6 +216,7 @@ export default function TournamentPanel() {
         prize_pool: editData.prize_pool,
         max_teams: Number(editData.max_teams),
         status: editData.status,
+        stream_url: editData.stream_url,
       }),
     onSuccess: () => {
       toast.success("Турнир обновлен");
@@ -265,6 +271,7 @@ export default function TournamentPanel() {
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Сетка (Группы + плей-офф, BO3)" value={createData.format} onChange={(e) => setCreateData((p) => ({ ...p, format: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Призовой фонд" value={createData.prize_pool} onChange={(e) => setCreateData((p) => ({ ...p, prize_pool: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="number" min={2} placeholder="Команд" value={createData.max_teams} onChange={(e) => setCreateData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Ссылка на стрим (Twitch/YouTube)" value={createData.stream_url} onChange={(e) => setCreateData((p) => ({ ...p, stream_url: e.target.value }))} />
           </div>
           <button className="mt-3 h-10 px-4 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/40 text-[#00E5FF]" onClick={() => createMutation.mutate()} disabled={isCreateDisabled}>
             Создать турнир
@@ -356,6 +363,7 @@ export default function TournamentPanel() {
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Сетка" value={editData.format} onChange={(e) => setEditData((p) => ({ ...p, format: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Призовой фонд" value={editData.prize_pool} onChange={(e) => setEditData((p) => ({ ...p, prize_pool: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="number" min={2} value={editData.max_teams} onChange={(e) => setEditData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Ссылка на стрим" value={editData.stream_url} onChange={(e) => setEditData((p) => ({ ...p, stream_url: e.target.value }))} />
                     <select className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" value={editData.status} onChange={(e) => setEditData((p) => ({ ...p, status: e.target.value }))}>
                       <option value="draft">Черновик</option>
                       <option value="open">Открыт</option>
