@@ -516,7 +516,14 @@ with app.app_context():
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN team_format VARCHAR(80) DEFAULT ''")
             if 'entry_fee' not in existing_tournament_columns:
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN entry_fee VARCHAR(80) DEFAULT ''")
-            
+
+    # Migration for teams
+    if 'teams' in existing_tables:
+        existing_team_columns = [col['name'] for col in inspector.get_columns('teams')]
+        with db.engine.connect() as conn:
+            if 'logo_url' not in existing_team_columns:
+                _safe_migration(conn, "ALTER TABLE teams ADD COLUMN logo_url VARCHAR(500) NULL", "Added logo_url column to teams table")
+
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
     if not admin:
