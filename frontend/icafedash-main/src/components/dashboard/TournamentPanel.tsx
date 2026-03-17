@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Medal, ShieldCheck, Swords } from "lucide-react";
+import { Medal, Plus, ShieldCheck, Swords, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { api } from "@/lib/api";
@@ -64,6 +64,8 @@ export default function TournamentPanel() {
   const { isAdmin, isCaptain } = useAuth();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showAddTeam, setShowAddTeam] = useState(false);
+  const [addTeamId, setAddTeamId] = useState<number | "">("");
   const [createData, setCreateData] = useState({
     title: "",
     game: "CS2",
@@ -244,6 +246,28 @@ export default function TournamentPanel() {
     onError: (e: any) => toast.error(e?.message || "Не удалось обновить статус регистрации"),
   });
 
+  const teamsQuery = useQuery({ queryKey: ["admin_teams"], queryFn: api.adminTeams, enabled: isAdmin });
+
+  const addTeamMutation = useMutation({
+    mutationFn: (teamId: number) => api.addTournamentTeam(selectedFromList!.id, teamId),
+    onSuccess: () => {
+      toast.success("Команда добавлена в турнир");
+      setShowAddTeam(false);
+      setAddTeamId("");
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Не удалось добавить команду"),
+  });
+
+  const removeRegMutation = useMutation({
+    mutationFn: (regId: number) => api.removeTournamentTeam(selectedFromList!.id, regId),
+    onSuccess: () => {
+      toast.success("Команда удалена из турнира");
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Не удалось удалить команду"),
+  });
+
   const isCreateDisabled =
     createMutation.isPending ||
     !createData.title.trim() ||
@@ -392,7 +416,36 @@ export default function TournamentPanel() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="rounded-xl border border-white/10 bg-[#0c1020]/55 p-3">
-                  <h4 className="font-semibold flex items-center gap-2 mb-3"><ShieldCheck className="w-4 h-4 text-[#00E5FF]" /> Регистрации</h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-[#00E5FF]" /> Регистрации</h4>
+                    {isAdmin && (
+                      <button className="text-xs rounded-md border border-[#00E5FF]/40 bg-[#00E5FF]/10 px-2 py-1 text-[#00E5FF] flex items-center gap-1" onClick={() => setShowAddTeam(!showAddTeam)}>
+                        {showAddTeam ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                        {showAddTeam ? "Отмена" : "Добавить"}
+                      </button>
+                    )}
+                  </div>
+                  {showAddTeam && isAdmin && (
+                    <div className="flex gap-2 mb-3">
+                      <select
+                        className="flex-1 h-9 rounded-lg bg-black/30 border border-white/10 px-2 text-sm"
+                        value={addTeamId}
+                        onChange={(e) => setAddTeamId(e.target.value ? Number(e.target.value) : "")}
+                      >
+                        <option value="">Выберите команду</option>
+                        {(teamsQuery.data || []).map((t) => (
+                          <option key={t.id} value={t.id}>{t.name} {t.tag ? `[${t.tag}]` : ""}</option>
+                        ))}
+                      </select>
+                      <button
+                        className="h-9 px-3 rounded-lg border border-[#58d68d]/40 bg-[#58d68d]/10 text-[#58d68d] text-xs"
+                        disabled={!addTeamId || addTeamMutation.isPending}
+                        onClick={() => addTeamId && addTeamMutation.mutate(Number(addTeamId))}
+                      >
+                        Добавить
+                      </button>
+                    </div>
+                  )}
                   <div className="space-y-2 max-h-64 overflow-auto pr-1">
                     {(detailsQuery.data?.registrations || []).map((reg) => (
                       <div key={reg.id} className="rounded-lg border border-white/10 bg-black/25 p-2.5">
@@ -401,11 +454,18 @@ export default function TournamentPanel() {
                             <p className="text-sm font-semibold text-white">{reg.team_name}</p>
                             <p className="text-[11px] text-slate-400">{formatRegistrationStatus(reg.status)} • {fmtDate(reg.created_at)}</p>
                           </div>
-                          {isAdmin && reg.status === "pending" ? (
-                            <button className="text-xs rounded-md border border-[#58d68d]/40 bg-[#58d68d]/10 px-2 py-1 text-[#58d68d]" onClick={() => approveMutation.mutate({ tournamentId: selectedFromList.id, registrationId: reg.id })}>
-                              Подтвердить
-                            </button>
-                          ) : null}
+                          <div className="flex items-center gap-1.5">
+                            {isAdmin && reg.status === "pending" && (
+                              <button className="text-xs rounded-md border border-[#58d68d]/40 bg-[#58d68d]/10 px-2 py-1 text-[#58d68d]" onClick={() => approveMutation.mutate({ tournamentId: selectedFromList.id, registrationId: reg.id })}>
+                                Подтвердить
+                              </button>
+                            )}
+                            {isAdmin && (
+                              <button className="rounded-md border border-rose-500/40 bg-rose-500/10 p-1.5 text-rose-400 hover:bg-rose-500/20" onClick={() => removeRegMutation.mutate(reg.id)} disabled={removeRegMutation.isPending}>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}

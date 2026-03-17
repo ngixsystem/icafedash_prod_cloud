@@ -450,6 +450,8 @@ export const api = {
     updateTournament: (tournamentId: number, data: Partial<Tournament>) =>
         put<{ message: string; tournament: Tournament }>(`/admin/tournaments/${tournamentId}`, data),
     deleteTournament: (tournamentId: number) => del<{ message: string }>(`/admin/tournaments/${tournamentId}`),
+    addTournamentTeam: (tournamentId: number, teamId: number) => post<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations`, { team_id: teamId }),
+    removeTournamentTeam: (tournamentId: number, registrationId: number) => del<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations/${registrationId}`),
     adminTeams: () => get<Team[]>("/admin/teams"),
     createTeam: (data: { name: string; tag?: string }) => post<{ message: string; team: Team }>("/admin/teams", data),
     updateTeam: (teamId: number, data: { name?: string; tag?: string }) => put<{ message: string; team: Team }>(`/admin/teams/${teamId}`, data),

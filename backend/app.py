@@ -2421,6 +2421,43 @@ def admin_approve_tournament_registration(tournament_id, registration_id):
     return jsonify({"message": "Registration approved"})
 
 
+@app.post("/api/admin/tournaments/<int:tournament_id>/registrations")
+@admin_required
+def admin_add_tournament_registration(tournament_id):
+    tournament = Tournament.query.get_or_404(tournament_id)
+    data = request.get_json(force=True) or {}
+    team_id = data.get("team_id")
+    if not team_id:
+        return jsonify({"message": "team_id is required"}), 400
+    team = Team.query.get(team_id)
+    if not team:
+        return jsonify({"message": "Команда не найдена"}), 404
+    existing = TournamentRegistration.query.filter_by(tournament_id=tournament.id, team_id=team.id).first()
+    if existing:
+        return jsonify({"message": "Команда уже зарегистрирована"}), 409
+    user = get_current_user_from_jwt()
+    reg = TournamentRegistration(
+        tournament_id=tournament.id,
+        team_id=team.id,
+        status="approved",
+        registered_by_user_id=user.id if user else 1,
+    )
+    db.session.add(reg)
+    db.session.commit()
+    return jsonify({"message": "Команда добавлена в турнир"}), 201
+
+
+@app.delete("/api/admin/tournaments/<int:tournament_id>/registrations/<int:registration_id>")
+@admin_required
+def admin_remove_tournament_registration(tournament_id, registration_id):
+    reg = TournamentRegistration.query.filter_by(id=registration_id, tournament_id=tournament_id).first()
+    if not reg:
+        return jsonify({"message": "Регистрация не найдена"}), 404
+    db.session.delete(reg)
+    db.session.commit()
+    return jsonify({"message": "Команда удалена из турнира"})
+
+
 @app.post("/api/admin/tournaments/<int:tournament_id>/generate-bracket")
 @admin_required
 def admin_generate_bracket(tournament_id):
