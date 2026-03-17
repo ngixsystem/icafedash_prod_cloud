@@ -243,6 +243,7 @@ export default function TournamentDetailsPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const { data: selected, isLoading, isError } = usePublicTournamentDetails(tournamentId);
   const [selectedPlayer, setSelectedPlayer] = useState<TournamentMember | null>(null);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   if (isLoading) {
     return (
@@ -286,9 +287,26 @@ export default function TournamentDetailsPage() {
             {selected.prize_pool || "Приз не указан"}
           </span>
         </div>
-        <div className="text-sm leading-relaxed text-[#B5BAC1] prose prose-invert prose-sm max-w-none">
-          <Markdown>{selected.description || "Описание пока не добавлено."}</Markdown>
-        </div>
+        {(() => {
+          const desc = selected.description || "Описание пока не добавлено.";
+          const isLong = desc.length > 150;
+          const shown = !descExpanded && isLong ? desc.slice(0, 150) + "…" : desc;
+          return (
+            <>
+              <div className={`text-sm leading-relaxed text-[#B5BAC1] prose prose-invert prose-sm max-w-none ${!descExpanded && isLong ? "line-clamp-4" : ""}`}>
+                <Markdown>{shown}</Markdown>
+              </div>
+              {isLong && (
+                <button
+                  onClick={() => setDescExpanded(!descExpanded)}
+                  className="mt-2 text-xs text-[#FF7800] font-medium hover:underline"
+                >
+                  {descExpanded ? "Свернуть" : "Читать дальше"}
+                </button>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* Info */}
