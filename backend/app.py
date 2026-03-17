@@ -3011,6 +3011,193 @@ def public_profile_unlink_faceit():
     })
 
 
+@app.get("/api/public/profile/faceit/stats")
+@jwt_required()
+def public_profile_faceit_stats():
+    """Fetch lifetime CS2 stats from FACEIT Data API v4."""
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if not user.faceit_id:
+        return jsonify({"message": "FACEIT not linked"}), 400
+    if not FACEIT_DATA_API_KEY:
+        return jsonify({"message": "FACEIT API key not configured"}), 500
+
+    headers = {"Authorization": f"Bearer {FACEIT_DATA_API_KEY}", "User-Agent": "Mozilla/5.0"}
+    try:
+        resp = requests.get(
+            f"https://open.faceit.com/data/v4/players/{user.faceit_id}/stats/cs2",
+            headers=headers, timeout=10,
+        )
+        if resp.status_code == 404:
+            resp = requests.get(
+                f"https://open.faceit.com/data/v4/players/{user.faceit_id}/stats/csgo",
+                headers=headers, timeout=10,
+            )
+        if not resp.ok:
+            app.logger.warning(f"FACEIT stats API failed: {resp.status_code} {resp.text[:200]}")
+            return jsonify({"message": "Failed to fetch FACEIT stats"}), 502
+
+        data = resp.json()
+        lifetime = data.get("lifetime", {})
+        segments = data.get("segments", [])
+
+        maps = []
+        for seg in segments:
+            if seg.get("type") == "Map":
+                s = seg.get("stats", {})
+                maps.append({
+                    "name": seg.get("label", "Unknown"),
+                    "img_regular": seg.get("img_regular", ""),
+                    "matches": s.get("Matches", "0"),
+                    "wins": s.get("Wins", "0"),
+                    "win_rate": s.get("Win Rate %", "0"),
+                    "avg_kills": s.get("Average Kills", "0"),
+                    "avg_deaths": s.get("Average Deaths", "0"),
+                    "avg_kd": s.get("Average K/D Ratio", "0"),
+                    "avg_headshots": s.get("Average Headshots %", "0"),
+                })
+
+        return jsonify({
+            "lifetime": {
+                "matches": lifetime.get("Matches", "0"),
+                "wins": lifetime.get("Wins", "0"),
+                "win_rate": lifetime.get("Win Rate %", "0"),
+                "kd_ratio": lifetime.get("Average K/D Ratio", "0"),
+                "headshots": lifetime.get("Average Headshots %", "0"),
+                "longest_win_streak": lifetime.get("Longest Win Streak", "0"),
+                "current_win_streak": lifetime.get("Current Win Streak", "0"),
+            },
+            "maps": sorted(maps, key=lambda m: int(m["matches"]), reverse=True),
+        })
+    except requests.exceptions.RequestException as e:
+        app.logger.warning(f"FACEIT stats request error: {e}")
+        return jsonify({"message": "Connection error"}), 502
+
+
+@app.get("/api/public/profile/faceit/history")
+@jwt_required()
+def public_profile_faceit_history():
+    """Fetch recent match history with per-match stats from FACEIT Data API v4."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if not user.faceit_id:
+        return jsonify({"message": "FACEIT not linked"}), 400
+    if not FACEIT_DATA_API_KEY:
+        return jsonify({"message": "FACEIT API key not configured"}), 500
+
+    limit = min(int(request.args.get("limit", 20)), 50)
+    offset = int(request.args.get("offset", 0))
+    headers = {"Authorization": f"Bearer {FACEIT_DATA_API_KEY}", "User-Agent": "Mozilla/5.0"}
+    faceit_id = user.faceit_id
+
+    try:
+        resp = requests.get(
+            f"https://open.faceit.com/data/v4/players/{faceit_id}/history",
+            params={"game": "cs2", "offset": offset, "limit": limit},
+            headers=headers, timeout=10,
+        )
+        if resp.status_code == 404 or (resp.ok and not resp.json().get("items")):
+            resp = requests.get(
+                f"https://open.faceit.com/data/v4/players/{faceit_id}/history",
+                params={"game": "csgo", "offset": offset, "limit": limit},
+                headers=headers, timeout=10,
+            )
+        if not resp.ok:
+            return jsonify({"message": "Failed to fetch match history"}), 502
+
+        items = resp.json().get("items", [])
+
+        # Build basic match data first
+        matches_by_id = {}
+        for item in items:
+            match_id = item.get("match_id", "")
+            teams = item.get("teams", {})
+            player_team = None
+            for team_key, team_data in teams.items():
+                if any(p.get("player_id") == faceit_id for p in team_data.get("players", [])):
+                    player_team = team_key
+                    break
+
+            results = item.get("results", {})
+            winner = results.get("winner")
+            is_win = (player_team == winner) if player_team and winner else None
+
+            score = results.get("score", {})
+            s1, s2 = score.get("faction1", 0), score.get("faction2", 0)
+            score_str = f"{s1}:{s2}" if player_team == "faction1" else f"{s2}:{s1}"
+
+            team_name = teams.get(player_team, {}).get("nickname", "") if player_team else ""
+            opp_key = "faction2" if player_team == "faction1" else "faction1"
+            opp_name = teams.get(opp_key, {}).get("nickname", "") if player_team else ""
+
+            voting = item.get("voting") or {}
+            map_pick = None
+            if voting.get("map", {}).get("pick"):
+                picks = voting["map"]["pick"]
+                map_pick = picks[0] if isinstance(picks, list) and picks else picks if isinstance(picks, str) else None
+
+            matches_by_id[match_id] = {
+                "match_id": match_id,
+                "map": map_pick,
+                "started_at": item.get("started_at"),
+                "finished_at": item.get("finished_at"),
+                "is_win": is_win,
+                "score": score_str,
+                "team_name": team_name,
+                "opponent_name": opp_name,
+                "stats": None,
+            }
+
+        # Fetch per-match stats in parallel
+        def fetch_match_stats(mid):
+            try:
+                r = requests.get(
+                    f"https://open.faceit.com/data/v4/matches/{mid}/stats",
+                    headers=headers, timeout=8,
+                )
+                if r.ok:
+                    return mid, r.json()
+            except Exception:
+                pass
+            return mid, None
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(fetch_match_stats, mid): mid for mid in matches_by_id}
+            for future in as_completed(futures):
+                mid, stats_data = future.result()
+                if not stats_data:
+                    continue
+                entry = matches_by_id[mid]
+                for rd in stats_data.get("rounds", []):
+                    if not entry["map"]:
+                        entry["map"] = rd.get("round_stats", {}).get("Map")
+                    for team in rd.get("teams", []):
+                        for player in team.get("players", []):
+                            if player.get("player_id") == faceit_id:
+                                ps = player.get("player_stats", {})
+                                entry["stats"] = {
+                                    "kills": ps.get("Kills", "0"),
+                                    "deaths": ps.get("Deaths", "0"),
+                                    "assists": ps.get("Assists", "0"),
+                                    "kd": ps.get("K/D Ratio", "0"),
+                                    "headshots_pct": ps.get("Headshots %", "0"),
+                                    "mvps": ps.get("MVPs", "0"),
+                                }
+
+        # Return in original order
+        matches = [matches_by_id[item.get("match_id", "")] for item in items if item.get("match_id") in matches_by_id]
+        return jsonify({"matches": matches})
+    except requests.exceptions.RequestException as e:
+        app.logger.warning(f"FACEIT history request error: {e}")
+        return jsonify({"message": "Connection error"}), 502
+
+
 @app.post("/api/public/profile/faceit/link")
 @jwt_required()
 def public_profile_link_faceit():
