@@ -1990,6 +1990,7 @@ def public_tournament_details(tournament_id):
             "team_id": reg.team_id,
             "team_name": team.name if team else "Unknown",
             "team_tag": team.tag if team else None,
+            "team_logo_url": (team.logo_url or "") if team else "",
             "status": reg.status,
             "created_at": reg.created_at.isoformat() if reg.created_at else None,
             "members": members,

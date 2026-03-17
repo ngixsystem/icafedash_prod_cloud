@@ -159,11 +159,10 @@ function StatCard({ icon, label, value, color }: { icon: ReactNode; label: strin
 /* ── Team accordion ──────────────────────────────────────────── */
 
 function TeamCard({ reg, onPlayerClick }: {
-  reg: { team_name: string; team_tag: string | null; status: string; members: TournamentMember[] };
+  reg: { team_name: string; team_tag: string | null; team_logo_url?: string; status: string; members: TournamentMember[] };
   onPlayerClick: (m: TournamentMember) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const st = STATUS_COLORS[reg.status] || STATUS_COLORS.pending;
 
   return (
     <div className="rounded-xl border border-[#25272B] bg-[#16181C] overflow-hidden">
@@ -172,8 +171,12 @@ function TeamCard({ reg, onPlayerClick }: {
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-[#FF7800]/10 border border-[#FF7800]/20 flex items-center justify-center text-[11px] font-bold text-[#FF7800] shrink-0">
-            {reg.team_tag?.slice(0, 3) || reg.team_name.slice(0, 2).toUpperCase()}
+          <div className="w-9 h-9 rounded-lg bg-[#FF7800]/10 border border-[#FF7800]/20 flex items-center justify-center text-[11px] font-bold text-[#FF7800] shrink-0 overflow-hidden">
+            {reg.team_logo_url ? (
+              <img src={reg.team_logo_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              reg.team_tag?.slice(0, 3) || reg.team_name.slice(0, 2).toUpperCase()
+            )}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">

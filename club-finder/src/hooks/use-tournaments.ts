@@ -37,6 +37,7 @@ export interface PublicTournamentDetails extends PublicTournament {
     team_id: number;
     team_name: string;
     team_tag: string | null;
+    team_logo_url: string;
     status: string;
     created_at: string | null;
     members: TournamentMember[];
