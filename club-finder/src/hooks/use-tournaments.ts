@@ -20,13 +20,25 @@ export interface PublicTournament {
   registered_teams: number;
 }
 
+export interface TournamentMember {
+  id: number;
+  username: string;
+  avatar_url: string;
+  role_in_team: string;
+  faceit_id: string | null;
+  faceit_elo: number | null;
+  faceit_level: number | null;
+}
+
 export interface PublicTournamentDetails extends PublicTournament {
   registrations: Array<{
     id: number;
     team_id: number;
     team_name: string;
+    team_tag: string | null;
     status: string;
     created_at: string | null;
+    members: TournamentMember[];
   }>;
 }
 

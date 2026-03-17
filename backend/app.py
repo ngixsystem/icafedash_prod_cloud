@@ -1944,16 +1944,43 @@ def public_tournaments():
 def public_tournament_details(tournament_id):
     item = Tournament.query.get_or_404(tournament_id)
     data = serialize_tournament(item)
-    data["registrations"] = [
-        {
+    data["registrations"] = []
+    for reg in item.registrations:
+        team = reg.team
+        members = []
+        if team:
+            for m in team.members:
+                u = m.user
+                members.append({
+                    "id": u.id,
+                    "username": u.username,
+                    "avatar_url": u.avatar_url or "",
+                    "role_in_team": m.role_in_team,
+                    "faceit_id": u.faceit_id,
+                    "faceit_elo": u.faceit_elo,
+                    "faceit_level": u.faceit_level,
+                })
+            # Also add captain if not already in members
+            if team.captain and not any(m.user_id == team.captain_user_id for m in team.members):
+                cap = team.captain
+                members.insert(0, {
+                    "id": cap.id,
+                    "username": cap.username,
+                    "avatar_url": cap.avatar_url or "",
+                    "role_in_team": "captain",
+                    "faceit_id": cap.faceit_id,
+                    "faceit_elo": cap.faceit_elo,
+                    "faceit_level": cap.faceit_level,
+                })
+        data["registrations"].append({
             "id": reg.id,
             "team_id": reg.team_id,
-            "team_name": reg.team.name if reg.team else "Unknown",
+            "team_name": team.name if team else "Unknown",
+            "team_tag": team.tag if team else None,
             "status": reg.status,
             "created_at": reg.created_at.isoformat() if reg.created_at else None,
-        }
-        for reg in item.registrations
-    ]
+            "members": members,
+        })
     return jsonify(data)
 
 
@@ -3220,6 +3247,76 @@ def public_profile_faceit_history():
         return jsonify({"matches": matches})
     except requests.exceptions.RequestException as e:
         app.logger.warning(f"FACEIT history request error: {e}")
+        return jsonify({"message": "Connection error"}), 502
+
+
+@app.get("/api/public/players/<int:user_id>/faceit-stats")
+def public_player_faceit_stats(user_id):
+    """Public endpoint: fetch FACEIT lifetime stats for any player by user ID."""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    if not user.faceit_id:
+        return jsonify({"message": "FACEIT not linked"}), 400
+    if not FACEIT_DATA_API_KEY:
+        return jsonify({"message": "FACEIT API key not configured"}), 500
+
+    headers = {"Authorization": f"Bearer {FACEIT_DATA_API_KEY}", "User-Agent": "Mozilla/5.0"}
+    try:
+        resp = requests.get(
+            f"https://open.faceit.com/data/v4/players/{user.faceit_id}/stats/cs2",
+            headers=headers, timeout=10,
+        )
+        if resp.status_code == 404:
+            resp = requests.get(
+                f"https://open.faceit.com/data/v4/players/{user.faceit_id}/stats/csgo",
+                headers=headers, timeout=10,
+            )
+        if not resp.ok:
+            return jsonify({"message": "Failed to fetch FACEIT stats"}), 502
+
+        data = resp.json()
+        lifetime = data.get("lifetime", {})
+        segments = data.get("segments", [])
+
+        maps = []
+        for seg in segments:
+            if seg.get("type") == "Map":
+                s = seg.get("stats", {})
+                maps.append({
+                    "name": seg.get("label", "Unknown"),
+                    "img_regular": seg.get("img_regular", ""),
+                    "matches": s.get("Matches", "0"),
+                    "wins": s.get("Wins", "0"),
+                    "win_rate": s.get("Win Rate %", "0"),
+                    "avg_kills": s.get("Average Kills", "0"),
+                    "avg_deaths": s.get("Average Deaths", "0"),
+                    "avg_kd": s.get("Average K/D Ratio", "0"),
+                    "avg_headshots": s.get("Average Headshots %", "0"),
+                })
+
+        return jsonify({
+            "player": {
+                "id": user.id,
+                "username": user.username,
+                "avatar_url": user.avatar_url or "",
+                "faceit_id": user.faceit_id,
+                "faceit_elo": user.faceit_elo,
+                "faceit_level": user.faceit_level,
+            },
+            "lifetime": {
+                "matches": lifetime.get("Matches", "0"),
+                "wins": lifetime.get("Wins", "0"),
+                "win_rate": lifetime.get("Win Rate %", "0"),
+                "kd_ratio": lifetime.get("Average K/D Ratio", "0"),
+                "headshots": lifetime.get("Average Headshots %", "0"),
+                "longest_win_streak": lifetime.get("Longest Win Streak", "0"),
+                "current_win_streak": lifetime.get("Current Win Streak", "0"),
+            },
+            "maps": sorted(maps, key=lambda m: int(m["matches"]), reverse=True),
+        })
+    except requests.exceptions.RequestException as e:
+        app.logger.warning(f"FACEIT player stats error: {e}")
         return jsonify({"message": "Connection error"}), 502
 
 

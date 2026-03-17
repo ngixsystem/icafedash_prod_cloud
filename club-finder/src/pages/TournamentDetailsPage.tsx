@@ -1,19 +1,21 @@
-import { ArrowLeft, CalendarDays, Medal, MapPin, ScrollText, Timer, Trophy, Users } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeft, CalendarDays, ChevronDown, ChevronUp, Crosshair, Crown, Loader2,
+  MapPin, Medal, ScrollText, Swords, Target, Timer, Trophy, Users, X,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { usePublicTournamentDetails } from "@/hooks/use-tournaments";
+import { usePublicTournamentDetails, type TournamentMember } from "@/hooks/use-tournaments";
+import { FaceitLevelIcon } from "@/components/FaceitLevelIcon";
+
+/* ── helpers ─────────────────────────────────────────────────── */
 
 function formatDate(value: string | null) {
   if (!value) return "Не указано";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Не указано";
-  return date.toLocaleString("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return date.toLocaleString("ru-RU", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 function formatTeams(teamFormat: string, maxTeams: number) {
@@ -22,16 +24,212 @@ function formatTeams(teamFormat: string, maxTeams: number) {
   return `${base} • ${teams}`;
 }
 
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  approved: { bg: "bg-emerald-500/15", text: "text-emerald-400" },
+  pending: { bg: "bg-amber-500/15", text: "text-amber-400" },
+  rejected: { bg: "bg-red-500/15", text: "text-red-400" },
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  approved: "Подтверждена",
+  pending: "На рассмотрении",
+  rejected: "Отклонена",
+};
+
+/* ── Player profile modal (FACEIT stats) ─────────────────────── */
+
+function PlayerModal({ member, onClose }: { member: TournamentMember; onClose: () => void }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["player_faceit_stats", member.id],
+    queryFn: async () => {
+      const resp = await fetch(`/api/public/players/${member.id}/faceit-stats`);
+      if (!resp.ok) throw new Error("Failed");
+      return resp.json();
+    },
+    enabled: !!member.faceit_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const lifetime = data?.lifetime;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={onClose}>
+      <div
+        className="relative w-full max-w-sm rounded-2xl border border-[#2F3136] bg-[#0e1015] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative p-5 pb-4 border-b border-white/5 bg-gradient-to-b from-[#FF7800]/5 to-transparent">
+          <button onClick={onClose} className="absolute top-3 right-3 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF7800] to-[#FF5500] p-[2px] shrink-0">
+              <div className="w-full h-full rounded-full bg-[#0e1015] overflow-hidden flex items-center justify-center">
+                {member.avatar_url ? (
+                  <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg font-bold uppercase text-white/60">{member.username[0]}</span>
+                )}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg font-display font-bold text-white truncate">{member.username}</h3>
+              <div className="flex items-center gap-2 mt-0.5">
+                {member.faceit_level != null && (
+                  <FaceitLevelIcon level={member.faceit_level} elo={member.faceit_elo} size={20} />
+                )}
+                {member.faceit_elo != null && (
+                  <span className="text-xs font-bold text-[#FF7800]">{member.faceit_elo} ELO</span>
+                )}
+                {!member.faceit_id && <span className="text-xs text-slate-500">FACEIT не привязан</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-4">
+          {!member.faceit_id ? (
+            <p className="text-sm text-slate-500 text-center py-4">У игрока не привязан FACEIT аккаунт</p>
+          ) : isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-[#FF7800]" />
+            </div>
+          ) : isError || !lifetime ? (
+            <p className="text-sm text-slate-500 text-center py-4">Не удалось загрузить статистику</p>
+          ) : (
+            <>
+              <h4 className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">CS2 Статистика</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <StatCard icon={<Swords className="w-4 h-4" />} label="Матчей" value={lifetime.matches} color="#FF7800" />
+                <StatCard icon={<Trophy className="w-4 h-4" />} label="Винрейт" value={`${lifetime.win_rate}%`} color="#22c55e" />
+                <StatCard icon={<Crosshair className="w-4 h-4" />} label="K/D" value={lifetime.kd_ratio} color="#3b82f6" />
+                <StatCard icon={<Target className="w-4 h-4" />} label="HS %" value={`${lifetime.headshots}%`} color="#a855f7" />
+              </div>
+
+              {data.maps?.length > 0 && (
+                <>
+                  <h4 className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-4 mb-2">Топ карты</h4>
+                  <div className="space-y-1.5">
+                    {data.maps.slice(0, 3).map((m: any) => (
+                      <div key={m.name} className="flex items-center justify-between rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2 text-xs">
+                        <span className="text-white font-medium">{m.name}</span>
+                        <div className="flex items-center gap-3 text-slate-400">
+                          <span>{m.matches} матчей</span>
+                          <span className="text-emerald-400">{m.win_rate}% WR</span>
+                          <span className="text-blue-400">{m.avg_kd} K/D</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, color }: { icon: ReactNode; label: string; value: string; color: string }) {
+  return (
+    <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3 flex items-center gap-2.5">
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}15`, color }}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-[11px] text-slate-500">{label}</p>
+        <p className="text-sm font-bold text-white">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Team accordion ──────────────────────────────────────────── */
+
+function TeamCard({ reg, onPlayerClick }: {
+  reg: { team_name: string; team_tag: string | null; status: string; members: TournamentMember[] };
+  onPlayerClick: (m: TournamentMember) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const st = STATUS_COLORS[reg.status] || STATUS_COLORS.pending;
+
+  return (
+    <div className="rounded-xl border border-[#25272B] bg-[#16181C] overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-[#FF7800]/10 border border-[#FF7800]/20 flex items-center justify-center text-[11px] font-bold text-[#FF7800] shrink-0">
+            {reg.team_tag?.slice(0, 3) || reg.team_name.slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white truncate">
+              {reg.team_name} {reg.team_tag && <span className="text-slate-500 font-normal">[{reg.team_tag}]</span>}
+            </p>
+            <p className="text-[11px] text-slate-500">{reg.members.length} участник(ов)</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${st.bg} ${st.text}`}>
+            {STATUS_LABELS[reg.status] || reg.status}
+          </span>
+          {open ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+        </div>
+      </button>
+
+      {open && reg.members.length > 0 && (
+        <div className="border-t border-white/5 divide-y divide-white/5">
+          {reg.members.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => onPlayerClick(m)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.03] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/5 overflow-hidden flex items-center justify-center shrink-0">
+                {m.avatar_url ? (
+                  <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs font-bold uppercase text-white/40">{m.username[0]}</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-white truncate">{m.username}</span>
+                  {m.role_in_team === "captain" && <Crown className="w-3.5 h-3.5 text-[#FF9A2F] shrink-0" />}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {m.faceit_level != null && <FaceitLevelIcon level={m.faceit_level} elo={m.faceit_elo} size={18} />}
+                {m.faceit_elo != null && <span className="text-[11px] font-bold text-[#FF7800]">{m.faceit_elo}</span>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {open && reg.members.length === 0 && (
+        <div className="border-t border-white/5 px-4 py-3">
+          <p className="text-xs text-slate-500 text-center">Нет участников</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main page ───────────────────────────────────────────────── */
+
 export default function TournamentDetailsPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const { data: selected, isLoading, isError } = usePublicTournamentDetails(tournamentId);
+  const [selectedPlayer, setSelectedPlayer] = useState<TournamentMember | null>(null);
 
   if (isLoading) {
     return (
       <div className="min-h-screen px-5 pt-7 pb-28">
         <Link to="/tournaments" className="inline-flex items-center gap-2 text-sm text-[#C4CAD2]">
-          <ArrowLeft className="h-4 w-4" />
-          Назад к турнирам
+          <ArrowLeft className="h-4 w-4" /> Назад к турнирам
         </Link>
         <p className="mt-5 text-[#949BA4]">Загрузка турнира...</p>
       </div>
@@ -42,21 +240,22 @@ export default function TournamentDetailsPage() {
     return (
       <div className="min-h-screen px-5 pt-7 pb-28">
         <Link to="/tournaments" className="inline-flex items-center gap-2 text-sm text-[#C4CAD2]">
-          <ArrowLeft className="h-4 w-4" />
-          Назад к турнирам
+          <ArrowLeft className="h-4 w-4" /> Назад к турнирам
         </Link>
         <p className="mt-5 text-[#949BA4]">Турнир не найден.</p>
       </div>
     );
   }
 
+  const regs = selected.registrations || [];
+
   return (
     <div className="min-h-screen px-5 pt-7 pb-28">
       <Link to="/tournaments" className="mb-4 inline-flex items-center gap-2 text-sm text-[#C4CAD2]">
-        <ArrowLeft className="h-4 w-4" />
-        Назад
+        <ArrowLeft className="h-4 w-4" /> Назад
       </Link>
 
+      {/* Title card */}
       <div className="mb-5 rounded-2xl border border-[#2F3136] bg-[linear-gradient(145deg,#1A1B1F_0%,#101010_100%)] p-4">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
@@ -68,13 +267,12 @@ export default function TournamentDetailsPage() {
             {selected.prize_pool || "Приз не указан"}
           </span>
         </div>
-
         <p className="text-sm leading-relaxed text-[#B5BAC1]">{selected.description || "Описание пока не добавлено."}</p>
       </div>
 
+      {/* Info */}
       <section className="mb-4 rounded-2xl border border-[#2F3136] bg-[#121315] p-4">
         <h2 className="mb-3 font-display text-[24px] leading-none">Информация</h2>
-
         <div className="space-y-2.5 text-sm text-[#B5BAC1]">
           <InfoRow icon={<CalendarDays className="h-4 w-4 text-[#FF7800]" />} label="Дата" value={formatDate(selected.starts_at)} />
           <InfoRow icon={<Users className="h-4 w-4 text-[#FF7800]" />} label="Формат" value={formatTeams(selected.team_format, selected.max_teams)} />
@@ -86,10 +284,26 @@ export default function TournamentDetailsPage() {
         </div>
       </section>
 
+      {/* Registered teams */}
       <section className="rounded-2xl border border-[#2F3136] bg-[#121315] p-4">
-        <h2 className="mb-3 font-display text-[24px] leading-none">Статус регистрации</h2>
-        <InfoRow icon={<Users className="h-4 w-4 text-[#FF7800]" />} label="Команд" value={`${selected.registered_teams}/${selected.max_teams}`} />
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display text-[24px] leading-none">Команды</h2>
+          <span className="text-sm text-[#FF7800] font-bold">{regs.length}/{selected.max_teams}</span>
+        </div>
+
+        {regs.length === 0 ? (
+          <p className="text-sm text-slate-500 text-center py-4">Пока нет зарегистрированных команд</p>
+        ) : (
+          <div className="space-y-2">
+            {regs.map((reg) => (
+              <TeamCard key={reg.id} reg={reg} onPlayerClick={setSelectedPlayer} />
+            ))}
+          </div>
+        )}
       </section>
+
+      {/* Player modal */}
+      {selectedPlayer && <PlayerModal member={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
     </div>
   );
 }
