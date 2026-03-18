@@ -1,4 +1,4 @@
-import { Trophy, Users, ChevronRight } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePublicTournaments } from "@/hooks/use-tournaments";
 
@@ -30,7 +30,7 @@ export default function TournamentsPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {isLoading ? (
           <div className="rounded-2xl border border-[#2F3136] bg-[#121315] p-4 text-sm text-[#949BA4]">Загрузка турниров...</div>
         ) : isError ? (
@@ -42,50 +42,45 @@ export default function TournamentsPage() {
             <Link
               key={item.id}
               to={`/tournaments/details/${item.id}`}
-              className="group block rounded-2xl border border-[#2F3136] bg-[#121315] overflow-hidden transition-colors hover:border-[#3A3E45] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7800]/50"
+              className="group block rounded-2xl border border-[#2F3136] bg-[#121315] p-4 transition-colors hover:border-[#3A3E45]"
             >
-              {/* Header with logo and title */}
-              <div className="flex items-center gap-3 p-4 pb-3">
+              {/* Top: logo + title */}
+              <div className="flex items-center gap-3 mb-3">
                 {item.logo_url ? (
-                  <img src={item.logo_url} alt="" className="w-12 h-12 rounded-xl object-cover border border-[#2F3136] flex-shrink-0" />
+                  <img src={item.logo_url} alt="" className="w-11 h-11 rounded-xl object-cover border border-[#2F3136] flex-shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-[#1A1B1F] border border-[#2F3136] flex items-center justify-center flex-shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-[#1A1B1F] border border-[#2F3136] flex items-center justify-center flex-shrink-0">
                     <Trophy className="w-5 h-5 text-[#FF7800]" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-lg leading-tight text-white truncate">{item.title}</h3>
-                  <p className="text-xs text-[#949BA4] mt-0.5 uppercase tracking-wide">{item.game}</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-[#949BA4] flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
-              </div>
-
-              {/* Info row */}
-              <div className="grid grid-cols-3 border-t border-[#2F3136] divide-x divide-[#2F3136]">
-                <div className="px-3 py-2.5 text-center">
-                  <p className="text-[10px] text-[#949BA4] uppercase tracking-wider">Начало</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{formatRelativeDate(item.starts_at)}</p>
-                </div>
-                <div className="px-3 py-2.5 text-center">
-                  <p className="text-[10px] text-[#949BA4] uppercase tracking-wider">Режим</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{item.team_format || "-"}</p>
-                </div>
-                <div className="px-3 py-2.5 text-center">
-                  <p className="text-[10px] text-[#949BA4] uppercase tracking-wider">Регионы</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{item.region || "-"}</p>
+                  <h3 className="font-semibold text-[15px] leading-tight text-white truncate">{item.title}</h3>
+                  <p className="text-xs text-[#949BA4] mt-0.5">{item.game}</p>
                 </div>
               </div>
 
-              {/* Bottom row: participants + prize */}
-              <div className="grid grid-cols-2 border-t border-[#2F3136] divide-x divide-[#2F3136]">
-                <div className="flex items-center justify-center gap-1.5 px-3 py-2.5">
-                  <Users className="w-3.5 h-3.5 text-[#949BA4]" />
-                  <span className="text-sm text-white font-semibold">{item.registered_teams} / {item.max_teams}</span>
+              {/* Middle: info row */}
+              <div className="flex items-baseline gap-6 text-xs text-[#949BA4] mb-3">
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider mb-0.5">Начало</span>
+                  <span className="text-sm font-semibold text-white">{formatRelativeDate(item.starts_at)}</span>
                 </div>
-                <div className="flex items-center justify-center gap-1.5 px-3 py-2.5">
-                  <span className="text-sm text-[#FF9A2F] font-semibold">Призовой фонд</span>
-                  <span className="text-sm text-white font-bold">${item.prize_pool || "0"}</span>
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider mb-0.5">Режим</span>
+                  <span className="text-sm font-semibold text-white">{item.team_format || "-"}</span>
                 </div>
+                {item.region && (
+                  <div>
+                    <span className="block text-[10px] uppercase tracking-wider mb-0.5">Регионы</span>
+                    <span className="text-sm font-semibold text-white">{item.region}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom: participants + prize */}
+              <div className="flex items-center gap-6 text-sm">
+                <span className="text-[#949BA4]">Участники <span className="font-semibold text-white">{item.registered_teams} / {item.max_teams}</span></span>
+                <span className="text-[#949BA4]">Призовой фонд <span className="font-semibold text-white">{item.prize_pool || "0"}</span></span>
               </div>
             </Link>
           ))
