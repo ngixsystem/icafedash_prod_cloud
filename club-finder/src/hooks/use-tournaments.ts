@@ -18,6 +18,7 @@ export interface PublicTournament {
   faceit_championship_id: string;
   region: string;
   logo_url: string;
+  banner_url: string | null;
   created_by_user_id: number;
   created_at: string | null;
   updated_at: string | null;

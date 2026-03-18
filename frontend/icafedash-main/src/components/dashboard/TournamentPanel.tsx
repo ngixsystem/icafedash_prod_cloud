@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, ImagePlus, Medal, Pencil, Plus, RefreshCw, ShieldCheck, Swords, Trash2, X } from "lucide-react";
+import { Eye, Image, ImagePlus, Medal, Pencil, Plus, RefreshCw, ShieldCheck, Swords, Trash2, X } from "lucide-react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -298,6 +298,15 @@ export default function TournamentPanel() {
     onError: (e: any) => toast.error(e?.message || "Не удалось загрузить логотип"),
   });
 
+  const uploadBannerMutation = useMutation({
+    mutationFn: (file: File) => api.adminUploadTournamentBanner(selectedFromList!.id, file),
+    onSuccess: () => {
+      toast.success("Баннер загружен");
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Не удалось загрузить баннер"),
+  });
+
   const removeRegMutation = useMutation({
     mutationFn: (regId: number) => api.removeTournamentTeam(selectedFromList!.id, regId),
     onSuccess: () => {
@@ -384,6 +393,12 @@ export default function TournamentPanel() {
             <p className="text-slate-400">Турниров пока нет</p>
           ) : (
             <>
+              {selectedFromList.banner_url && (
+                <div className="mb-4 rounded-xl overflow-hidden border border-white/10">
+                  <img src={selectedFromList.banner_url} alt="" className="w-full aspect-[2340/600] object-cover" />
+                </div>
+              )}
+
               <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
                   {selectedFromList.logo_url ? (
@@ -496,6 +511,10 @@ export default function TournamentPanel() {
                     <label className="h-9 px-3 rounded-lg border border-[#6C5CE7]/40 bg-[#6C5CE7]/10 text-[#c7bbff] cursor-pointer inline-flex items-center gap-1.5">
                       <ImagePlus className="w-4 h-4" /> Логотип
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogoMutation.mutate(f); e.target.value = ""; }} />
+                    </label>
+                    <label className="h-9 px-3 rounded-lg border border-[#FF7800]/40 bg-[#FF7800]/10 text-[#FF9A2F] cursor-pointer inline-flex items-center gap-1.5">
+                      <Image className="w-4 h-4" /> Баннер
+                      <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBannerMutation.mutate(f); e.target.value = ""; }} />
                     </label>
                     <button className="h-9 px-3 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-400" onClick={() => deleteMutation.mutate(selectedFromList.id)} disabled={deleteMutation.isPending}>
                       Удалить турнир

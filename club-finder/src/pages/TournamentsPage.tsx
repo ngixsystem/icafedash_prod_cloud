@@ -49,10 +49,24 @@ export default function TournamentsPage() {
                 <div className="w-full h-full rounded-2xl bg-[#0D0E12]" />
               </div>
 
+              {/* Banner */}
+              {item.banner_url && (
+                <div className="relative w-full aspect-[2340/600] overflow-hidden">
+                  <img
+                    src={item.banner_url}
+                    alt=""
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D0E12] via-transparent to-transparent" />
+                </div>
+              )}
+
               {/* Card content */}
               <div className="relative p-4">
                 {/* Subtle glow accent */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF7800]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                {!item.banner_url && (
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF7800]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                )}
 
                 {/* Top: logo + title + prize badge */}
                 <div className="flex items-center gap-3 mb-4">

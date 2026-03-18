@@ -318,6 +318,7 @@ class Tournament(db.Model):
     faceit_championship_id = db.Column(db.String(100), nullable=True)
     region = db.Column(db.String(100), nullable=True)
     logo_url = db.Column(db.String(500), nullable=True)
+    banner_url = db.Column(db.String(500), nullable=True)
     created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -528,6 +529,8 @@ with app.app_context():
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN region VARCHAR(100) NULL", "Added region column to tournaments table")
             if 'logo_url' not in existing_tournament_columns:
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN logo_url VARCHAR(500) NULL", "Added logo_url column to tournaments table")
+            if 'banner_url' not in existing_tournament_columns:
+                _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN banner_url VARCHAR(500) NULL", "Added banner_url column to tournaments table")
 
     # Migration for teams
     if 'teams' in existing_tables:
@@ -1925,6 +1928,7 @@ def serialize_tournament(item: Tournament) -> dict:
         "faceit_championship_id": item.faceit_championship_id or "",
         "region": item.region or "",
         "logo_url": item.logo_url or "",
+        "banner_url": item.banner_url or "",
         "created_by_user_id": item.created_by_user_id,
         "created_at": item.created_at.isoformat() if item.created_at else None,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
@@ -2327,6 +2331,25 @@ def admin_upload_tournament_logo(tournament_id):
     tournament.logo_url = f"/api/uploads/{filename}"
     db.session.commit()
     return jsonify({"message": "Логотип загружен", "logo_url": tournament.logo_url})
+
+
+@app.post("/api/admin/tournaments/<int:tournament_id>/banner")
+@admin_required
+def admin_upload_tournament_banner(tournament_id):
+    tournament = Tournament.query.get_or_404(tournament_id)
+    if "file" not in request.files:
+        return jsonify({"message": "Файл не найден"}), 400
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"message": "Пустое имя файла"}), 400
+    ext = f.filename.rsplit(".", 1)[-1].lower() if "." in f.filename else ""
+    if ext not in ("png", "jpg", "jpeg", "webp", "gif"):
+        return jsonify({"message": "Неверный формат изображения"}), 400
+    filename = f"tournament_{tournament.id}_banner.{ext}"
+    f.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+    tournament.banner_url = f"/api/uploads/{filename}"
+    db.session.commit()
+    return jsonify({"message": "Баннер загружен", "banner_url": tournament.banner_url})
 
 
 @app.get("/api/captain/team/me")

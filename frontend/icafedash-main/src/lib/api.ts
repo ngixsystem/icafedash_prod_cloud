@@ -255,6 +255,7 @@ export interface Tournament {
     faceit_championship_id: string;
     region: string;
     logo_url: string;
+    banner_url: string;
     created_by_user_id: number;
     created_at: string | null;
     updated_at: string | null;
@@ -468,6 +469,17 @@ export const api = {
         });
         if (!res.ok) throw await toApiError(res);
         return res.json() as Promise<{ message: string; logo_url: string }>;
+    },
+    adminUploadTournamentBanner: async (tournamentId: number, file: File) => {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch(`${BASE}/admin/tournaments/${tournamentId}/banner`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${localStorage.getItem("icafe_token")}` },
+            body: form,
+        });
+        if (!res.ok) throw await toApiError(res);
+        return res.json() as Promise<{ message: string; banner_url: string }>;
     },
     adminTeams: () => get<Team[]>("/admin/teams"),
     createTeam: (data: { name: string; tag?: string }) => post<{ message: string; team: Team }>("/admin/teams", data),
