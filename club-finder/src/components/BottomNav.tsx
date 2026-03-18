@@ -1,6 +1,5 @@
-﻿import { Home, Map, User, Trophy } from "lucide-react";
+﻿import { Home, Map, User, BarChart3, Trophy } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import fragLogo from "@/assets/frag.png";
 
 const leftTabs = [
   { to: "/", icon: Home },
@@ -8,7 +7,7 @@ const leftTabs = [
 ];
 
 const rightTabs = [
-  { to: "/ratings", icon: Trophy },
+  { to: "/ratings", icon: BarChart3 },
   { to: "/profile", icon: User },
 ];
 
@@ -36,18 +35,13 @@ export default function BottomNav() {
           ))}
         </div>
 
-        <NavLink to="/tournaments" className="absolute left-1/2 -translate-x-1/2 -top-[22px]">
-          {({ isActive }) => (
-            <img
-              src={fragLogo}
-              alt="FRAG.GG"
-              className={`w-[74px] h-[74px] object-contain transition-all ${
-                isActive
-                  ? "scale-[1.02] drop-shadow-[0_0_12px_rgba(255,120,0,0.55)]"
-                  : "drop-shadow-[0_6px_16px_rgba(0,0,0,0.35)]"
-              }`}
-            />
-          )}
+        <NavLink
+          to="/tournaments"
+          className={({ isActive }) =>
+            `w-11 h-11 flex items-center justify-center transition-colors ${isActive ? "text-[#FF7800]" : "text-[#a5adba] hover:text-white"}`
+          }
+        >
+          <Trophy className="w-[21px] h-[21px]" />
         </NavLink>
 
         <div className="flex items-center gap-5">
