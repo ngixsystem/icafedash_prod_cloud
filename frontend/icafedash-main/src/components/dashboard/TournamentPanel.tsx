@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Medal, Pencil, Plus, RefreshCw, ShieldCheck, Swords, Trash2, X } from "lucide-react";
+import { Eye, ImagePlus, Medal, Pencil, Plus, RefreshCw, ShieldCheck, Swords, Trash2, X } from "lucide-react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -81,6 +81,7 @@ export default function TournamentPanel() {
     stream_url: "",
     description: "",
     faceit_championship_id: "",
+    region: "",
   });
   const [editData, setEditData] = useState({
     title: "",
@@ -97,6 +98,7 @@ export default function TournamentPanel() {
     stream_url: "",
     description: "",
     faceit_championship_id: "",
+    region: "",
   });
   const [editDescPreview, setEditDescPreview] = useState(false);
   const [createDescPreview, setCreateDescPreview] = useState(false);
@@ -126,6 +128,7 @@ export default function TournamentPanel() {
       stream_url: selectedFromList.stream_url || "",
       description: selectedFromList.description || "",
       faceit_championship_id: selectedFromList.faceit_championship_id || "",
+      region: selectedFromList.region || "",
     });
   }, [selectedFromList?.id]);
 
@@ -165,6 +168,7 @@ export default function TournamentPanel() {
         stream_url: createData.stream_url,
         description: createData.description,
         faceit_championship_id: createData.faceit_championship_id,
+        region: createData.region,
         status: "open",
       }),
     onSuccess: () => {
@@ -183,6 +187,7 @@ export default function TournamentPanel() {
         stream_url: "",
         description: "",
         faceit_championship_id: "",
+        region: "",
       });
       refreshAll();
     },
@@ -234,6 +239,7 @@ export default function TournamentPanel() {
         stream_url: editData.stream_url,
         description: editData.description,
         faceit_championship_id: editData.faceit_championship_id,
+        region: editData.region,
       }),
     onSuccess: () => {
       toast.success("Турнир обновлен");
@@ -283,6 +289,15 @@ export default function TournamentPanel() {
     onError: (e: any) => toast.error(e?.message || "Не удалось добавить команду"),
   });
 
+  const uploadLogoMutation = useMutation({
+    mutationFn: (file: File) => api.adminUploadTournamentLogo(selectedFromList!.id, file),
+    onSuccess: () => {
+      toast.success("Логотип загружен");
+      refreshAll();
+    },
+    onError: (e: any) => toast.error(e?.message || "Не удалось загрузить логотип"),
+  });
+
   const removeRegMutation = useMutation({
     mutationFn: (regId: number) => api.removeTournamentTeam(selectedFromList!.id, regId),
     onSuccess: () => {
@@ -319,6 +334,7 @@ export default function TournamentPanel() {
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Сетка (Группы + плей-офф, BO3)" value={createData.format} onChange={(e) => setCreateData((p) => ({ ...p, format: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Призовой фонд" value={createData.prize_pool} onChange={(e) => setCreateData((p) => ({ ...p, prize_pool: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" type="number" min={2} placeholder="Команд" value={createData.max_teams} onChange={(e) => setCreateData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
+            <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Регион (🇺🇿 Узбекистан)" value={createData.region} onChange={(e) => setCreateData((p) => ({ ...p, region: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-white/10 px-3" placeholder="Ссылка на стрим (Twitch/YouTube)" value={createData.stream_url} onChange={(e) => setCreateData((p) => ({ ...p, stream_url: e.target.value }))} />
             <input className="h-11 rounded-xl bg-white/5 border border-[#FF5500]/30 px-3" placeholder="FACEIT Championship ID" value={createData.faceit_championship_id} onChange={(e) => setCreateData((p) => ({ ...p, faceit_championship_id: e.target.value }))} />
           </div>
@@ -369,9 +385,14 @@ export default function TournamentPanel() {
           ) : (
             <>
               <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                <div>
-                  <h3 className="font-display text-3xl leading-none text-white">{selectedFromList.title}</h3>
-                  <p className="text-sm text-slate-400 mt-2">{selectedFromList.game} • {selectedFromList.location || "Локация не указана"}</p>
+                <div className="flex items-center gap-3">
+                  {selectedFromList.logo_url ? (
+                    <img src={selectedFromList.logo_url} alt="" className="w-14 h-14 rounded-xl object-cover border border-white/10" />
+                  ) : null}
+                  <div>
+                    <h3 className="font-display text-3xl leading-none text-white">{selectedFromList.title}</h3>
+                    <p className="text-sm text-slate-400 mt-2">{selectedFromList.game} • {selectedFromList.location || "Локация не указана"}{selectedFromList.region ? ` • ${selectedFromList.region}` : ""}</p>
+                  </div>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#2f2f2f] bg-black/40 px-3 py-1.5 text-xs text-[#FF9A2F]">
                   <Medal className="w-3.5 h-3.5" /> {selectedFromList.prize_pool || "Призовой фонд не указан"}
@@ -435,6 +456,7 @@ export default function TournamentPanel() {
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Сетка" value={editData.format} onChange={(e) => setEditData((p) => ({ ...p, format: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Призовой фонд" value={editData.prize_pool} onChange={(e) => setEditData((p) => ({ ...p, prize_pool: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" type="number" min={2} value={editData.max_teams} onChange={(e) => setEditData((p) => ({ ...p, max_teams: Number(e.target.value || 2) }))} />
+                    <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Регион" value={editData.region} onChange={(e) => setEditData((p) => ({ ...p, region: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" placeholder="Ссылка на стрим" value={editData.stream_url} onChange={(e) => setEditData((p) => ({ ...p, stream_url: e.target.value }))} />
                     <input className="h-10 rounded-lg bg-black/30 border border-[#FF5500]/30 px-3" placeholder="FACEIT Championship ID" value={editData.faceit_championship_id} onChange={(e) => setEditData((p) => ({ ...p, faceit_championship_id: e.target.value }))} />
                     <select className="h-10 rounded-lg bg-black/30 border border-white/10 px-3" value={editData.status} onChange={(e) => setEditData((p) => ({ ...p, status: e.target.value }))}>
@@ -471,6 +493,10 @@ export default function TournamentPanel() {
                     <button className="h-9 px-3 rounded-lg border border-[#f39c12]/40 bg-[#f39c12]/10 text-[#f39c12]" onClick={() => registrationStatusMutation.mutate({ id: selectedFromList.id, status: "closed" })} disabled={registrationStatusMutation.isPending}>
                       Закрыть регистрацию
                     </button>
+                    <label className="h-9 px-3 rounded-lg border border-[#6C5CE7]/40 bg-[#6C5CE7]/10 text-[#c7bbff] cursor-pointer inline-flex items-center gap-1.5">
+                      <ImagePlus className="w-4 h-4" /> Логотип
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogoMutation.mutate(f); e.target.value = ""; }} />
+                    </label>
                     <button className="h-9 px-3 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-400" onClick={() => deleteMutation.mutate(selectedFromList.id)} disabled={deleteMutation.isPending}>
                       Удалить турнир
                     </button>

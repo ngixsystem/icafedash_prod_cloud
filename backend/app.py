@@ -316,6 +316,8 @@ class Tournament(db.Model):
     entry_fee = db.Column(db.String(80), nullable=True, default="")
     stream_url = db.Column(db.String(500), nullable=True)
     faceit_championship_id = db.Column(db.String(100), nullable=True)
+    region = db.Column(db.String(100), nullable=True)
+    logo_url = db.Column(db.String(500), nullable=True)
     created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -522,6 +524,10 @@ with app.app_context():
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN stream_url VARCHAR(500) NULL", "Added stream_url column to tournaments table")
             if 'faceit_championship_id' not in existing_tournament_columns:
                 _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN faceit_championship_id VARCHAR(100) NULL", "Added faceit_championship_id column to tournaments table")
+            if 'region' not in existing_tournament_columns:
+                _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN region VARCHAR(100) NULL", "Added region column to tournaments table")
+            if 'logo_url' not in existing_tournament_columns:
+                _safe_migration(conn, "ALTER TABLE tournaments ADD COLUMN logo_url VARCHAR(500) NULL", "Added logo_url column to tournaments table")
 
     # Migration for teams
     if 'teams' in existing_tables:
@@ -1917,6 +1923,8 @@ def serialize_tournament(item: Tournament) -> dict:
         "entry_fee": item.entry_fee or "",
         "stream_url": item.stream_url or "",
         "faceit_championship_id": item.faceit_championship_id or "",
+        "region": item.region or "",
+        "logo_url": item.logo_url or "",
         "created_by_user_id": item.created_by_user_id,
         "created_at": item.created_at.isoformat() if item.created_at else None,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
@@ -2087,6 +2095,7 @@ def admin_create_tournament():
         entry_fee=entry_fee,
         stream_url=str(data.get("stream_url") or "").strip() or None,
         faceit_championship_id=str(data.get("faceit_championship_id") or "").strip() or None,
+        region=str(data.get("region") or "").strip() or None,
         created_by_user_id=user.id if user else 1,
     )
     db.session.add(tournament)
@@ -2131,6 +2140,8 @@ def admin_update_tournament(tournament_id):
         item.stream_url = str(data.get("stream_url") or "").strip() or None
     if "faceit_championship_id" in data:
         item.faceit_championship_id = str(data.get("faceit_championship_id") or "").strip() or None
+    if "region" in data:
+        item.region = str(data.get("region") or "").strip() or None
 
     db.session.commit()
     return jsonify({"message": "Tournament updated", "tournament": serialize_tournament(item)})
@@ -2297,6 +2308,25 @@ def admin_upload_team_logo(team_id):
     team.logo_url = f"/api/uploads/{filename}"
     db.session.commit()
     return jsonify({"message": "Логотип загружен", "logo_url": team.logo_url})
+
+
+@app.post("/api/admin/tournaments/<int:tournament_id>/logo")
+@admin_required
+def admin_upload_tournament_logo(tournament_id):
+    tournament = Tournament.query.get_or_404(tournament_id)
+    if "file" not in request.files:
+        return jsonify({"message": "Файл не найден"}), 400
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"message": "Пустое имя файла"}), 400
+    ext = f.filename.rsplit(".", 1)[-1].lower() if "." in f.filename else ""
+    if ext not in ("png", "jpg", "jpeg", "webp", "gif", "svg"):
+        return jsonify({"message": "Неверный формат изображения"}), 400
+    filename = f"tournament_{tournament.id}_logo.{ext}"
+    f.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+    tournament.logo_url = f"/api/uploads/{filename}"
+    db.session.commit()
+    return jsonify({"message": "Логотип загружен", "logo_url": tournament.logo_url})
 
 
 @app.get("/api/captain/team/me")

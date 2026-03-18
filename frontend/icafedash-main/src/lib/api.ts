@@ -253,6 +253,8 @@ export interface Tournament {
     entry_fee: string;
     stream_url: string;
     faceit_championship_id: string;
+    region: string;
+    logo_url: string;
     created_by_user_id: number;
     created_at: string | null;
     updated_at: string | null;
@@ -448,6 +450,7 @@ export const api = {
         prize_pool?: string;
         stream_url?: string;
         faceit_championship_id?: string;
+        region?: string;
     }) => post<{ message: string; tournament: Tournament }>("/admin/tournaments", data),
     updateTournament: (tournamentId: number, data: Partial<Tournament>) =>
         put<{ message: string; tournament: Tournament }>(`/admin/tournaments/${tournamentId}`, data),
@@ -455,6 +458,17 @@ export const api = {
     addTournamentTeam: (tournamentId: number, teamId: number) => post<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations`, { team_id: teamId }),
     removeTournamentTeam: (tournamentId: number, registrationId: number) => del<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations/${registrationId}`),
     faceitSyncTournament: (tournamentId: number) => post<{ message: string; tournament: Tournament; matches_synced: number }>(`/admin/tournaments/${tournamentId}/faceit-sync`, {}),
+    adminUploadTournamentLogo: async (tournamentId: number, file: File) => {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch(`${BASE}/admin/tournaments/${tournamentId}/logo`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${localStorage.getItem("icafe_token")}` },
+            body: form,
+        });
+        if (!res.ok) throw await toApiError(res);
+        return res.json() as Promise<{ message: string; logo_url: string }>;
+    },
     adminTeams: () => get<Team[]>("/admin/teams"),
     createTeam: (data: { name: string; tag?: string }) => post<{ message: string; team: Team }>("/admin/teams", data),
     updateTeam: (teamId: number, data: { name?: string; tag?: string }) => put<{ message: string; team: Team }>(`/admin/teams/${teamId}`, data),

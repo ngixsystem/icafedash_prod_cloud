@@ -16,6 +16,8 @@ export interface PublicTournament {
   entry_fee: string;
   stream_url: string;
   faceit_championship_id: string;
+  region: string;
+  logo_url: string;
   created_by_user_id: number;
   created_at: string | null;
   updated_at: string | null;
