@@ -1,4 +1,4 @@
-﻿import { Home, Map, User, Gamepad2 } from "lucide-react";
+﻿import { Home, Map, User, Trophy } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import fragLogo from "@/assets/frag.png";
 
@@ -8,7 +8,7 @@ const leftTabs = [
 ];
 
 const rightTabs = [
-  { to: "/booking", icon: Gamepad2 },
+  { to: "/ratings", icon: Trophy },
   { to: "/profile", icon: User },
 ];
 

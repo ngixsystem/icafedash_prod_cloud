@@ -18,6 +18,7 @@ import TournamentDetailsPage from "./pages/TournamentDetailsPage";
 import AuthPage from "./pages/AuthPage";
 import FaceitCallbackPage from "./pages/FaceitCallbackPage";
 import CashbackPage from "./pages/CashbackPage";
+import RatingsPage from "./pages/RatingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/map" element={<MapPage />} />
+              <Route path="/ratings" element={<RatingsPage />} />
               <Route path="/tournaments" element={<TournamentsPage />} />
               <Route path="/tournaments/:gameId" element={<TournamentGameRatingPage />} />
               <Route path="/tournaments/details/:tournamentId" element={<TournamentDetailsPage />} />

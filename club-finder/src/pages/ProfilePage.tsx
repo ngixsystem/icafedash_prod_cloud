@@ -1,4 +1,4 @@
-import { ChevronRight, Settings, LogOut, Wallet, Shield, Unlink, BarChart3, Swords, User as UserIcon } from "lucide-react";
+import { ChevronRight, Settings, LogOut, Wallet, Shield, Unlink, BarChart3, Swords, User as UserIcon, Monitor } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -118,6 +118,18 @@ export default function ProfilePage() {
             <Wallet className="w-4 h-4 text-primary" />
           </div>
           <span className="flex-1 text-left text-sm font-medium">Кешбек</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/booking")}
+          className="w-full flex items-center gap-3 rounded-2xl glass border border-white/8 px-4 py-3.5 hover:bg-white/5 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+            <Monitor className="w-4 h-4 text-emerald-400" />
+          </div>
+          <span className="flex-1 text-left text-sm font-medium">Бронирование ПК</span>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
 
