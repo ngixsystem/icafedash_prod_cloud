@@ -57,7 +57,7 @@ export default function TournamentsPage() {
                     alt=""
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0D0E12] via-transparent to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 h-px bg-[#0D0E12]" />
                 </div>
               )}
 
