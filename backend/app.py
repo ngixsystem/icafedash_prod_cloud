@@ -361,6 +361,27 @@ class TournamentMatch(db.Model):
     winner_team = db.relationship("Team", foreign_keys=[winner_team_id], backref=db.backref("matches_won", lazy=True))
 
 
+class TransferListing(db.Model):
+    __tablename__ = "transfer_listings"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    # "lft" = looking for team (игрок ищет команду)
+    # "lfs" = looking for squad/player (команда ищет игрока)
+    listing_type = db.Column(db.String(20), nullable=False, default="lft")
+    game = db.Column(db.String(60), nullable=False, default="CS2")
+    roles = db.Column(db.String(255), nullable=True)        # "Rifler, AWPer, IGL"
+    description = db.Column(db.Text, nullable=True)
+    region = db.Column(db.String(80), nullable=True)
+    min_elo = db.Column(db.Integer, nullable=True)
+    max_elo = db.Column(db.Integer, nullable=True)
+    contact = db.Column(db.String(255), nullable=True)      # telegram / discord
+    is_active = db.Column(db.Boolean, default=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    expires_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship("User", backref=db.backref("transfer_listings", lazy=True))
+
+
 def generate_verification_code():
     return ''.join(random.choices(string.digits, k=6))
 
@@ -538,6 +559,32 @@ with app.app_context():
         with db.engine.connect() as conn:
             if 'logo_url' not in existing_team_columns:
                 _safe_migration(conn, "ALTER TABLE teams ADD COLUMN logo_url VARCHAR(500) NULL", "Added logo_url column to teams table")
+
+    # Migration for transfer_listings (create table if missing)
+    if 'transfer_listings' not in existing_tables:
+        with db.engine.connect() as conn:
+            _safe_migration(conn, """
+                CREATE TABLE transfer_listings (
+                    id INTEGER NOT NULL AUTO_INCREMENT,
+                    user_id INTEGER NOT NULL,
+                    listing_type VARCHAR(20) NOT NULL DEFAULT 'lft',
+                    game VARCHAR(60) NOT NULL DEFAULT 'CS2',
+                    roles VARCHAR(255),
+                    description TEXT,
+                    region VARCHAR(80),
+                    min_elo INTEGER,
+                    max_elo INTEGER,
+                    contact VARCHAR(255),
+                    is_active BOOLEAN NOT NULL DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    expires_at DATETIME,
+                    PRIMARY KEY (id),
+                    INDEX ix_transfer_listings_user_id (user_id),
+                    INDEX ix_transfer_listings_is_active (is_active),
+                    INDEX ix_transfer_listings_created_at (created_at),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """, "Created transfer_listings table")
 
     # Create or update default admin user
     admin = User.query.filter_by(username='admin').first()
@@ -4958,6 +5005,214 @@ def health():
     })
 
 
+# ─────────────────────────────────────────────
+# TRANSFER MARKET — публичные и авторизованные маршруты
+# ─────────────────────────────────────────────
+
+@app.get("/api/public/transfer")
+def public_transfer_list():
+    """Список активных объявлений трансфер-маркета с фильтрами."""
+    game = request.args.get("game", "").strip()
+    listing_type = request.args.get("type", "").strip()   # lft / lfs
+    region = request.args.get("region", "").strip()
+    min_elo = request.args.get("min_elo", type=int)
+    max_elo = request.args.get("max_elo", type=int)
+    limit = min(int(request.args.get("limit", 50)), 100)
+    offset = int(request.args.get("offset", 0))
+
+    q = TransferListing.query.filter_by(is_active=True)
+    if game:
+        q = q.filter(TransferListing.game.ilike(f"%{game}%"))
+    if listing_type in ("lft", "lfs"):
+        q = q.filter_by(listing_type=listing_type)
+    if region:
+        q = q.filter(TransferListing.region.ilike(f"%{region}%"))
+    if min_elo is not None:
+        q = q.join(User, User.id == TransferListing.user_id).filter(User.faceit_elo >= min_elo)
+    if max_elo is not None:
+        q = q.join(User, User.id == TransferListing.user_id).filter(User.faceit_elo <= max_elo)
+
+    total = q.count()
+    listings = q.order_by(TransferListing.created_at.desc()).offset(offset).limit(limit).all()
+
+    result = []
+    for lst in listings:
+        u = lst.user
+        # Определяем команду игрока
+        membership = TeamMember.query.filter_by(user_id=u.id).first()
+        team_name = None
+        if membership:
+            t = Team.query.get(membership.team_id)
+            if t:
+                team_name = t.name
+
+        result.append({
+            "id": lst.id,
+            "listing_type": lst.listing_type,
+            "game": lst.game,
+            "roles": lst.roles,
+            "description": lst.description,
+            "region": lst.region,
+            "min_elo": lst.min_elo,
+            "max_elo": lst.max_elo,
+            "contact": lst.contact,
+            "created_at": lst.created_at.isoformat() if lst.created_at else None,
+            "expires_at": lst.expires_at.isoformat() if lst.expires_at else None,
+            "player": {
+                "id": u.id,
+                "username": u.username,
+                "avatar_url": u.avatar_url or "",
+                "faceit_elo": u.faceit_elo,
+                "faceit_level": u.faceit_level,
+                "team_name": team_name,
+            },
+        })
+
+    return jsonify({"total": total, "items": result})
+
+
+@app.get("/api/public/players/<int:user_id>")
+def public_player_profile(user_id):
+    """Публичный профиль игрока: базовая инфо + команда."""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    membership = TeamMember.query.filter_by(user_id=user_id).first()
+    team_info = None
+    if membership:
+        t = Team.query.get(membership.team_id)
+        if t:
+            team_info = {
+                "id": t.id,
+                "name": t.name,
+                "tag": t.tag,
+                "logo_url": t.logo_url or "",
+                "role_in_team": membership.role_in_team,
+            }
+
+    # Последние турниры игрока (через команду)
+    tournaments_played = []
+    if team_info:
+        regs = TournamentRegistration.query.filter_by(team_id=membership.team_id).order_by(
+            TournamentRegistration.registered_at.desc()
+        ).limit(5).all()
+        for reg in regs:
+            trn = Tournament.query.get(reg.tournament_id)
+            if trn:
+                tournaments_played.append({
+                    "id": trn.id,
+                    "title": trn.title,
+                    "game": trn.game,
+                    "status": trn.status,
+                    "starts_at": trn.starts_at.isoformat() if trn.starts_at else None,
+                    "logo_url": trn.logo_url or "",
+                })
+
+    # Открытые объявления на трансфер
+    transfer = TransferListing.query.filter_by(user_id=user_id, is_active=True).first()
+    transfer_listing = None
+    if transfer:
+        transfer_listing = {
+            "id": transfer.id,
+            "listing_type": transfer.listing_type,
+            "game": transfer.game,
+            "roles": transfer.roles,
+            "description": transfer.description,
+            "region": transfer.region,
+            "contact": transfer.contact,
+        }
+
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "avatar_url": user.avatar_url or "",
+        "faceit_id": user.faceit_id,
+        "faceit_elo": user.faceit_elo,
+        "faceit_level": user.faceit_level,
+        "team": team_info,
+        "tournaments": tournaments_played,
+        "transfer_listing": transfer_listing,
+        "member_since": user.created_at.isoformat() if user.created_at else None,
+    })
+
+
+@app.post("/api/public/transfer")
+@jwt_required()
+def public_transfer_create():
+    """Создать или обновить объявление на трансфер (один пользователь — одно активное)."""
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    data = request.json or {}
+    listing_type = data.get("listing_type", "lft")
+    if listing_type not in ("lft", "lfs"):
+        return jsonify({"message": "listing_type must be 'lft' or 'lfs'"}), 400
+
+    # Деактивируем предыдущие объявления
+    TransferListing.query.filter_by(user_id=user_id, is_active=True).update({"is_active": False})
+
+    expires_days = int(data.get("expires_days", 30))
+    expires_at = datetime.utcnow() + timedelta(days=expires_days)
+
+    listing = TransferListing(
+        user_id=user_id,
+        listing_type=listing_type,
+        game=data.get("game", "CS2"),
+        roles=data.get("roles", ""),
+        description=data.get("description", ""),
+        region=data.get("region", ""),
+        min_elo=data.get("min_elo"),
+        max_elo=data.get("max_elo"),
+        contact=data.get("contact", ""),
+        expires_at=expires_at,
+    )
+    db.session.add(listing)
+    db.session.commit()
+    return jsonify({"message": "Listing created", "id": listing.id}), 201
+
+
+@app.put("/api/public/transfer/<int:listing_id>")
+@jwt_required()
+def public_transfer_update(listing_id):
+    """Обновить своё объявление."""
+    user_id = int(get_jwt_identity())
+    listing = TransferListing.query.get(listing_id)
+    if not listing:
+        return jsonify({"message": "Not found"}), 404
+    if listing.user_id != user_id:
+        return jsonify({"message": "Forbidden"}), 403
+
+    data = request.json or {}
+    for field in ("game", "roles", "description", "region", "contact", "min_elo", "max_elo"):
+        if field in data:
+            setattr(listing, field, data[field])
+    if "is_active" in data:
+        listing.is_active = bool(data["is_active"])
+
+    db.session.commit()
+    return jsonify({"message": "Updated"})
+
+
+@app.delete("/api/public/transfer/<int:listing_id>")
+@jwt_required()
+def public_transfer_delete(listing_id):
+    """Удалить своё объявление."""
+    user_id = int(get_jwt_identity())
+    listing = TransferListing.query.get(listing_id)
+    if not listing:
+        return jsonify({"message": "Not found"}), 404
+    if listing.user_id != user_id:
+        return jsonify({"message": "Forbidden"}), 403
+
+    db.session.delete(listing)
+    db.session.commit()
+    return jsonify({"message": "Deleted"})
+
+
+# ─────────────────────────────────────────────
 # Serve Frontend (Non-Docker mode)
 
 @app.route("/", defaults={"path": ""})
