@@ -5213,6 +5213,158 @@ def public_transfer_delete(listing_id):
 
 
 # ─────────────────────────────────────────────
+# TRANSFER MARKET — admin маршруты
+# ─────────────────────────────────────────────
+
+def _transfer_listing_to_dict(lst: TransferListing) -> dict:
+    u = lst.user
+    membership = TeamMember.query.filter_by(user_id=u.id).first()
+    team_name = None
+    if membership:
+        t = Team.query.get(membership.team_id)
+        if t:
+            team_name = t.name
+    return {
+        "id": lst.id,
+        "listing_type": lst.listing_type,
+        "game": lst.game,
+        "roles": lst.roles,
+        "description": lst.description,
+        "region": lst.region,
+        "min_elo": lst.min_elo,
+        "max_elo": lst.max_elo,
+        "contact": lst.contact,
+        "is_active": lst.is_active,
+        "created_at": lst.created_at.isoformat() if lst.created_at else None,
+        "expires_at": lst.expires_at.isoformat() if lst.expires_at else None,
+        "player": {
+            "id": u.id,
+            "username": u.username,
+            "avatar_url": u.avatar_url or "",
+            "faceit_elo": u.faceit_elo,
+            "faceit_level": u.faceit_level,
+            "team_name": team_name,
+        },
+    }
+
+
+@app.get("/api/admin/transfer")
+@jwt_required()
+def admin_transfer_list():
+    """Список всех объявлений трансфер-маркета для администратора."""
+    user_id = int(get_jwt_identity())
+    me = User.query.get(user_id)
+    if not me or me.role != "admin":
+        return jsonify({"message": "Forbidden"}), 403
+
+    game = request.args.get("game", "").strip()
+    listing_type = request.args.get("type", "").strip()
+    is_active = request.args.get("is_active", "").strip()
+    search = request.args.get("search", "").strip()
+    limit = min(int(request.args.get("limit", 50)), 200)
+    offset = int(request.args.get("offset", 0))
+
+    q = TransferListing.query
+    if game:
+        q = q.filter(TransferListing.game.ilike(f"%{game}%"))
+    if listing_type in ("lft", "lfs"):
+        q = q.filter_by(listing_type=listing_type)
+    if is_active == "1":
+        q = q.filter_by(is_active=True)
+    elif is_active == "0":
+        q = q.filter_by(is_active=False)
+    if search:
+        q = q.join(User, User.id == TransferListing.user_id).filter(User.username.ilike(f"%{search}%"))
+
+    total = q.count()
+    listings = q.order_by(TransferListing.created_at.desc()).offset(offset).limit(limit).all()
+    return jsonify({"total": total, "items": [_transfer_listing_to_dict(l) for l in listings]})
+
+
+@app.post("/api/admin/transfer")
+@jwt_required()
+def admin_transfer_create():
+    """Создать объявление от имени любого пользователя."""
+    user_id = int(get_jwt_identity())
+    me = User.query.get(user_id)
+    if not me or me.role != "admin":
+        return jsonify({"message": "Forbidden"}), 403
+
+    data = request.json or {}
+    target_user_id = data.get("user_id")
+    if not target_user_id:
+        return jsonify({"message": "user_id required"}), 400
+    target = User.query.get(target_user_id)
+    if not target:
+        return jsonify({"message": "User not found"}), 404
+
+    listing_type = data.get("listing_type", "lft")
+    if listing_type not in ("lft", "lfs"):
+        return jsonify({"message": "listing_type must be 'lft' or 'lfs'"}), 400
+
+    TransferListing.query.filter_by(user_id=target_user_id, is_active=True).update({"is_active": False})
+
+    expires_days = int(data.get("expires_days", 30))
+    listing = TransferListing(
+        user_id=target_user_id,
+        listing_type=listing_type,
+        game=data.get("game", "CS2"),
+        roles=data.get("roles", ""),
+        description=data.get("description", ""),
+        region=data.get("region", ""),
+        min_elo=data.get("min_elo"),
+        max_elo=data.get("max_elo"),
+        contact=data.get("contact", ""),
+        expires_at=datetime.utcnow() + timedelta(days=expires_days),
+    )
+    db.session.add(listing)
+    db.session.commit()
+    return jsonify({"message": "Created", "id": listing.id}), 201
+
+
+@app.put("/api/admin/transfer/<int:listing_id>")
+@jwt_required()
+def admin_transfer_update(listing_id):
+    """Редактировать любое объявление."""
+    user_id = int(get_jwt_identity())
+    me = User.query.get(user_id)
+    if not me or me.role != "admin":
+        return jsonify({"message": "Forbidden"}), 403
+
+    listing = TransferListing.query.get(listing_id)
+    if not listing:
+        return jsonify({"message": "Not found"}), 404
+
+    data = request.json or {}
+    for field in ("game", "listing_type", "roles", "description", "region", "contact", "min_elo", "max_elo"):
+        if field in data:
+            setattr(listing, field, data[field])
+    if "is_active" in data:
+        listing.is_active = bool(data["is_active"])
+
+    db.session.commit()
+    return jsonify({"message": "Updated", "listing": _transfer_listing_to_dict(listing)})
+
+
+@app.delete("/api/admin/transfer/<int:listing_id>")
+@jwt_required()
+def admin_transfer_delete(listing_id):
+    """Удалить любое объявление."""
+    user_id = int(get_jwt_identity())
+    me = User.query.get(user_id)
+    if not me or me.role != "admin":
+        return jsonify({"message": "Forbidden"}), 403
+
+    listing = TransferListing.query.get(listing_id)
+    if not listing:
+        return jsonify({"message": "Not found"}), 404
+
+    db.session.delete(listing)
+    db.session.commit()
+    return jsonify({"message": "Deleted"})
+
+
+# ─────────────────────────────────────────────
 # Serve Frontend (Non-Docker mode)
 
 @app.route("/", defaults={"path": ""})

@@ -1,4 +1,5 @@
 ﻿import {
+  ArrowLeftRight,
   BarChart3,
   CalendarClock,
   ChevronRight,
@@ -110,6 +111,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         { icon: Trophy, label: "Турниры", section: "main", color: "text-[#FF9A2F]" },
         { icon: Users, label: "Пользователи", section: "ops", color: "text-[#58d68d]" },
         { icon: Shield, label: "Команды", section: "ops", color: "text-[#FF9A2F]" },
+        { icon: ArrowLeftRight, label: "Трансфер", section: "ops", color: "text-orange-400" },
         { icon: MessageSquare, label: "Отзывы", section: "ops", color: "text-[#00E5FF]" },
       ]
     : isCaptain

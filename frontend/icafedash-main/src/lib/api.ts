@@ -310,6 +310,42 @@ export interface TournamentDetails extends Tournament {
     }>;
 }
 
+export interface AdminTransferListing {
+    id: number;
+    listing_type: "lft" | "lfs";
+    game: string;
+    roles: string | null;
+    description: string | null;
+    region: string | null;
+    min_elo: number | null;
+    max_elo: number | null;
+    contact: string | null;
+    is_active: boolean;
+    created_at: string | null;
+    expires_at: string | null;
+    player: {
+        id: number;
+        username: string;
+        avatar_url: string;
+        faceit_elo: number | null;
+        faceit_level: number | null;
+        team_name: string | null;
+    };
+}
+
+export interface AdminTransferCreatePayload {
+    user_id: number;
+    listing_type: "lft" | "lfs";
+    game: string;
+    roles?: string;
+    description?: string;
+    region?: string;
+    min_elo?: number | null;
+    max_elo?: number | null;
+    contact?: string;
+    expires_days?: number;
+}
+
 // ── API calls ──────────────────────────────────────────────────────────────
 
 export const api = {
@@ -509,6 +545,14 @@ export const api = {
         post<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations/${registrationId}/approve`, {}),
     generateTournamentBracket: (tournamentId: number) =>
         post<{ message: string; matches_count: number }>(`/admin/tournaments/${tournamentId}/generate-bracket`, {}),
+
+    // Transfer market (admin)
+    adminTransferList: (params?: { game?: string; type?: string; is_active?: string; search?: string; limit?: number; offset?: number }) =>
+        get<{ total: number; items: AdminTransferListing[] }>("/admin/transfer", params as any),
+    adminTransferCreate: (data: AdminTransferCreatePayload) => post<{ message: string; id: number }>("/admin/transfer", data),
+    adminTransferUpdate: (id: number, data: Partial<AdminTransferCreatePayload> & { is_active?: boolean }) =>
+        put<{ message: string; listing: AdminTransferListing }>(`/admin/transfer/${id}`, data),
+    adminTransferDelete: (id: number) => del<{ message: string }>(`/admin/transfer/${id}`),
 
     // Generic helpers for anything else
     get: <T>(path: string, params?: any) => get<T>(path, params),
