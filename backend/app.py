@@ -5095,7 +5095,7 @@ def public_player_profile(user_id):
     tournaments_played = []
     if team_info:
         regs = TournamentRegistration.query.filter_by(team_id=membership.team_id).order_by(
-            TournamentRegistration.registered_at.desc()
+            TournamentRegistration.created_at.desc()
         ).limit(5).all()
         for reg in regs:
             trn = Tournament.query.get(reg.tournament_id)
