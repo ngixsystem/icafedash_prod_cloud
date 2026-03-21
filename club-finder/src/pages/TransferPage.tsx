@@ -271,7 +271,7 @@ function ListingCard({
 
 const INPUT_CLS = "w-full bg-white/4 border border-white/8 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#FF7800]/50 focus:bg-white/6 transition-all";
 
-function CreateListingModal({ onClose, token }: { onClose: () => void; token: string }) {
+function CreateListingModal({ onClose, token }: { onClose: () => void; token: string | null }) {
   const { mutate, isPending } = useCreateListing(token);
   const [form, setForm] = useState<CreateListingPayload>({
     listing_type: "lft",
@@ -397,6 +397,14 @@ export default function TransferPage() {
   const [filterGame, setFilterGame] = useState("");
   const [showForm, setShowForm] = useState(false);
 
+  function handleOpenForm() {
+    if (!isAuthenticated) {
+      navigate("/auth");
+      return;
+    }
+    setShowForm(true);
+  }
+
   const { data, isLoading } = useTransferListings({ type: filterType, game: filterGame });
   const { mutate: deleteListing } = useDeleteListing(token);
   const myListing = data?.items.find((l) => l.player.id === user?.id);
@@ -431,19 +439,17 @@ export default function TransferPage() {
             </p>
           </div>
 
-          {isAuthenticated && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-xs font-bold transition-all active:scale-95 mt-1"
-              style={{
-                background: "linear-gradient(135deg, #FF7800, #ff9a2f)",
-                boxShadow: "0 4px 16px rgba(255,120,0,0.35)",
-              }}
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              Подать
-            </button>
-          )}
+          <button
+            onClick={handleOpenForm}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-xs font-bold transition-all active:scale-95 mt-1"
+            style={{
+              background: "linear-gradient(135deg, #FF7800, #ff9a2f)",
+              boxShadow: "0 4px 16px rgba(255,120,0,0.35)",
+            }}
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            Подать
+          </button>
         </div>
       </div>
 
@@ -537,7 +543,7 @@ export default function TransferPage() {
         )}
       </div>
 
-      {showForm && token && (
+      {showForm && (
         <CreateListingModal token={token} onClose={() => setShowForm(false)} />
       )}
     </div>
