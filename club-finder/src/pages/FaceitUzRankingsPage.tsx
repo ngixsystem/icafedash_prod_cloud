@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Trophy, Loader2, RefreshCw } from "lucide-react";
+import faceitLogo from "@/assets/FaceitLogo.png";
 import { FaceitLevelIcon } from "@/components/FaceitLevelIcon";
 
 const API = import.meta.env.VITE_API_URL ?? "";
@@ -72,8 +73,8 @@ export default function FaceitUzRankingsPage() {
           </div>
 
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-[#FF5500]/15 flex items-center justify-center">
-              <Trophy className="w-3.5 h-3.5 text-[#FF5500]" />
+            <div className="w-7 h-7 rounded-lg bg-[#FF5500]/15 flex items-center justify-center overflow-hidden">
+              <img src={faceitLogo} alt="FACEIT" className="w-4 h-4 object-contain" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF5500]">FACEIT</span>
           </div>

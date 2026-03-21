@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import faceitLogo from "@/assets/FaceitLogo.png";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -497,8 +498,8 @@ export default function TransferPage() {
           className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[#FF5500]/20 bg-[#FF5500]/5 hover:bg-[#FF5500]/10 active:scale-[0.98] transition-all group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#FF5500]/15 flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-[#FF5500]" />
+            <div className="w-8 h-8 rounded-lg bg-[#FF5500]/15 flex items-center justify-center overflow-hidden">
+              <img src={faceitLogo} alt="FACEIT" className="w-5 h-5 object-contain" />
             </div>
             <div className="text-left">
               <p className="text-sm font-bold text-white">Рейтинг Faceit Uzbekistan</p>
