@@ -474,8 +474,8 @@ export default function TransferPage() {
         </div>
       </div>
 
-      {/* Кнопка рейтинга */}
-      <div className="px-4 pb-3">
+      {/* Кнопки рейтингов */}
+      <div className="px-4 pb-3 flex flex-col gap-2">
         <button
           onClick={() => navigate("/ratings")}
           className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[#FFD700]/20 bg-[#FFD700]/5 hover:bg-[#FFD700]/10 active:scale-[0.98] transition-all group"
@@ -490,6 +490,22 @@ export default function TransferPage() {
             </div>
           </div>
           <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 group-hover:text-[#FFD700] transition-colors" />
+        </button>
+
+        <button
+          onClick={() => navigate("/ratings/faceit-uz")}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[#FF5500]/20 bg-[#FF5500]/5 hover:bg-[#FF5500]/10 active:scale-[0.98] transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#FF5500]/15 flex items-center justify-center">
+              <Trophy className="w-4 h-4 text-[#FF5500]" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-white">Рейтинг Faceit Uzbekistan</p>
+              <p className="text-[10px] text-white/40">Топ-100 CS2 · EU регион</p>
+            </div>
+          </div>
+          <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 group-hover:text-[#FF5500] transition-colors" />
         </button>
       </div>
 

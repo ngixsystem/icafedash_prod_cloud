@@ -3739,6 +3739,45 @@ def public_player_faceit_stats(user_id):
         return jsonify({"message": "Connection error"}), 502
 
 
+@app.route("/api/public/faceit/rankings/uzbekistan", methods=["GET"])
+def public_faceit_rankings_uzbekistan():
+    """Топ-100 CS2 игроков из Узбекистана по данным FACEIT API."""
+    if not FACEIT_DATA_API_KEY:
+        return jsonify({"message": "FACEIT API key not configured"}), 503
+
+    limit = min(int(request.args.get("limit", 100)), 100)
+    offset = int(request.args.get("offset", 0))
+    try:
+        resp = requests.get(
+            "https://open.faceit.com/data/v4/rankings/games/cs2/regions/EU/countries/UZ",
+            headers={"Authorization": f"Bearer {FACEIT_DATA_API_KEY}"},
+            params={"limit": limit, "offset": offset},
+            timeout=10,
+        )
+        if not resp.ok:
+            app.logger.warning(f"FACEIT rankings UZ failed: {resp.status_code} {resp.text[:200]}")
+            return jsonify({"message": "Failed to fetch rankings from FACEIT"}), 502
+        data = resp.json()
+        items = data.get("items", [])
+        result = []
+        for entry in items:
+            player = entry.get("player", {})
+            result.append({
+                "position": entry.get("position"),
+                "faceit_points": entry.get("faceit_points"),
+                "nickname": player.get("nickname"),
+                "avatar": player.get("avatar"),
+                "player_id": player.get("player_id"),
+                "country": player.get("country"),
+                "skill_level": player.get("games", {}).get("cs2", {}).get("skill_level"),
+                "faceit_elo": player.get("games", {}).get("cs2", {}).get("faceit_elo"),
+            })
+        return jsonify({"total": len(result), "offset": offset, "items": result})
+    except Exception as e:
+        app.logger.warning(f"FACEIT rankings UZ error: {e}")
+        return jsonify({"message": "Connection error"}), 502
+
+
 @app.post("/api/public/profile/faceit/link")
 @jwt_required()
 def public_profile_link_faceit():

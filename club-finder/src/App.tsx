@@ -21,6 +21,7 @@ import CashbackPage from "./pages/CashbackPage";
 import RatingsPage from "./pages/RatingsPage";
 import TransferPage from "./pages/TransferPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
+import FaceitUzRankingsPage from "./pages/FaceitUzRankingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/auth/faceit/callback" element={<FaceitCallbackPage />} />
               <Route path="/transfer" element={<TransferPage />} />
               <Route path="/players/:id" element={<PlayerProfilePage />} />
+              <Route path="/ratings/faceit-uz" element={<FaceitUzRankingsPage />} />
 
               <Route
                 path="/profile"
