@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+﻿import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, TrendingUp } from "lucide-react";
 import { api, formatMoney } from "@/lib/api";
 
@@ -13,25 +13,24 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, subtitle, badge, highlight, loading }: StatCardProps) => (
   <div
-    className={`relative rounded-xl border p-5 transition-all ${highlight
-        ? "border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-card"
-        : "border-border bg-card"
-      }`}
+    className={`glass-card rounded-2xl border p-5 transition-all ${
+      highlight
+        ? "border-primary/35 bg-[linear-gradient(145deg,rgba(108,92,231,0.25),rgba(17,24,39,0.8))]"
+        : "border-white/10 bg-[linear-gradient(145deg,rgba(17,24,39,0.75),rgba(14,19,34,0.7))]"
+    }`}
   >
     <div className="flex items-start justify-between mb-3">
-      <p className={`text-sm font-medium ${highlight ? "text-primary" : "text-muted-foreground"}`}>
-        {title}
-      </p>
-      <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+      <p className={`text-sm font-medium ${highlight ? "text-cyan-300" : "text-slate-400"}`}>{title}</p>
+      <ArrowUpRight className="h-4 w-4 text-slate-500" />
     </div>
     {loading ? (
       <div className="h-8 w-32 rounded bg-secondary animate-pulse" />
     ) : (
-      <p className="text-2xl font-bold text-foreground">{value}</p>
+      <p className="text-2xl font-semibold text-white">{value}</p>
     )}
-    {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+    {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
     {badge && (
-      <span className="inline-flex items-center gap-1 mt-3 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
+      <span className="inline-flex items-center gap-1 mt-3 rounded-full bg-primary/20 px-2.5 py-1 text-xs font-medium text-cyan-200">
         <TrendingUp className="h-3 w-3" />
         {badge}
       </span>
@@ -43,7 +42,7 @@ const StatCards = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["overview"],
     queryFn: api.overview,
-    refetchInterval: 30_000, // refresh every 30 s
+    refetchInterval: 30_000,
   });
 
   const currency = "сум";
