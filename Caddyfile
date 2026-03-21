@@ -1,4 +1,4 @@
-icafedash.com, www.icafedash.com {
+icafedash.com {
     reverse_proxy showcase:80
 }
 
