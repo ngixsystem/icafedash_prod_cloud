@@ -3829,8 +3829,6 @@ def public_profile_avatar_upload():
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": "User not found"}), 404
-    if user.role not in ("client", "member"):
-        return jsonify({"message": "Only authorized clients can update avatar"}), 403
 
     if "file" not in request.files:
         return jsonify({"message": "No file uploaded"}), 400
