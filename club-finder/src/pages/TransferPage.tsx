@@ -269,7 +269,7 @@ function ListingCard({
 
 // ─── Форма создания объявления ──────────────────────────────────────────────
 
-const INPUT_CLS = "w-full bg-white/4 border border-white/8 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#FF7800]/50 focus:bg-white/6 transition-all";
+const INPUT_CLS = "w-full bg-[#0e0f12] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF7800]/50 transition-all";
 
 function CreateListingModal({ onClose, token }: { onClose: () => void; token: string | null }) {
   const { mutate, isPending } = useCreateListing(token);
@@ -286,11 +286,13 @@ function CreateListingModal({ onClose, token }: { onClose: () => void; token: st
     setForm((p) => ({ ...p, [k]: v }));
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/80 backdrop-blur-md">
-      {/* Backdrop tap to close */}
-      <div className="absolute inset-0" onClick={onClose} />
+    <div className="fixed inset-0 z-[1100]">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
 
-      <div className="relative w-full max-w-[420px] rounded-t-3xl overflow-hidden max-h-[92vh] flex flex-col"
+      {/* Sheet */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center pointer-events-none">
+      <div className="relative w-full max-w-[420px] rounded-t-3xl overflow-hidden max-h-[92vh] flex flex-col pointer-events-auto"
         style={{ background: "linear-gradient(180deg, #1e1f24 0%, #18191d 100%)", borderTop: "1px solid rgba(255,255,255,0.08)" }}
       >
         {/* Handle */}
@@ -377,6 +379,7 @@ function CreateListingModal({ onClose, token }: { onClose: () => void; token: st
             )}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
