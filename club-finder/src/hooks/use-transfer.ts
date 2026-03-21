@@ -133,7 +133,7 @@ export function useCreateListing(token: string | null) {
     mutationFn: async (payload: CreateListingPayload) => {
       const resp = await fetch(`${API}/api/public/transfer`, {
         method: "POST",
-        headers: authHeaders(token!),
+        headers: authHeaders(token ?? ""),
         body: JSON.stringify(payload),
       });
       if (!resp.ok) {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, User, PlusCircle, Trash2, MapPin, X,
   ChevronDown, ChevronUp, Crosshair, Target, Trophy,
@@ -273,6 +274,7 @@ const INPUT_CLS = "w-full bg-[#0e0f12] border border-white/10 rounded-xl px-3.5 
 
 function CreateListingModal({ onClose, token }: { onClose: () => void; token: string | null }) {
   const { mutate, isPending } = useCreateListing(token);
+  const { toast } = useToast();
   const [form, setForm] = useState<CreateListingPayload>({
     listing_type: "lft",
     game: "CS2",
@@ -284,6 +286,22 @@ function CreateListingModal({ onClose, token }: { onClose: () => void; token: st
 
   const set = (k: keyof CreateListingPayload, v: string) =>
     setForm((p) => ({ ...p, [k]: v }));
+
+  function handleSubmit() {
+    if (!token) {
+      toast({ title: "Необходима авторизация", description: "Войдите в аккаунт", variant: "destructive" });
+      return;
+    }
+    mutate(form, {
+      onSuccess: () => {
+        toast({ title: "Объявление опубликовано" });
+        onClose();
+      },
+      onError: (e: any) => {
+        toast({ title: "Ошибка", description: e?.message ?? "Не удалось опубликовать", variant: "destructive" });
+      },
+    });
+  }
 
   return (
     <div className="fixed inset-0 z-[1100]">
@@ -369,7 +387,7 @@ function CreateListingModal({ onClose, token }: { onClose: () => void; token: st
             value={form.contact} onChange={(e) => set("contact", e.target.value)} />
 
           <button
-            onClick={() => mutate(form, { onSuccess: onClose })}
+            onClick={handleSubmit}
             disabled={isPending}
             className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2"
             style={{ background: "linear-gradient(135deg, #FF7800, #ff9a2f)", boxShadow: "0 4px 20px rgba(255,120,0,0.35)" }}
