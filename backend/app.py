@@ -5009,7 +5009,7 @@ def health():
 # TRANSFER MARKET — публичные и авторизованные маршруты
 # ─────────────────────────────────────────────
 
-@app.get("/api/public/transfer")
+@app.route("/api/public/transfer", methods=["GET"])
 def public_transfer_list():
     """Список активных объявлений трансфер-маркета с фильтрами."""
     game = request.args.get("game", "").strip()
@@ -5137,7 +5137,7 @@ def public_player_profile(user_id):
     })
 
 
-@app.post("/api/public/transfer")
+@app.route("/api/public/transfer", methods=["POST"])
 @jwt_required()
 def public_transfer_create():
     """Создать или обновить объявление на трансфер (один пользователь — одно активное)."""
@@ -5175,7 +5175,7 @@ def public_transfer_create():
     return jsonify({"message": "Listing created", "id": listing.id}), 201
 
 
-@app.put("/api/public/transfer/<int:listing_id>")
+@app.route("/api/public/transfer/<int:listing_id>", methods=["PUT"])
 @jwt_required()
 def public_transfer_update(listing_id):
     """Обновить своё объявление."""
@@ -5197,7 +5197,7 @@ def public_transfer_update(listing_id):
     return jsonify({"message": "Updated"})
 
 
-@app.delete("/api/public/transfer/<int:listing_id>")
+@app.route("/api/public/transfer/<int:listing_id>", methods=["DELETE"])
 @jwt_required()
 def public_transfer_delete(listing_id):
     """Удалить своё объявление."""
@@ -5249,7 +5249,7 @@ def _transfer_listing_to_dict(lst: TransferListing) -> dict:
     }
 
 
-@app.get("/api/admin/transfer")
+@app.route("/api/admin/transfer", methods=["GET"])
 @jwt_required()
 def admin_transfer_list():
     """Список всех объявлений трансфер-маркета для администратора."""
@@ -5282,7 +5282,7 @@ def admin_transfer_list():
     return jsonify({"total": total, "items": [_transfer_listing_to_dict(l) for l in listings]})
 
 
-@app.post("/api/admin/transfer")
+@app.route("/api/admin/transfer", methods=["POST"])
 @jwt_required()
 def admin_transfer_create():
     """Создать объявление от имени любого пользователя."""
@@ -5324,7 +5324,7 @@ def admin_transfer_create():
     return jsonify({"message": "Created", "id": listing.id}), 201
 
 
-@app.put("/api/admin/transfer/<int:listing_id>")
+@app.route("/api/admin/transfer/<int:listing_id>", methods=["PUT"])
 @jwt_required()
 def admin_transfer_update(listing_id):
     """Редактировать любое объявление."""
@@ -5348,7 +5348,7 @@ def admin_transfer_update(listing_id):
     return jsonify({"message": "Updated", "listing": _transfer_listing_to_dict(listing)})
 
 
-@app.delete("/api/admin/transfer/<int:listing_id>")
+@app.route("/api/admin/transfer/<int:listing_id>", methods=["DELETE"])
 @jwt_required()
 def admin_transfer_delete(listing_id):
     """Удалить любое объявление."""
