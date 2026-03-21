@@ -170,11 +170,18 @@ export default function FaceitUzRankingsPage() {
                   </div>
                 </div>
 
-                {/* Очки */}
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold text-[#FF5500]">{entry.faceit_points?.toLocaleString()}</p>
-                  <p className="text-[10px] text-white/30">pts</p>
-                </div>
+                {/* Очки / ELO */}
+                {entry.faceit_points ? (
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-[#FF5500]">{entry.faceit_points.toLocaleString()}</p>
+                    <p className="text-[10px] text-white/30">pts</p>
+                  </div>
+                ) : entry.faceit_elo ? (
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-[#FF5500]">{entry.faceit_elo}</p>
+                    <p className="text-[10px] text-white/30">ELO</p>
+                  </div>
+                ) : null}
               </a>
             ))}
           </div>

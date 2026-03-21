@@ -3770,7 +3770,13 @@ def public_faceit_rankings_uzbekistan():
                 "position": entry.get("position"),
                 "faceit_points": entry.get("faceit_points") or player.get("faceit_points"),
                 "nickname": entry.get("nickname") or player.get("nickname"),
-                "avatar": entry.get("avatar") or player.get("avatar") or entry.get("cover_image_url"),
+                "avatar": (
+                    entry.get("cover_image_url")
+                    or entry.get("avatar")
+                    or player.get("cover_image_url")
+                    or player.get("avatar")
+                    or ""
+                ),
                 "player_id": entry.get("player_id") or player.get("player_id"),
                 "country": entry.get("country") or player.get("country"),
                 "skill_level": (
