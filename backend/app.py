@@ -3749,9 +3749,9 @@ def public_faceit_rankings_uzbekistan():
     offset = int(request.args.get("offset", 0))
     try:
         resp = requests.get(
-            "https://open.faceit.com/data/v4/rankings/games/cs2/regions/EU/countries/UZ",
+            "https://open.faceit.com/data/v4/rankings/games/cs2/regions/EU",
             headers={"Authorization": f"Bearer {FACEIT_DATA_API_KEY}"},
-            params={"limit": limit, "offset": offset},
+            params={"country": "uz", "limit": limit, "offset": offset},
             timeout=10,
         )
         if not resp.ok:
