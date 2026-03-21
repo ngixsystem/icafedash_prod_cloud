@@ -108,7 +108,8 @@ export function useTransferListings(params: {
       if (!resp.ok) throw new Error("Failed to fetch transfer listings");
       return resp.json();
     },
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }
 

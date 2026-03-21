@@ -5020,11 +5020,11 @@ def public_transfer_list():
     limit = min(int(request.args.get("limit", 50)), 100)
     offset = int(request.args.get("offset", 0))
 
-    q = TransferListing.query.filter_by(is_active=True)
+    q = TransferListing.query.filter(TransferListing.is_active == True)
     if game:
         q = q.filter(TransferListing.game.ilike(f"%{game}%"))
     if listing_type in ("lft", "lfs"):
-        q = q.filter_by(listing_type=listing_type)
+        q = q.filter(TransferListing.listing_type == listing_type)
     if region:
         q = q.filter(TransferListing.region.ilike(f"%{region}%"))
     if min_elo is not None:
@@ -5168,6 +5168,7 @@ def public_transfer_create():
         max_elo=data.get("max_elo"),
         contact=data.get("contact", ""),
         expires_at=expires_at,
+        is_active=True,
     )
     db.session.add(listing)
     db.session.commit()
@@ -5316,6 +5317,7 @@ def admin_transfer_create():
         max_elo=data.get("max_elo"),
         contact=data.get("contact", ""),
         expires_at=datetime.utcnow() + timedelta(days=expires_days),
+        is_active=True,
     )
     db.session.add(listing)
     db.session.commit()

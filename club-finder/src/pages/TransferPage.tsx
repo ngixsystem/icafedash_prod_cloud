@@ -426,7 +426,7 @@ export default function TransferPage() {
     setShowForm(true);
   }
 
-  const { data, isLoading } = useTransferListings({ type: filterType, game: filterGame });
+  const { data, isLoading, isError, error } = useTransferListings({ type: filterType, game: filterGame });
   const { mutate: deleteListing } = useDeleteListing(token);
   const myListing = data?.items.find((l) => l.player.id === user?.id);
 
@@ -536,6 +536,11 @@ export default function TransferPage() {
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <Loader2 className="w-7 h-7 animate-spin text-[#FF7800]" />
             <p className="text-xs text-white/25">Загрузка объявлений...</p>
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-center px-4">
+            <p className="text-sm font-semibold text-red-400">Ошибка загрузки</p>
+            <p className="text-xs text-white/30">{(error as any)?.message ?? "Не удалось загрузить объявления"}</p>
           </div>
         ) : !data?.items.length ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
