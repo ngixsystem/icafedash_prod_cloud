@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, User, PlusCircle, Trash2, MapPin, X,
   ChevronDown, ChevronUp, Crosshair, Target, Trophy,
-  Swords, ArrowLeftRight, Zap, Shield, MessageCircle,
+  Swords, ArrowLeftRight, Zap, Shield, MessageCircle, BarChart2,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { FaceitLevelIcon } from "@/components/FaceitLevelIcon";
@@ -472,6 +472,25 @@ export default function TransferPage() {
             Подать
           </button>
         </div>
+      </div>
+
+      {/* Кнопка рейтинга */}
+      <div className="px-4 pb-3">
+        <button
+          onClick={() => navigate("/ratings")}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[#FFD700]/20 bg-[#FFD700]/5 hover:bg-[#FFD700]/10 active:scale-[0.98] transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#FFD700]/15 flex items-center justify-center">
+              <BarChart2 className="w-4 h-4 text-[#FFD700]" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-white">Рейтинг CYBER UNION</p>
+              <p className="text-[10px] text-white/40">Топ игроков и команд</p>
+            </div>
+          </div>
+          <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 group-hover:text-[#FFD700] transition-colors" />
+        </button>
       </div>
 
       {/* Фильтры — прилипают к верху */}
