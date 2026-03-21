@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Users, User, PlusCircle, Trash2, MapPin, Gamepad2, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, Users, User, PlusCircle, Trash2, MapPin, Gamepad2, X, ChevronDown, ChevronUp, Crosshair, Target, Trophy, Swords } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { FaceitLevelIcon } from "@/components/FaceitLevelIcon";
 import {
@@ -11,7 +12,56 @@ import {
   type TransferListing,
 } from "@/hooks/use-transfer";
 
-const GAMES = ["CS2", "Dota 2", "Valorant", "League of Legends", "PUBG"];
+const API = import.meta.env.VITE_API_URL ?? "";
+
+// ─── Мини-стата FACEIT ───────────────────────────────
+
+function FaceitMiniStats({ userId }: { userId: number }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["faceit_mini", userId],
+    queryFn: async () => {
+      const r = await fetch(`${API}/api/public/players/${userId}/faceit-stats`);
+      if (!r.ok) throw new Error("no stats");
+      return r.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-2">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!data?.lifetime) {
+    return <p className="text-xs text-muted-foreground text-center py-2">Нет данных FACEIT</p>;
+  }
+
+  const lt = data.lifetime;
+  const stats = [
+    { icon: Swords, label: "Матчей", value: lt.matches, color: "#FF7800" },
+    { icon: Trophy, label: "Винрейт", value: `${lt.win_rate}%`, color: "#22c55e" },
+    { icon: Crosshair, label: "K/D", value: lt.kd_ratio, color: "#3b82f6" },
+    { icon: Target, label: "HS %", value: `${lt.headshots}%`, color: "#a855f7" },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 gap-2 pt-1">
+      {stats.map(({ icon: Icon, label, value, color }) => (
+        <div key={label} className="flex flex-col items-center gap-1 bg-white/3 rounded-xl py-2">
+          <Icon className="w-3 h-3" style={{ color }} />
+          <span className="text-xs font-bold text-white leading-none">{value}</span>
+          <span className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const GAMES = ["CS2", "Dota 2"];
 
 // ─── Карточка объявления ─────────────────────────────
 
@@ -23,6 +73,8 @@ function ListingCard({ listing, onPlayerClick, myListingId, onDelete }: {
 }) {
   const isLft = listing.listing_type === "lft";
   const p = listing.player;
+  const [showStats, setShowStats] = useState(false);
+  const hasFaceit = p.faceit_level != null;
 
   return (
     <div className="rounded-2xl bg-[#1a1b1e] border border-white/8 p-4 space-y-3">
@@ -104,6 +156,9 @@ function ListingCard({ listing, onPlayerClick, myListingId, onDelete }: {
         </p>
       )}
 
+      {/* FACEIT мини-стата */}
+      {hasFaceit && showStats && <FaceitMiniStats userId={p.id} />}
+
       {/* Footer */}
       <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-white/5">
         <div className="flex items-center gap-1">
@@ -114,9 +169,20 @@ function ListingCard({ listing, onPlayerClick, myListingId, onDelete }: {
             </>
           )}
         </div>
-        {listing.contact && (
-          <span className="text-[#FF7800] truncate max-w-[140px]">{listing.contact}</span>
-        )}
+        <div className="flex items-center gap-3">
+          {listing.contact && (
+            <span className="text-[#FF7800] truncate max-w-[100px]">{listing.contact}</span>
+          )}
+          {hasFaceit && (
+            <button
+              onClick={() => setShowStats((s) => !s)}
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-white transition-colors"
+            >
+              {showStats ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              Стата
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -144,8 +210,8 @@ function CreateListingModal({ onClose, token }: { onClose: () => void; token: st
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-[420px] bg-[#18191c] rounded-t-3xl border-t border-white/10 p-5 pb-8 space-y-4">
+    <div className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-[420px] bg-[#18191c] rounded-t-3xl border-t border-white/10 p-5 pb-[80px] space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-base">Подать объявление</h2>
           <button onClick={onClose}>
