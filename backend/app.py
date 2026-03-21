@@ -3739,11 +3739,37 @@ def public_player_faceit_stats(user_id):
         return jsonify({"message": "Connection error"}), 502
 
 
+_faceit_uz_cache = {"data": None, "ts": 0}
+_FACEIT_UZ_TTL = 300  # 5 минут
+
+
+def _fetch_faceit_avatar(player_id):
+    """Загрузить аватар одного игрока через FACEIT Data API."""
+    try:
+        r = requests.get(
+            f"https://open.faceit.com/data/v4/players/{player_id}",
+            headers={"Authorization": f"Bearer {FACEIT_DATA_API_KEY}"},
+            timeout=5,
+        )
+        if r.ok:
+            return player_id, r.json().get("avatar", "")
+    except Exception:
+        pass
+    return player_id, ""
+
+
 @app.route("/api/public/faceit/rankings/uzbekistan", methods=["GET"])
 def public_faceit_rankings_uzbekistan():
     """Топ-100 CS2 игроков из Узбекистана по данным FACEIT API."""
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
     if not FACEIT_DATA_API_KEY:
         return jsonify({"message": "FACEIT API key not configured"}), 503
+
+    # Кэш чтобы не делать 100+ запросов при каждом открытии страницы
+    if _faceit_uz_cache["data"] and time.time() - _faceit_uz_cache["ts"] < _FACEIT_UZ_TTL:
+        return jsonify(_faceit_uz_cache["data"])
 
     limit = min(int(request.args.get("limit", 100)), 100)
     offset = int(request.args.get("offset", 0))
@@ -3757,15 +3783,10 @@ def public_faceit_rankings_uzbekistan():
         if not resp.ok:
             app.logger.warning(f"FACEIT rankings UZ failed: {resp.status_code} {resp.text[:200]}")
             return jsonify({"message": "Failed to fetch rankings from FACEIT"}), 502
-        data = resp.json()
-        items = data.get("items", [])
-        if items:
-            app.logger.info(f"FACEIT rankings UZ sample entry keys: {list(items[0].keys())}")
-            app.logger.info(f"FACEIT rankings UZ sample entry: {items[0]}")
+
+        items = resp.json().get("items", [])
         result = []
         for entry in items:
-            # Поля могут быть как на верхнем уровне, так и вложены в "player"
-            player = entry.get("player") or {}
             result.append({
                 "position": entry.get("position"),
                 "faceit_points": entry.get("faceit_points"),
@@ -3776,7 +3797,18 @@ def public_faceit_rankings_uzbekistan():
                 "skill_level": entry.get("game_skill_level"),
                 "faceit_elo": entry.get("faceit_elo"),
             })
-        return jsonify({"total": len(result), "offset": offset, "items": result})
+
+        # Загружаем аватары параллельно (20 потоков)
+        player_ids = [e["player_id"] for e in result if e["player_id"]]
+        with ThreadPoolExecutor(max_workers=20) as ex:
+            avatar_map = dict(ex.map(_fetch_faceit_avatar, player_ids))
+        for entry in result:
+            entry["avatar"] = avatar_map.get(entry["player_id"], "")
+
+        response_data = {"total": len(result), "offset": offset, "items": result}
+        _faceit_uz_cache["data"] = response_data
+        _faceit_uz_cache["ts"] = time.time()
+        return jsonify(response_data)
     except Exception as e:
         app.logger.warning(f"FACEIT rankings UZ error: {e}")
         return jsonify({"message": "Connection error"}), 502
