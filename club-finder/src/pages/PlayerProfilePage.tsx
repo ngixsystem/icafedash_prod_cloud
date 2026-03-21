@@ -14,7 +14,7 @@ function useFaceitStatsByUserId(userId: number | null) {
   return useQuery<FaceitStatsPayload>({
     queryKey: ["faceit_stats_public", userId],
     queryFn: async () => {
-      const resp = await fetch(`${API}/api/public/players/${userId}/faceit-stats`);
+      const resp = await fetch(`${API}/public/players/${userId}/faceit-stats`);
       if (!resp.ok) throw new Error("No FACEIT stats");
       const data = await resp.json();
       return { lifetime: data.lifetime, maps: data.maps };

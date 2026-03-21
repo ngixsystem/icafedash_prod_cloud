@@ -104,7 +104,7 @@ export function useTransferListings(params: {
   return useQuery<TransferListResponse>({
     queryKey: ["transfer_listings", params],
     queryFn: async () => {
-      const resp = await fetch(`${API}/api/public/transfer?${search.toString()}`);
+      const resp = await fetch(`${API}/public/transfer?${search.toString()}`);
       if (!resp.ok) throw new Error("Failed to fetch transfer listings");
       return resp.json();
     },
@@ -117,7 +117,7 @@ export function usePlayerProfile(userId: number | null) {
   return useQuery<PlayerProfile>({
     queryKey: ["player_profile", userId],
     queryFn: async () => {
-      const resp = await fetch(`${API}/api/public/players/${userId}`);
+      const resp = await fetch(`${API}/public/players/${userId}`);
       if (!resp.ok) throw new Error("Player not found");
       return resp.json();
     },
@@ -132,7 +132,7 @@ export function useCreateListing(token: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateListingPayload) => {
-      const resp = await fetch(`${API}/api/public/transfer`, {
+      const resp = await fetch(`${API}/public/transfer`, {
         method: "POST",
         headers: authHeaders(token ?? ""),
         body: JSON.stringify(payload),
@@ -151,7 +151,7 @@ export function useDeleteListing(token: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (listingId: number) => {
-      const resp = await fetch(`${API}/api/public/transfer/${listingId}`, {
+      const resp = await fetch(`${API}/public/transfer/${listingId}`, {
         method: "DELETE",
         headers: authHeaders(token!),
       });

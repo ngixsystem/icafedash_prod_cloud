@@ -26,7 +26,7 @@ function FaceitMiniStats({ userId }: { userId: number }) {
   const { data, isLoading } = useQuery({
     queryKey: ["faceit_mini", userId],
     queryFn: async () => {
-      const r = await fetch(`${API}/api/public/players/${userId}/faceit-stats`);
+      const r = await fetch(`${API}/public/players/${userId}/faceit-stats`);
       if (!r.ok) throw new Error("no stats");
       return r.json();
     },
