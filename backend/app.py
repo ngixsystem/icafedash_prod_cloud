@@ -3768,27 +3768,13 @@ def public_faceit_rankings_uzbekistan():
             player = entry.get("player") or {}
             result.append({
                 "position": entry.get("position"),
-                "faceit_points": entry.get("faceit_points") or player.get("faceit_points"),
-                "nickname": entry.get("nickname") or player.get("nickname"),
-                "avatar": (
-                    entry.get("cover_image_url")
-                    or entry.get("avatar")
-                    or player.get("cover_image_url")
-                    or player.get("avatar")
-                    or ""
-                ),
-                "player_id": entry.get("player_id") or player.get("player_id"),
-                "country": entry.get("country") or player.get("country"),
-                "skill_level": (
-                    entry.get("skill_level")
-                    or player.get("skill_level")
-                    or (entry.get("games") or {}).get("cs2", {}).get("skill_level")
-                ),
-                "faceit_elo": (
-                    entry.get("faceit_elo")
-                    or player.get("faceit_elo")
-                    or (entry.get("games") or {}).get("cs2", {}).get("faceit_elo")
-                ),
+                "faceit_points": entry.get("faceit_points"),
+                "nickname": entry.get("nickname"),
+                "avatar": "",
+                "player_id": entry.get("player_id"),
+                "country": entry.get("country"),
+                "skill_level": entry.get("game_skill_level"),
+                "faceit_elo": entry.get("faceit_elo"),
             })
         return jsonify({"total": len(result), "offset": offset, "items": result})
     except Exception as e:
