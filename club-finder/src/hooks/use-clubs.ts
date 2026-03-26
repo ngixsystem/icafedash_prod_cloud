@@ -39,6 +39,8 @@ export const useClubs = () => {
             if (!resp.ok) throw new Error("Failed to fetch clubs");
             return resp.json();
         },
+        staleTime: 30_000,
+        gcTime: 60_000,
     });
 };
 

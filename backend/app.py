@@ -1855,75 +1855,82 @@ def faceit_oauth_redirect_callback():
     return _redirect(f"{FRONTEND}/auth/faceit/callback?at={jwt_token}&u={user_encoded}")
 
 
+_public_clubs_cache: dict[str, Any] = {"data": None, "ts": 0.0}
+_PUBLIC_CLUBS_TTL = 30  # seconds
+
+def _fetch_club_pcs(club):
+    """Fetch PC stats for a single club from iCafeCloud API (runs in thread)."""
+    total_pcs = 0
+    free_pcs = 0
+    is_open = False
+    try:
+        headers = {"Authorization": f"Bearer {club.api_key.strip()}", "Accept": "application/json"}
+        pc_raw = requests.get(f"{ICAFE_BASE}/cafe/{club.cafe_id}/pcList", headers=headers, timeout=4).json()
+        if pc_raw.get("code") == 200:
+            data_field = pc_raw.get("data", {})
+            pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
+            total_pcs = len(pcs)
+            for pc in pcs:
+                if not (pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account")):
+                    s_str = str(pc.get("pc_status", "")).lower()
+                    if s_str not in ("busy", "locked", "ordered", "using", "offline", "off"):
+                        free_pcs += 1
+            is_open = True
+    except Exception:
+        pass
+    return club.id, total_pcs, free_pcs, is_open
+
+
 @app.get("/api/public/clubs")
 def public_clubs():
-    """Return an aggregated list of clubs with some basic stats based on iCafeCloud API"""
+    """Return an aggregated list of clubs with PC stats fetched in parallel + 30s cache."""
+    import time as _time
+    from concurrent.futures import ThreadPoolExecutor
+
+    now = _time.time()
+    if _public_clubs_cache["data"] is not None and (now - _public_clubs_cache["ts"]) < _PUBLIC_CLUBS_TTL:
+        return jsonify(_public_clubs_cache["data"])
+
     clubs = Club.query.all()
+
+    # Fetch PC stats for all clubs in parallel
+    pc_stats: dict[int, tuple[int, int, bool]] = {}
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(_fetch_club_pcs, c): c.id for c in clubs if c.api_key and c.cafe_id}
+        for future in futures:
+            try:
+                cid, total, free, is_open = future.result(timeout=5)
+                pc_stats[cid] = (total, free, is_open)
+            except Exception:
+                pc_stats[futures[future]] = (0, 0, False)
+
     result = []
-    
     for c in clubs:
         avg_rating, rating_count = get_club_rating_stats(c.id)
-        try:
-            # We fetch simple public stats if API key is valid
-            headers = {"Authorization": f"Bearer {c.api_key.strip()}", "Accept": "application/json"}
-            
-            # Count PCs
-            pc_raw = requests.get(f"{ICAFE_BASE}/cafe/{c.cafe_id}/pcList", headers=headers, timeout=5).json()
-            total_pcs = 0
-            free_pcs = 0
-            if pc_raw.get("code") == 200:
-                data_field = pc_raw.get("data", {})
-                pcs = data_field if isinstance(data_field, list) else data_field.get("pcs", [])
-                total_pcs = len(pcs)
-                for pc in pcs:
-                    if not (pc.get("member_id") or pc.get("status_connect_time_local") or pc.get("member_account")):
-                        s_str = str(pc.get("pc_status", "")).lower()
-                        if s_str not in ("busy", "locked", "ordered", "using", "offline", "off"):
-                            free_pcs += 1
-            
-            result.append({
-                "id": c.id,
-                "name": c.name,
-                "logo": c.club_main_photo_url or c.club_logo_url,
-                "profile_logo": c.club_logo_url,
-                "pcsTotal": total_pcs,
-                "pcsFree": free_pcs,
-                "rating": round(avg_rating, 1),
-                "rating_count": rating_count,
-                "address": c.address or "Адрес не указан",
-                "phone": c.phone or "",
-                "telegram_username": c.telegram_username or "",
-                "description": c.description or "",
-                "lat": c.lat or 0.0,
-                "lng": c.lng or 0.0,
-                "instagram": c.instagram or "",
-                "working_hours": c.working_hours or "Круглосуточно",
-                "isOpen": True,
-                "pricePerHour": 100
-            })
-        except:
-            # Add anyway as offline/unknown
-            result.append({
-                "id": c.id,
-                "name": c.name,
-                "logo": c.club_main_photo_url or c.club_logo_url,
-                "profile_logo": c.club_logo_url,
-                "pcsTotal": 0,
-                "pcsFree": 0,
-                "rating": round(avg_rating, 1),
-                "rating_count": rating_count,
-                "address": c.address or "Адрес не указан",
-                "phone": c.phone or "",
-                "telegram_username": c.telegram_username or "",
-                "description": c.description or "",
-                "lat": c.lat or 0.0,
-                "lng": c.lng or 0.0,
-                "instagram": c.instagram or "",
-                "working_hours": c.working_hours or "Круглосуточно",
-                "isOpen": False,
-                "pricePerHour": 0
-            })
-            
+        total_pcs, free_pcs, is_open = pc_stats.get(c.id, (0, 0, False))
+        result.append({
+            "id": c.id,
+            "name": c.name,
+            "logo": c.club_main_photo_url or c.club_logo_url,
+            "profile_logo": c.club_logo_url,
+            "pcsTotal": total_pcs,
+            "pcsFree": free_pcs,
+            "rating": round(avg_rating, 1),
+            "rating_count": rating_count,
+            "address": c.address or "Адрес не указан",
+            "phone": c.phone or "",
+            "telegram_username": c.telegram_username or "",
+            "description": c.description or "",
+            "lat": c.lat or 0.0,
+            "lng": c.lng or 0.0,
+            "instagram": c.instagram or "",
+            "working_hours": c.working_hours or "Круглосуточно",
+            "isOpen": is_open,
+            "pricePerHour": 100 if is_open else 0,
+        })
+
+    _public_clubs_cache["data"] = result
+    _public_clubs_cache["ts"] = now
     return jsonify(result)
 
 
