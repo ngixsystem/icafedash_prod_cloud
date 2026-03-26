@@ -382,6 +382,18 @@ class TransferListing(db.Model):
     user = db.relationship("User", backref=db.backref("transfer_listings", lazy=True))
 
 
+class Banner(db.Model):
+    __tablename__ = "banners"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(180), nullable=False)
+    subtitle = db.Column(db.String(255), nullable=True, default="")
+    image_url = db.Column(db.String(500), nullable=False)
+    link_url = db.Column(db.String(500), nullable=True, default="")
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 def generate_verification_code():
     return ''.join(random.choices(string.digits, k=6))
 
@@ -5437,6 +5449,138 @@ def admin_transfer_delete(listing_id):
     db.session.delete(listing)
     db.session.commit()
     return jsonify({"message": "Deleted"})
+
+
+# ─────────────────────────────────────────────
+# Banners (public + admin)
+
+@app.get("/api/public/banners")
+def public_banners():
+    banners = Banner.query.filter_by(is_active=True).order_by(Banner.sort_order.asc(), Banner.id.desc()).all()
+    return jsonify([{
+        "id": b.id,
+        "title": b.title,
+        "subtitle": b.subtitle or "",
+        "image_url": b.image_url,
+        "link_url": b.link_url or "",
+    } for b in banners])
+
+
+@app.get("/api/admin/banners")
+@admin_required
+def admin_list_banners():
+    banners = Banner.query.order_by(Banner.sort_order.asc(), Banner.id.desc()).all()
+    return jsonify([{
+        "id": b.id,
+        "title": b.title,
+        "subtitle": b.subtitle or "",
+        "image_url": b.image_url,
+        "link_url": b.link_url or "",
+        "sort_order": b.sort_order,
+        "is_active": b.is_active,
+        "created_at": b.created_at.isoformat() + "Z" if b.created_at else None,
+    } for b in banners])
+
+
+@app.post("/api/admin/banners")
+@admin_required
+def admin_create_banner():
+    title = request.form.get("title", "").strip()
+    if not title:
+        return jsonify({"message": "Title is required"}), 400
+
+    file = request.files.get("image")
+    if not file or not file.filename:
+        return jsonify({"message": "Image file is required"}), 400
+    if not allowed_file(file.filename):
+        return jsonify({"message": "File type not allowed"}), 400
+
+    filename = f"banner_{int(datetime.utcnow().timestamp())}_{secure_filename(file.filename)}"
+    file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+    image_url = f"/api/uploads/{filename}"
+
+    banner = Banner(
+        title=title,
+        subtitle=request.form.get("subtitle", "").strip(),
+        image_url=image_url,
+        link_url=request.form.get("link_url", "").strip(),
+        sort_order=int(request.form.get("sort_order", 0)),
+        is_active=request.form.get("is_active", "true").lower() in ("true", "1", "yes"),
+    )
+    db.session.add(banner)
+    db.session.commit()
+
+    return jsonify({
+        "id": banner.id,
+        "title": banner.title,
+        "subtitle": banner.subtitle or "",
+        "image_url": banner.image_url,
+        "link_url": banner.link_url or "",
+        "sort_order": banner.sort_order,
+        "is_active": banner.is_active,
+    }), 201
+
+
+@app.put("/api/admin/banners/<int:banner_id>")
+@admin_required
+def admin_update_banner(banner_id):
+    banner = Banner.query.get(banner_id)
+    if not banner:
+        return jsonify({"message": "Banner not found"}), 404
+
+    if "title" in request.form:
+        banner.title = request.form["title"].strip()
+    if "subtitle" in request.form:
+        banner.subtitle = request.form["subtitle"].strip()
+    if "link_url" in request.form:
+        banner.link_url = request.form["link_url"].strip()
+    if "sort_order" in request.form:
+        banner.sort_order = int(request.form["sort_order"])
+    if "is_active" in request.form:
+        banner.is_active = request.form["is_active"].lower() in ("true", "1", "yes")
+
+    file = request.files.get("image")
+    if file and file.filename and allowed_file(file.filename):
+        # Delete old image file if it exists
+        if banner.image_url:
+            old_filename = banner.image_url.rsplit("/", 1)[-1]
+            old_path = os.path.join(app.config["UPLOAD_FOLDER"], old_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        filename = f"banner_{int(datetime.utcnow().timestamp())}_{secure_filename(file.filename)}"
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        banner.image_url = f"/api/uploads/{filename}"
+
+    db.session.commit()
+
+    return jsonify({
+        "id": banner.id,
+        "title": banner.title,
+        "subtitle": banner.subtitle or "",
+        "image_url": banner.image_url,
+        "link_url": banner.link_url or "",
+        "sort_order": banner.sort_order,
+        "is_active": banner.is_active,
+    })
+
+
+@app.delete("/api/admin/banners/<int:banner_id>")
+@admin_required
+def admin_delete_banner(banner_id):
+    banner = Banner.query.get(banner_id)
+    if not banner:
+        return jsonify({"message": "Banner not found"}), 404
+
+    # Delete image file
+    if banner.image_url:
+        old_filename = banner.image_url.rsplit("/", 1)[-1]
+        old_path = os.path.join(app.config["UPLOAD_FOLDER"], old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    db.session.delete(banner)
+    db.session.commit()
+    return jsonify({"message": "Banner deleted"})
 
 
 # ─────────────────────────────────────────────
