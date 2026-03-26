@@ -310,6 +310,17 @@ export interface TournamentDetails extends Tournament {
     }>;
 }
 
+export interface AdminBanner {
+    id: number;
+    title: string;
+    subtitle: string;
+    image_url: string;
+    link_url: string;
+    sort_order: number;
+    is_active: boolean;
+    created_at: string | null;
+}
+
 export interface AdminTransferListing {
     id: number;
     listing_type: "lft" | "lfs";
@@ -545,6 +556,28 @@ export const api = {
         post<{ message: string }>(`/admin/tournaments/${tournamentId}/registrations/${registrationId}/approve`, {}),
     generateTournamentBracket: (tournamentId: number) =>
         post<{ message: string; matches_count: number }>(`/admin/tournaments/${tournamentId}/generate-bracket`, {}),
+
+    // Banners (admin)
+    adminBanners: () => get<AdminBanner[]>("/admin/banners"),
+    adminCreateBanner: async (formData: FormData): Promise<AdminBanner> => {
+        const res = await fetch(`${BASE}/admin/banners`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${localStorage.getItem("icafe_token")}` },
+            body: formData,
+        });
+        if (!res.ok) throw await toApiError(res);
+        return res.json();
+    },
+    adminUpdateBanner: async (id: number, formData: FormData): Promise<AdminBanner> => {
+        const res = await fetch(`${BASE}/admin/banners/${id}`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${localStorage.getItem("icafe_token")}` },
+            body: formData,
+        });
+        if (!res.ok) throw await toApiError(res);
+        return res.json();
+    },
+    adminDeleteBanner: (id: number) => del<{ message: string }>(`/admin/banners/${id}`),
 
     // Transfer market (admin)
     adminTransferList: (params?: { game?: string; type?: string; is_active?: string; search?: string; limit?: number; offset?: number }) =>
