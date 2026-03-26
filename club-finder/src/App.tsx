@@ -22,7 +22,6 @@ import RatingsPage from "./pages/RatingsPage";
 import TransferPage from "./pages/TransferPage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
 import FaceitUzRankingsPage from "./pages/FaceitUzRankingsPage";
-import AdminBannersPage from "./pages/AdminBannersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,14 +47,6 @@ const App = () => (
               <Route path="/transfer" element={<TransferPage />} />
               <Route path="/players/:id" element={<PlayerProfilePage />} />
               <Route path="/ratings/faceit-uz" element={<FaceitUzRankingsPage />} />
-              <Route
-                path="/admin/banners"
-                element={
-                  <AuthGuard>
-                    <AdminBannersPage />
-                  </AuthGuard>
-                }
-              />
 
               <Route
                 path="/profile"
