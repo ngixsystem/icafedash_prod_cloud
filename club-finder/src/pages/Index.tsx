@@ -159,9 +159,6 @@ export default function Index() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#121315]/90 via-[#121315]/55 to-[#121315]/20" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#121315]/85 via-transparent to-transparent" />
                     <div className="relative z-10 flex h-full flex-col justify-end p-4">
-                      <span className="mb-1 inline-flex w-fit rounded-full border border-[#F5A623]/40 bg-[#121315]/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-[#F5A623]">
-                        Баннер {idx + 1}
-                      </span>
                       <h3 className="font-display text-[26px] leading-none font-bold uppercase tracking-wide text-white">{slide.title}</h3>
                       <p className="mt-1 text-xs font-medium text-[#D3D7DE]">{slide.subtitle}</p>
                     </div>
