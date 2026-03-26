@@ -7,6 +7,7 @@ import slideTwo from "@/assets/club2.jpg";
 import slideThree from "@/assets/club3.jpg";
 import brandLogo from "@/assets/frag.png";
 import { useClubs } from "@/hooks/use-clubs";
+import { useBanners } from "@/hooks/use-banners";
 import { useUserLocation } from "@/hooks/use-user-location";
 import { distanceKm, hasValidCoords } from "@/lib/distance";
 
@@ -20,9 +21,10 @@ type BannerSlide = {
   title: string;
   subtitle: string;
   image: string;
+  link_url?: string;
 };
 
-const bannerSlides: BannerSlide[] = [
+const fallbackSlides: BannerSlide[] = [
   { id: 1, title: "Турнирный сезон", subtitle: "CS2 / Dota 2 / Valorant", image: slideOne },
   { id: 2, title: "Ночные скидки", subtitle: "Пакеты до -25% после 23:00", image: slideTwo },
   { id: 3, title: "VIP-зоны", subtitle: "Комфортные кабины для сквадов", image: slideThree },
@@ -33,7 +35,21 @@ export default function Index() {
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [selectedSlide, setSelectedSlide] = useState(0);
   const { data: clubs = [], isLoading } = useClubs();
+  const { data: apiBanners } = useBanners();
   const userLocation = useUserLocation();
+
+  const bannerSlides: BannerSlide[] = useMemo(() => {
+    if (apiBanners && apiBanners.length > 0) {
+      return apiBanners.map((b) => ({
+        id: b.id,
+        title: b.title,
+        subtitle: b.subtitle,
+        image: b.image_url,
+        link_url: b.link_url,
+      }));
+    }
+    return fallbackSlides;
+  }, [apiBanners]);
 
   const filtered = clubs.filter(
     (c) => c.name.toLowerCase().includes(query.toLowerCase()) || c.address.toLowerCase().includes(query.toLowerCase()),
@@ -112,7 +128,7 @@ export default function Index() {
           </div>
           <div className="flex flex-col">
             <h1 className="font-display text-[30px] font-bold uppercase tracking-wide leading-tight">FRAG.GG</h1>
-            <span className="text-[#F5A623] text-[10px] font-bold tracking-widest uppercase">Киберспортивный поиск</span>
+            <span className="text-[#F5A623] text-[10px] font-bold tracking-widest uppercase">Киберспортивный портал</span>
           </div>
         </div>
         <button className="w-10 h-10 bg-[#1E1F22] rounded-xl flex items-center justify-center border border-[#2F3136] text-[#949BA4] hover:text-[#F5A623] transition-colors">
@@ -137,15 +153,18 @@ export default function Index() {
         <div className="px-5 mb-8">
           <Carousel setApi={setCarouselApi} opts={{ loop: true }} className="w-full">
             <CarouselContent className="ml-0">
-              {bannerSlides.map((slide) => (
+              {bannerSlides.map((slide, idx) => (
                 <CarouselItem key={slide.id} className="pl-0">
-                  <div className="relative w-full overflow-hidden rounded-2xl border border-[#2F3136] bg-[#121315] shadow-lg h-[150px] sm:h-[172px]">
+                  <div
+                    className={`relative w-full overflow-hidden rounded-2xl border border-[#2F3136] bg-[#121315] shadow-lg h-[150px] sm:h-[172px] ${slide.link_url ? "cursor-pointer" : ""}`}
+                    onClick={() => slide.link_url && window.open(slide.link_url, "_blank", "noopener")}
+                  >
                     <img src={slide.image} alt={slide.title} className="absolute inset-0 h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-r from-[#121315]/90 via-[#121315]/55 to-[#121315]/20" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#121315]/85 via-transparent to-transparent" />
                     <div className="relative z-10 flex h-full flex-col justify-end p-4">
                       <span className="mb-1 inline-flex w-fit rounded-full border border-[#F5A623]/40 bg-[#121315]/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-[#F5A623]">
-                        Баннер {slide.id}
+                        Баннер {idx + 1}
                       </span>
                       <h3 className="font-display text-[26px] leading-none font-bold uppercase tracking-wide text-white">{slide.title}</h3>
                       <p className="mt-1 text-xs font-medium text-[#D3D7DE]">{slide.subtitle}</p>
