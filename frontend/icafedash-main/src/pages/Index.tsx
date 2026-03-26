@@ -21,7 +21,6 @@ import TeamCaptainPanel from "@/components/dashboard/TeamCaptainPanel";
 import UserPrivilegesPanel from "@/components/dashboard/UserPrivilegesPanel";
 import UsersPanel from "@/components/dashboard/UsersPanel";
 import TransferPanel from "@/components/dashboard/TransferPanel";
-import BannerPanel from "@/components/dashboard/BannerPanel";
 
 const Index = () => {
   const { isAdmin, isCaptain, user } = useAuth();
@@ -93,8 +92,6 @@ const Index = () => {
             <UsersPanel />
           ) : activeTab === "Команды" ? (
             <UserPrivilegesPanel />
-          ) : activeTab === "Баннеры" ? (
-            <BannerPanel />
           ) : activeTab === "Трансфер" ? (
             <TransferPanel />
           ) : activeTab === "Настройки" ? (
