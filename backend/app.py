@@ -1715,6 +1715,7 @@ def faceit_oauth_redirect_callback():
     # Decode code_verifier and optional link_token from state
     code_verifier = None
     link_token = None
+    source = "web"
     if state:
         try:
             padding = (4 - len(state) % 4) % 4
@@ -1783,6 +1784,7 @@ def faceit_oauth_redirect_callback():
     # If link_token is present — link FACEIT to existing user instead of login
     if link_token:
         import urllib.parse as _urlparse
+        base = IOS_SCHEME if source == "ios" else f"{FRONTEND}/auth/faceit/callback"
         try:
             from flask_jwt_extended import decode_token as _decode_token
             decoded_jwt = _decode_token(link_token)
@@ -1791,7 +1793,7 @@ def faceit_oauth_redirect_callback():
             if link_user:
                 existing = User.query.filter(User.faceit_id == faceit_id, User.id != link_user_id).first()
                 if existing:
-                    return _redirect(f"{FRONTEND}/auth/faceit/callback?faceit_error=already_linked_to_another_account")
+                    return _redirect(f"{base}?faceit_error=already_linked_to_another_account")
                 link_user.faceit_id = faceit_id
                 link_user.faceit_elo = faceit_elo
                 link_user.faceit_level = faceit_level
@@ -1805,11 +1807,10 @@ def faceit_oauth_redirect_callback():
                     qs += f"&faceit_level={faceit_level}"
                 if link_user.avatar_url:
                     qs += f"&avatar_url={_urlparse.quote(link_user.avatar_url)}"
-                base = IOS_SCHEME if source == "ios" else f"{FRONTEND}/auth/faceit/callback"
                 return _redirect(f"{base}?{qs}")
         except Exception:
             pass
-        return _redirect(f"{FRONTEND}/auth/faceit/callback?faceit_error=link_failed")
+        return _redirect(f"{base}?faceit_error=link_failed")
 
     # Find existing user by faceit_id, then email, then username
     user = User.query.filter_by(faceit_id=faceit_id).first()
