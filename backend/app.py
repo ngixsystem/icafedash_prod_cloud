@@ -1702,6 +1702,7 @@ def faceit_oauth_redirect_callback():
     from flask import redirect as _redirect
 
     FRONTEND = "https://cloud.icafedash.com"
+    IOS_SCHEME = "fraggg://auth/faceit/callback"
     REDIRECT_URI = f"{FRONTEND}/api/auth/faceit/oauth-callback"
 
     code  = request.args.get("code")  or request.form.get("code")
@@ -1720,7 +1721,9 @@ def faceit_oauth_redirect_callback():
             state_data = _json.loads(_b64.urlsafe_b64decode(state + "=" * padding).decode())
             code_verifier = state_data.get("v")
             link_token = state_data.get("link_token")
+            source = state_data.get("source", "web")
         except Exception:
+            source = "web"
             pass
 
     # Exchange code for FACEIT access token
@@ -1802,7 +1805,8 @@ def faceit_oauth_redirect_callback():
                     qs += f"&faceit_level={faceit_level}"
                 if link_user.avatar_url:
                     qs += f"&avatar_url={_urlparse.quote(link_user.avatar_url)}"
-                return _redirect(f"{FRONTEND}/auth/faceit/callback?{qs}")
+                base = IOS_SCHEME if source == "ios" else f"{FRONTEND}/auth/faceit/callback"
+                return _redirect(f"{base}?{qs}")
         except Exception:
             pass
         return _redirect(f"{FRONTEND}/auth/faceit/callback?faceit_error=link_failed")
