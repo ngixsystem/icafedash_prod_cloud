@@ -1,6 +1,6 @@
 # iOS ClubFinder Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Добавить 4 недостающих фичи в существующий iOS ClubFinder (`club-finder/ios/ClubFinder/`): баннер-карусель, FRAG.GG логотип, FACEIT OAuth через ASWebAuthenticationSession, экран TournamentGameRating.
 
@@ -15,7 +15,7 @@
 **Files:**
 - Create: `club-finder/ios/ClubFinder/Models/Banner.swift`
 
-- [ ] **Создать файл модели**
+- [x] **Создать файл модели**
 
 ```swift
 import Foundation
@@ -29,7 +29,7 @@ struct Banner: Identifiable, Decodable {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Models/Banner.swift
@@ -43,7 +43,7 @@ git commit -m "feat(ios): add Banner model"
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Services/APIService.swift`
 
-- [ ] **Добавить метод в конец MARK: Clubs секции (после `getZonePCs`)**
+- [x] **Добавить метод в конец MARK: Clubs секции (после `getZonePCs`)**
 
 Открой `APIService.swift`, найди строку:
 ```swift
@@ -57,7 +57,7 @@ git commit -m "feat(ios): add Banner model"
     }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Services/APIService.swift
@@ -71,7 +71,7 @@ git commit -m "feat(ios): add getBanners() to APIService"
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Assets.xcassets/` (добавить 3 imagesets)
 
-- [ ] **Создать директории и Contents.json для club1**
+- [x] **Создать директории и Contents.json для club1**
 
 ```bash
 mkdir -p "club-finder/ios/ClubFinder/Assets.xcassets/club1.imageset"
@@ -99,7 +99,7 @@ mkdir -p "club-finder/ios/ClubFinder/Assets.xcassets/club1.imageset"
 cp "club-finder/src/assets/club1.jpg" "club-finder/ios/ClubFinder/Assets.xcassets/club1.imageset/club1.jpg"
 ```
 
-- [ ] **Создать imageset для club2**
+- [x] **Создать imageset для club2**
 
 ```bash
 mkdir -p "club-finder/ios/ClubFinder/Assets.xcassets/club2.imageset"
@@ -126,7 +126,7 @@ mkdir -p "club-finder/ios/ClubFinder/Assets.xcassets/club2.imageset"
 cp "club-finder/src/assets/club2.jpg" "club-finder/ios/ClubFinder/Assets.xcassets/club2.imageset/club2.jpg"
 ```
 
-- [ ] **Создать imageset для club3**
+- [x] **Создать imageset для club3**
 
 ```bash
 mkdir -p "club-finder/ios/ClubFinder/Assets.xcassets/club3.imageset"
@@ -153,7 +153,7 @@ mkdir -p "club-finder/ios/ClubFinder/Assets.xcassets/club3.imageset"
 cp "club-finder/src/assets/club3.jpg" "club-finder/ios/ClubFinder/Assets.xcassets/club3.imageset/club3.jpg"
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Assets.xcassets/
@@ -167,7 +167,7 @@ git commit -m "feat(ios): add club1/2/3 fallback banner images to Assets"
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Views/Home/HomeView.swift`
 
-- [ ] **Полностью заменить содержимое `HomeView.swift`**
+- [x] **Полностью заменить содержимое `HomeView.swift`**
 
 ```swift
 import SwiftUI
@@ -380,7 +380,7 @@ struct HomeView: View {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Views/Home/HomeView.swift
@@ -394,7 +394,7 @@ git commit -m "feat(ios): add banner carousel to HomeView"
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Assets.xcassets/` (добавить frag-logo imageset)
 
-- [ ] **Создать imageset для frag-logo**
+- [x] **Создать imageset для frag-logo**
 
 ```bash
 mkdir -p "club-finder/ios/ClubFinder/Assets.xcassets/frag-logo.imageset"
@@ -418,7 +418,7 @@ cp "club-finder/src/assets/frag.png" "club-finder/ios/ClubFinder/Assets.xcassets
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Assets.xcassets/frag-logo.imageset/
@@ -432,7 +432,7 @@ git commit -m "feat(ios): add frag-logo asset"
 **Files:**
 - Modify: `backend/app.py` строки ~1714–1805
 
-- [ ] **Добавить чтение `source` из state JSON**
+- [x] **Добавить чтение `source` из state JSON**
 
 В `backend/app.py`, найди блок (около строки 1716):
 ```python
@@ -458,7 +458,7 @@ git commit -m "feat(ios): add frag-logo asset"
             pass
 ```
 
-- [ ] **Добавить переменную `IOS_SCHEME` и обновить redirect в link flow**
+- [x] **Добавить переменную `IOS_SCHEME` и обновить redirect в link flow**
 
 Сразу после строки `FRONTEND = "https://cloud.icafedash.com"` добавь:
 ```python
@@ -483,7 +483,7 @@ git commit -m "feat(ios): add frag-logo asset"
                 return _redirect(f"{base}?{qs}")
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add backend/app.py
@@ -497,7 +497,7 @@ git commit -m "feat(backend): support source=ios redirect to fraggg:// in FACEIT
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Info.plist`
 
-- [ ] **Добавить CFBundleURLTypes в Info.plist**
+- [x] **Добавить CFBundleURLTypes в Info.plist**
 
 Найди строку:
 ```xml
@@ -519,7 +519,7 @@ git commit -m "feat(backend): support source=ios redirect to fraggg:// in FACEIT
     </array>
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Info.plist
@@ -533,7 +533,7 @@ git commit -m "feat(ios): add fraggg:// URL scheme for FACEIT OAuth callback"
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Services/AuthService.swift`
 
-- [ ] **Полностью заменить содержимое `AuthService.swift`**
+- [x] **Полностью заменить содержимое `AuthService.swift`**
 
 ```swift
 import Foundation
@@ -702,7 +702,7 @@ class AuthService: ObservableObject {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Services/AuthService.swift
@@ -716,7 +716,7 @@ git commit -m "feat(ios): add FACEIT OAuth via ASWebAuthenticationSession"
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Views/Profile/ProfileView.swift`
 
-- [ ] **Найти блок Actions (строки ~122–141) и добавить FACEIT кнопки**
+- [x] **Найти блок Actions (строки ~122–141) и добавить FACEIT кнопки**
 
 Найди в `ProfileView.swift`:
 ```swift
@@ -754,7 +754,7 @@ git commit -m "feat(ios): add FACEIT OAuth via ASWebAuthenticationSession"
                 }
 ```
 
-- [ ] **Добавить `@State` переменные и `faceitSection` в `ProfileView`**
+- [x] **Добавить `@State` переменные и `faceitSection` в `ProfileView`**
 
 В начало `ProfileView` (после `@State private var showSettings = false`) добавь:
 ```swift
@@ -846,7 +846,7 @@ git commit -m "feat(ios): add FACEIT OAuth via ASWebAuthenticationSession"
     }
 ```
 
-- [ ] **Добавить toast overlay к ScrollView**
+- [x] **Добавить toast overlay к ScrollView**
 
 Найди `.background(Color(hex: "#121315"))` в `ProfileView` и добавь после него:
 ```swift
@@ -866,14 +866,14 @@ git commit -m "feat(ios): add FACEIT OAuth via ASWebAuthenticationSession"
         }
 ```
 
-- [ ] **Добавить import AuthenticationServices в начало файла**
+- [x] **Добавить import AuthenticationServices в начало файла**
 
 В самом начале `ProfileView.swift` добавь:
 ```swift
 import AuthenticationServices
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Views/Profile/ProfileView.swift
@@ -887,7 +887,7 @@ git commit -m "feat(ios): add FACEIT link/unlink buttons to ProfileView"
 **Files:**
 - Create: `club-finder/ios/ClubFinder/Views/Tournaments/TournamentGameRatingView.swift`
 
-- [ ] **Создать файл**
+- [x] **Создать файл**
 
 ```swift
 import SwiftUI
@@ -1085,7 +1085,7 @@ struct TournamentGameRatingView: View {
 }
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Views/Tournaments/TournamentGameRatingView.swift
@@ -1099,11 +1099,11 @@ git commit -m "feat(ios): add TournamentGameRatingView with static game data"
 **Files:**
 - Modify: `club-finder/ios/ClubFinder/Views/Tournaments/TournamentsView.swift`
 
-- [ ] **Прочитать файл, найти конец списка турниров**
+- [x] **Прочитать файл, найти конец списка турниров**
 
 Открой `TournamentsView.swift`. Найди `.task` или `.refreshable` модификатор в конце `body`. Перед ним найди закрывающую `}` основного `LazyVStack` или `VStack` со списком турниров.
 
-- [ ] **Добавить секцию "Рейтинги по играм" после списка турниров**
+- [x] **Добавить секцию "Рейтинги по играм" после списка турниров**
 
 Прямо перед закрывающей `}` основного `VStack` в `body` (после блока с `LazyVStack(ForEach(tournaments))` или пустого состояния) добавь:
 
@@ -1137,7 +1137,7 @@ git commit -m "feat(ios): add TournamentGameRatingView with static game data"
                 .padding(.top, 8)
 ```
 
-- [ ] **Commit**
+- [x] **Commit**
 
 ```bash
 git add club-finder/ios/ClubFinder/Views/Tournaments/TournamentsView.swift
