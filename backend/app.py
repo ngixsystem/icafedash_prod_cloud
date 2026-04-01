@@ -2789,6 +2789,36 @@ def public_faceit_bracket(tournament_id):
 
     return jsonify({"matches": matches, "championship_id": champ_id})
 
+
+@app.get("/api/public/tournaments/<int:tournament_id>/game-rating")
+def public_tournament_game_rating(tournament_id):
+    item = Tournament.query.get_or_404(tournament_id)
+    wins = {}
+    for match in item.matches:
+        if match.winner_team_id:
+            wins[match.winner_team_id] = wins.get(match.winner_team_id, 0) + 1
+
+    result = []
+    for reg in item.registrations:
+        if reg.status not in ("approved", "confirmed"):
+            continue
+        team = reg.team
+        if not team:
+            continue
+        result.append({
+            "id": team.id,
+            "username": team.name,
+            "avatar_url": team.logo_url or None,
+            "score": wins.get(team.id, 0),
+        })
+
+    result.sort(key=lambda x: x["score"], reverse=True)
+    for i, r in enumerate(result):
+        r["rank"] = i + 1
+
+    return jsonify(result)
+
+
 @app.get("/api/admin/clubs")
 @admin_required
 def get_clubs():
