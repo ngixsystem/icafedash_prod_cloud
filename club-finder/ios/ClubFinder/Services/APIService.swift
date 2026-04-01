@@ -181,6 +181,11 @@ class APIService {
         try await request("/public/tournaments/\(tournamentId)/faceit-bracket")
     }
 
+    func getTournamentGameRating(id: Int, game: String) async throws -> [GameRatingPlayer] {
+        try await request("/public/tournaments/\(id)/game-rating",
+                          queryItems: [URLQueryItem(name: "game", value: game)])
+    }
+
     // MARK: - Transfer Market
     func getTransferListings(game: String? = nil, type: String? = nil, region: String? = nil, limit: Int = 20, offset: Int = 0) async throws -> TransferListResponse {
         var items: [URLQueryItem] = [
