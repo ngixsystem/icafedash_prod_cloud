@@ -21,6 +21,9 @@ class APIService {
 
     let baseURL = "https://cloud.icafedash.com/api"
 
+    /// Base URL без "/api" — для построения URL загрузок (фото, логотипы)
+    var baseHost: String { baseURL.hasSuffix("/api") ? String(baseURL.dropLast(4)) : baseURL }
+
     private let decoder: JSONDecoder = {
         let d = JSONDecoder()
         return d

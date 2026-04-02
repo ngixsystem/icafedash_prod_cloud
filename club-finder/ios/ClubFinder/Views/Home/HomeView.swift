@@ -14,7 +14,7 @@ private let fallbackBanners: [FallbackBanner] = [
 ]
 
 struct HomeView: View {
-    @StateObject private var location = LocationService.shared
+    @ObservedObject private var location = LocationService.shared
     @State private var clubs: [Club] = []
     @State private var banners: [Banner] = []
     @State private var searchText = ""
@@ -107,31 +107,22 @@ struct HomeView: View {
         }
     }
 
-    @ViewBuilder
     private var bannerCarousel: some View {
-        if banners.isEmpty {
-            TabView(selection: $currentBanner) {
+        TabView(selection: $currentBanner) {
+            if banners.isEmpty {
                 ForEach(fallbackBanners) { b in
-                    fallbackSlide(b)
-                        .tag(b.id)
+                    fallbackSlide(b).tag(b.id)
                 }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .automatic))
-            .frame(height: 180)
-            .cornerRadius(16)
-            .padding(.horizontal)
-        } else {
-            TabView(selection: $currentBanner) {
+            } else {
                 ForEach(banners) { banner in
-                    apiBannerSlide(banner)
-                        .tag(banner.id)
+                    apiBannerSlide(banner).tag(banner.id)
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .automatic))
-            .frame(height: 180)
-            .cornerRadius(16)
-            .padding(.horizontal)
         }
+        .tabViewStyle(.page(indexDisplayMode: .automatic))
+        .frame(height: 180)
+        .cornerRadius(16)
+        .padding(.horizontal)
     }
 
     private func fallbackSlide(_ b: FallbackBanner) -> some View {
@@ -160,13 +151,9 @@ struct HomeView: View {
     }
 
     private func apiBannerSlide(_ banner: Banner) -> some View {
-        let imageURL: URL? = {
-            if banner.image_url.hasPrefix("http") {
-                return URL(string: banner.image_url)
-            }
-            let base = APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "")
-            return URL(string: base + banner.image_url)
-        }()
+        let imageURL: URL? = banner.image_url.hasPrefix("http")
+            ? URL(string: banner.image_url)
+            : URL(string: APIService.shared.baseHost + banner.image_url)
         return ZStack(alignment: .bottomLeading) {
             AsyncImage(url: imageURL) { image in
                 image.resizable().scaledToFill()

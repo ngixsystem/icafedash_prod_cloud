@@ -9,6 +9,19 @@ struct TournamentDetailView: View {
 
     private let accent = Color(hex: "#FF7800")
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoFormatterShort = ISO8601DateFormatter()
+    private static let displayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "dd.MM.yyyy HH:mm"
+        f.locale = Locale(identifier: "ru_RU")
+        return f
+    }()
+
     var body: some View {
         ScrollView {
             if isLoading {
@@ -19,7 +32,7 @@ struct TournamentDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     // Banner
                     if let banner = t.banner_url, !banner.isEmpty {
-                        AsyncImage(url: URL(string: APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + banner)) { image in
+                        AsyncImage(url: URL(string: APIService.shared.baseHost + banner)) { image in
                             image.resizable().aspectRatio(2340.0/600.0, contentMode: .fill)
                         } placeholder: {
                             Rectangle().fill(Color.white.opacity(0.05))
@@ -31,7 +44,7 @@ struct TournamentDetailView: View {
                         // Header
                         HStack(spacing: 12) {
                             if !t.logo_url.isEmpty {
-                                AsyncImage(url: URL(string: APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + t.logo_url)) { image in
+                                AsyncImage(url: URL(string: APIService.shared.baseHost + t.logo_url)) { image in
                                     image.resizable().aspectRatio(contentMode: .fill)
                                 } placeholder: {
                                     RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
@@ -139,7 +152,7 @@ struct TournamentDetailView: View {
                                     VStack(alignment: .leading, spacing: 8) {
                                         HStack {
                                             if !reg.team_logo_url.isEmpty {
-                                                AsyncImage(url: URL(string: APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + reg.team_logo_url)) { image in
+                                                AsyncImage(url: URL(string: APIService.shared.baseHost + reg.team_logo_url)) { image in
                                                     image.resizable().aspectRatio(contentMode: .fill)
                                                 } placeholder: {
                                                     Circle().fill(Color.white.opacity(0.1))
@@ -161,7 +174,7 @@ struct TournamentDetailView: View {
                                         // Members
                                         ForEach(reg.members) { member in
                                             HStack(spacing: 8) {
-                                                AsyncImage(url: URL(string: member.avatar_url.hasPrefix("http") ? member.avatar_url : APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + member.avatar_url)) { image in
+                                                AsyncImage(url: URL(string: member.avatar_url.hasPrefix("http") ? member.avatar_url : APIService.shared.baseHost + member.avatar_url)) { image in
                                                     image.resizable().aspectRatio(contentMode: .fill)
                                                 } placeholder: {
                                                     Circle().fill(Color.white.opacity(0.1))
@@ -242,13 +255,8 @@ struct TournamentDetailView: View {
 
     func formatDate(_ iso: String?) -> String {
         guard let iso else { return "-" }
-        let fmt = ISO8601DateFormatter()
-        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = fmt.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) else { return iso }
-        let df = DateFormatter()
-        df.dateFormat = "dd.MM.yyyy HH:mm"
-        df.locale = Locale(identifier: "ru_RU")
-        return df.string(from: date)
+        guard let date = Self.isoFormatter.date(from: iso) ?? Self.isoFormatterShort.date(from: iso) else { return iso }
+        return Self.displayFormatter.string(from: date)
     }
 }
 

@@ -19,7 +19,7 @@ struct ProfileView: View {
                 // Avatar + Info
                 VStack(spacing: 12) {
                     if let avatar = auth.user?.avatar_url, !avatar.isEmpty {
-                        AsyncImage(url: URL(string: avatar.hasPrefix("http") ? avatar : APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + avatar)) { image in
+                        AsyncImage(url: URL(string: avatar.hasPrefix("http") ? avatar : APIService.shared.baseHost + avatar)) { image in
                             image.resizable().aspectRatio(contentMode: .fill)
                         } placeholder: {
                             Circle().fill(Color.white.opacity(0.1))
@@ -215,8 +215,8 @@ struct ProfileView: View {
             Button {
                 guard let token = auth.token else { return }
                 Task {
-                    if let result = try? await APIService.shared.unlinkFaceit(token: token) {
-                        let u = auth.user!
+                    if let result = try? await APIService.shared.unlinkFaceit(token: token),
+                           let u = auth.user {
                         auth.updateUser(ClientUser(
                             id: u.id, username: u.username, email: u.email,
                             role: u.role,
@@ -247,7 +247,8 @@ struct ProfileView: View {
     private func showToast(_ message: String) {
         faceitToast = message
         showFaceitToast = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
             showFaceitToast = false
         }
     }

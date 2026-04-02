@@ -40,7 +40,7 @@ struct TournamentsView: View {
                         .foregroundColor(.white)
 
                     ForEach([("cs2", "CS2"), ("dota2", "Dota 2"), ("pubg-mobile", "PUBG Mobile")], id: \.0) { gameId, title in
-                        NavigationLink(destination: TournamentGameRatingView(gameId: gameId)) {
+                        NavigationLink(destination: TournamentGameRatingView(tournamentId: nil, game: title)) {
                             HStack {
                                 Image(systemName: "trophy.fill")
                                     .foregroundColor(Color(hex: "#FF7800"))
@@ -79,11 +79,16 @@ struct TournamentCardView: View {
     let tournament: PublicTournament
     private let accent = Color(hex: "#FF7800")
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoFormatterShort = ISO8601DateFormatter()
+
     var daysUntil: String? {
         guard let startsAt = tournament.starts_at else { return nil }
-        let fmt = ISO8601DateFormatter()
-        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = fmt.date(from: startsAt) ?? ISO8601DateFormatter().date(from: startsAt) else { return nil }
+        guard let date = Self.isoFormatter.date(from: startsAt) ?? Self.isoFormatterShort.date(from: startsAt) else { return nil }
         let days = Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0
         if days < 0 { return "Завершён" }
         if days == 0 { return "Сегодня" }
@@ -99,7 +104,7 @@ struct TournamentCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Banner
             if let banner = tournament.banner_url, !banner.isEmpty {
-                AsyncImage(url: URL(string: APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + banner)) { image in
+                AsyncImage(url: URL(string: APIService.shared.baseHost + banner)) { image in
                     image.resizable().aspectRatio(2340.0/600.0, contentMode: .fill)
                         .saturation(0)
                 } placeholder: {
@@ -113,7 +118,7 @@ struct TournamentCardView: View {
                 // Logo + Title + Prize
                 HStack(spacing: 10) {
                     if !tournament.logo_url.isEmpty {
-                        AsyncImage(url: URL(string: APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + tournament.logo_url)) { image in
+                        AsyncImage(url: URL(string: APIService.shared.baseHost + tournament.logo_url)) { image in
                             image.resizable().aspectRatio(contentMode: .fill)
                         } placeholder: {
                             RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.1))

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TournamentGameRatingView: View {
-    let tournamentId: Int
+    let tournamentId: Int?
     let game: String
 
     @State private var players: [GameRatingPlayer] = []
@@ -9,6 +9,11 @@ struct TournamentGameRatingView: View {
     @State private var loadError = false
 
     private let accent = Color(hex: "#FF7800")
+    private static let rankColors: [Int: Color] = [
+        1: Color(hex: "#FEE75C"),
+        2: Color(hex: "#C0C0C0"),
+        3: Color(hex: "#CD7F32"),
+    ]
 
     var body: some View {
         ScrollView {
@@ -66,6 +71,12 @@ struct TournamentGameRatingView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, 20)
+                } else if tournamentId == nil {
+                    Text("Выберите конкретный турнир для просмотра рейтинга")
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 20)
                 } else if players.isEmpty {
                     Text("Рейтинг пока не сформирован")
                         .foregroundColor(.gray)
@@ -101,13 +112,7 @@ struct TournamentGameRatingView: View {
     }
 
     private func playerRow(_ player: GameRatingPlayer) -> some View {
-        let rankColors: [Int: Color] = [
-            1: Color(hex: "#FEE75C"),
-            2: Color(hex: "#C0C0C0"),
-            3: Color(hex: "#CD7F32"),
-        ]
-        let rankColor = rankColors[player.rank] ?? accent
-
+        let rankColor = Self.rankColors[player.rank] ?? accent
         return HStack(spacing: 12) {
             ZStack {
                 Circle()
@@ -122,7 +127,7 @@ struct TournamentGameRatingView: View {
             if let urlStr = player.avatar_url, !urlStr.isEmpty {
                 let fullURL: URL? = urlStr.hasPrefix("http")
                     ? URL(string: urlStr)
-                    : URL(string: APIService.shared.baseURL.replacingOccurrences(of: "/api", with: "") + urlStr)
+                    : URL(string: APIService.shared.baseHost + urlStr)
                 AsyncImage(url: fullURL) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
@@ -160,10 +165,11 @@ struct TournamentGameRatingView: View {
     }
 
     private func load() async {
+        guard let id = tournamentId else { isLoading = false; return }
         isLoading = true
         loadError = false
         do {
-            players = try await APIService.shared.getTournamentGameRating(id: tournamentId, game: game)
+            players = try await APIService.shared.getTournamentGameRating(id: id, game: game)
         } catch {
             loadError = true
         }
