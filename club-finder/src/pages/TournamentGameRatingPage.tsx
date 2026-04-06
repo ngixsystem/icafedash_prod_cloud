@@ -486,7 +486,17 @@ export default function TournamentGameRatingPage() {
         <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">Сезон 2026</span>
       </div>
 
-      <TabContent gameId={gameId as GameId} />
+      {gameId === "cs2" ? (
+        <TabContent gameId={gameId as GameId} />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-16 h-16 rounded-2xl border border-[#2F3136] bg-[#151515] flex items-center justify-center">
+            <Trophy className="w-7 h-7 text-[#FF7800]/50" />
+          </div>
+          <p className="text-lg font-bold text-white/80">Раздел в разработке</p>
+          <p className="text-sm text-[#949BA4] text-center max-w-[260px]">Рейтинг для этой игры появится в ближайшее время</p>
+        </div>
+      )}
     </div>
   );
 }
