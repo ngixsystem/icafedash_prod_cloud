@@ -4567,6 +4567,7 @@ def get_shift():
             "date_end": today_str,
             "time_start": today_str,
             "time_end": today_str,
+            "shift_staff_name": "",
         })
         debug["shiftList"] = r2
         if r2 and r2.get("code") == 200:
