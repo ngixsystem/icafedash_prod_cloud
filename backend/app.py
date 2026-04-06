@@ -4604,8 +4604,8 @@ def get_shift():
             debug["shiftList_attempts"][staff_name] = r2
             for s in _extract_shifts(r2):
                 status = str(s.get("status") or "").lower()
-                end = s.get("end_time") or s.get("shift_end") or s.get("close_time") or ""
-                if status in ("open", "active", "") or not end:
+                end = s.get("shift_end_time") or s.get("end_time") or s.get("shift_end") or s.get("close_time") or ""
+                if status in ("open", "active", "") or not end or end == "-":
                     data = s
                     break
             if data:
@@ -4629,12 +4629,13 @@ def get_shift():
                 return v
         return None
 
+    end_raw = pick("shift_end_time", "shift_end", "end_time", "close_time", "end_at", "closed_at") or ""
     shift = {
-        "operator":   pick("operator_name", "cashier_name", "staff_name", "username", "name") or "",
-        "start_time": pick("shift_start", "start_time", "open_time", "start_at", "opened_at") or "",
-        "end_time":   pick("shift_end", "end_time", "close_time", "end_at", "closed_at") or "",
-        "cash":       float(pick("cash_amount", "total_cash", "cash", "balance", "income") or 0),
-        "status":     pick("status") or "open",
+        "operator":   pick("shift_staff_name", "operator_name", "cashier_name", "staff_name", "username", "name") or "",
+        "start_time": pick("shift_start_time", "shift_start", "start_time", "open_time", "start_at", "opened_at") or "",
+        "end_time":   "" if end_raw == "-" else end_raw,
+        "cash":       float(pick("total_amount", "cash_amount", "total_cash", "cash", "balance", "income") or 0),
+        "status":     "open" if (not end_raw or end_raw == "-") else "closed",
     }
     return jsonify({"shift": shift, "debug": debug})
 
