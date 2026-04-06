@@ -23,7 +23,7 @@ const GAME_META: Record<GameId, { title: string; image: string }> = {
 
 const RANK_COLORS = ["#FEE75C", "#C0C0C0", "#CD7F32"];
 
-// ─── Модалка фото игрока ────────────────────────────────────────────────────
+// ─── Карточка игрока на весь экран ──────────────────────────────────────────
 
 function PlayerPhotoModal({
   player,
@@ -33,48 +33,91 @@ function PlayerPhotoModal({
   onClose: () => void;
 }) {
   const isDefault = player.photo.includes("man.png") || player.photo.includes("no_image");
+
+  // Имя → первое слово фамилия, остальное имя
+  const nameParts = player.name.trim().split(" ");
+  const lastName  = nameParts[0] ?? "";
+  const firstName = nameParts.slice(1).join(" ");
+
   return (
-    <div className="fixed inset-0 z-[1200] flex items-end justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center" onClick={onClose}>
+      {/* Размытый фон */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-xl" />
+
+      {/* Карточка */}
       <div
-        className="relative w-full max-w-[420px] rounded-t-3xl overflow-hidden pb-10"
-        style={{ background: "linear-gradient(180deg, #1e1f24 0%, #18191d 100%)", borderTop: "1px solid rgba(255,255,255,0.08)" }}
+        className="relative w-full max-w-[420px] h-full overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 rounded-full bg-white/15" />
-        </div>
-        {/* Close */}
+        {/* Фото на весь экран как фон */}
+        {!isDefault && (
+          <>
+            <img
+              src={player.photo}
+              alt={player.nickname}
+              className="absolute inset-0 w-full h-full object-cover object-top"
+            />
+            {/* Градиент снизу */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+          </>
+        )}
+        {/* Заглушка если нет фото */}
+        {isDefault && (
+          <div className="absolute inset-0 bg-[#0e0f12] flex items-center justify-center">
+            <Users className="w-24 h-24 text-white/8" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          </div>
+        )}
+
+        {/* Кнопка закрыть */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/8 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+          className="absolute top-12 right-5 z-10 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white transition-colors"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4.5 h-4.5" />
         </button>
 
-        {/* Фото */}
-        <div className="flex flex-col items-center px-6 pt-2 pb-4 gap-4">
-          <div className="w-32 h-32 rounded-2xl overflow-hidden bg-[#1E1E1E] border border-white/10 flex items-center justify-center">
-            {!isDefault ? (
-              <img src={player.photo} alt={player.nickname} className="w-full h-full object-cover" />
-            ) : (
-              <Users className="w-12 h-12 text-white/15" />
-            )}
+        {/* Контент снизу */}
+        <div className="relative mt-auto px-6 pb-14 pt-8">
+
+          {/* Никнейм */}
+          <p className="text-[42px] font-black leading-none text-white tracking-tight mb-1">
+            {player.nickname || lastName}
+          </p>
+
+          {/* Имя Фамилия */}
+          {player.name && (
+            <div className="flex items-baseline gap-2 mb-5">
+              <span className="text-base font-bold text-white/90">{firstName}</span>
+              <span className="text-base font-bold text-white/50">{lastName}</span>
+            </div>
+          )}
+
+          {/* Команда + PTS */}
+          <div className="flex items-end justify-between">
+            {player.team ? (
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/35 mb-1">Команда</p>
+                <p className="text-lg font-black text-white">{player.team}</p>
+              </div>
+            ) : <div />}
+
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/35 mb-1">Рейтинг</p>
+              <div className="flex items-baseline gap-1.5">
+                <span
+                  className="text-4xl font-black leading-none"
+                  style={{ background: "linear-gradient(135deg,#FF9A2F,#FF7800)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+                >
+                  {player.points}
+                </span>
+                <span className="text-xs font-bold text-white/40 uppercase tracking-widest">pts</span>
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-xl font-black text-white">{player.nickname || player.name}</p>
-            {player.nickname && player.name !== player.nickname && (
-              <p className="text-xs text-white/40 mt-0.5">{player.name}</p>
-            )}
-            {player.team && (
-              <p className="text-sm text-[#FF7800]/80 mt-1">{player.team}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FF7800]/10 border border-[#FF7800]/20">
-            <span className="text-lg font-black text-[#FF9A2F]">{player.points}</span>
-            <span className="text-xs uppercase tracking-widest text-[#949BA4]">очков</span>
-          </div>
+
+          {/* Разделитель */}
+          <div className="mt-5 h-px bg-gradient-to-r from-[#FF7800]/30 via-white/10 to-transparent" />
         </div>
       </div>
     </div>
