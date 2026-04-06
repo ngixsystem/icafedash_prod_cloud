@@ -5415,70 +5415,66 @@ def _cu_get_all_players() -> list:
 
 @app.route("/api/public/cyberunion/teams", methods=["GET"])
 def cyberunion_teams():
-    game = request.args.get("game", "cs2")
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
-    discipline_id = _CU_DISCIPLINE.get(game)
-    if discipline_id is None:
-        return jsonify({"error": "unknown game"}), 400
     try:
+        game = request.args.get("game", "cs2")
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 20, type=int)
+        discipline_id = _CU_DISCIPLINE.get(game)
+        if discipline_id is None:
+            return jsonify({"error": "unknown game"}), 400
         all_raw = _cu_get_all_teams()
-    except Exception:
-        return jsonify({"error": "upstream"}), 502
-
-    filtered = [t for t in all_raw if t.get("discipline", {}).get("id") == discipline_id]
-    filtered.sort(key=lambda t: t.get("points", 0), reverse=True)
-
-    total = len(filtered)
-    page_count = max(1, (total + per_page - 1) // per_page)
-    start = (page - 1) * per_page
-    items = [
-        {
-            "id": t["id"],
-            "name": t["name"],
-            "points": t["points"],
-            "photo": t.get("photo", ""),
-            "region": t["region"]["name"],
-            "region_photo": t["region"].get("photo", ""),
-        }
-        for t in filtered[start:start + per_page]
-    ]
-    return jsonify({"items": items, "total": total, "page": page, "page_count": page_count})
+        filtered = [t for t in all_raw if t.get("discipline", {}).get("id") == discipline_id]
+        filtered.sort(key=lambda t: t.get("points", 0), reverse=True)
+        total = len(filtered)
+        page_count = max(1, (total + per_page - 1) // per_page)
+        start = (page - 1) * per_page
+        items = [
+            {
+                "id": t["id"],
+                "name": t["name"],
+                "points": t.get("points", 0),
+                "photo": t.get("photo", ""),
+                "region": (t.get("region") or {}).get("name", ""),
+                "region_photo": (t.get("region") or {}).get("photo", ""),
+            }
+            for t in filtered[start:start + per_page]
+        ]
+        return jsonify({"items": items, "total": total, "page": page, "page_count": page_count})
+    except Exception as e:
+        return jsonify({"error": "server", "detail": str(e)}), 500
 
 
 @app.route("/api/public/cyberunion/players", methods=["GET"])
 def cyberunion_players():
-    game = request.args.get("game", "cs2")
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
-    discipline_id = _CU_DISCIPLINE.get(game)
-    if discipline_id is None:
-        return jsonify({"error": "unknown game"}), 400
     try:
+        game = request.args.get("game", "cs2")
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 20, type=int)
+        discipline_id = _CU_DISCIPLINE.get(game)
+        if discipline_id is None:
+            return jsonify({"error": "unknown game"}), 400
         all_raw = _cu_get_all_players()
-    except Exception:
-        return jsonify({"error": "upstream"}), 502
-
-    filtered = [p for p in all_raw if p.get("discipline", {}).get("id") == discipline_id]
-    filtered.sort(key=lambda p: p.get("points", 0), reverse=True)
-
-    total = len(filtered)
-    page_count = max(1, (total + per_page - 1) // per_page)
-    start = (page - 1) * per_page
-    items = [
-        {
-            "id": p["id"],
-            "name": p["name"],
-            "nickname": p.get("nickname", "").strip(),
-            "points": p["points"],
-            "photo": p.get("photo", ""),
-            "team": p["team"]["name"] if p.get("team") else None,
-            "region": p["region"]["name"],
-            "region_photo": p["region"].get("photo", ""),
-        }
-        for p in filtered[start:start + per_page]
-    ]
-    return jsonify({"items": items, "total": total, "page": page, "page_count": page_count})
+        filtered = [p for p in all_raw if p.get("discipline", {}).get("id") == discipline_id]
+        filtered.sort(key=lambda p: p.get("points", 0), reverse=True)
+        total = len(filtered)
+        page_count = max(1, (total + per_page - 1) // per_page)
+        start = (page - 1) * per_page
+        items = [
+            {
+                "id": p["id"],
+                "name": p.get("name", ""),
+                "nickname": p.get("nickname", "").strip(),
+                "points": p.get("points", 0),
+                "photo": p.get("photo", ""),
+                "team": (p.get("team") or {}).get("name") or None,
+                "region": (p.get("region") or {}).get("name", ""),
+                "region_photo": (p.get("region") or {}).get("photo", ""),
+            }
+            for p in filtered[start:start + per_page]
+        ]
+        return jsonify({"items": items, "total": total, "page": page, "page_count": page_count})
+    except Exception as e:
+        return jsonify({"error": "server", "detail": str(e)}), 500
 
 
 @app.route("/api/public/cyberunion/team-players", methods=["GET"])
