@@ -90,12 +90,12 @@ function PlayerPhotoModal({
 
         {/* ── ОСНОВНОЕ ФОТО ── */}
         {!isDefault ? (
-          <div className="absolute inset-0 flex items-center justify-center pb-36">
+          <div className="absolute inset-x-0 top-0 bottom-[200px] flex items-end justify-center">
             <img
               src={player.photo}
               alt={player.nickname}
-              className="max-w-[92%] max-h-[62vh]"
-              style={{ objectFit: "contain" }}
+              className="w-full h-full"
+              style={{ objectFit: "contain", objectPosition: "bottom center" }}
             />
           </div>
         ) : (
