@@ -5500,7 +5500,7 @@ def cyberunion_players():
 
 @app.route("/api/public/cyberunion/team-players", methods=["GET"])
 def cyberunion_team_players():
-    """Игроки команды — берём из вложенного players[] в /rating/teams-ca."""
+    """Игроки команды — из players[] команды, points докидываем из players/index."""
     try:
         game = request.args.get("game", "cs2")
         team_name = request.args.get("team_name", "").strip()
@@ -5509,22 +5509,34 @@ def cyberunion_team_players():
         discipline_id = _CU_DISCIPLINE.get(game)
         if discipline_id is None:
             return jsonify({"error": "unknown game"}), 400
+
         all_teams = _cu_get_rating_teams(discipline_id)
         target = team_name.upper()
+        team_players = []
         for team in all_teams:
             if (team.get("name") or "").strip().upper() == target:
-                items = [
-                    {
-                        "id": p["id"],
-                        "name": p.get("name", ""),
-                        "nickname": p.get("nickname", "").strip(),
-                        "points": p.get("points", 0),
-                        "photo": p.get("photo", ""),
-                    }
-                    for p in (team.get("players") or []) if p
-                ]
-                return jsonify({"items": items})
-        return jsonify({"items": []})
+                team_players = [p for p in (team.get("players") or []) if p]
+                break
+
+        if not team_players:
+            return jsonify({"items": []})
+
+        # Докидываем points из кэша players/index
+        all_players = _cu_get_all_players()
+        points_by_id = {p["id"]: p.get("points", 0) for p in all_players if p and p.get("id")}
+
+        items = [
+            {
+                "id": p["id"],
+                "name": p.get("name", ""),
+                "nickname": p.get("nickname", "").strip(),
+                "points": points_by_id.get(p["id"], 0),
+                "photo": p.get("photo", ""),
+            }
+            for p in team_players
+        ]
+        items.sort(key=lambda x: x["points"], reverse=True)
+        return jsonify({"items": items})
     except Exception as e:
         return jsonify({"error": "server", "detail": str(e)}), 500
 
