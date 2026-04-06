@@ -104,9 +104,6 @@ function PlayerPhotoModal({
           </div>
         )}
 
-        {/* Горизонтальная линия-акцент над текстом */}
-        <div className="absolute bottom-[212px] left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF7800]/50 to-transparent" />
-
         {/* Кнопка закрыть */}
         <button
           onClick={onClose}
@@ -118,6 +115,8 @@ function PlayerPhotoModal({
 
         {/* ── ТЕКСТ СНИЗУ ── */}
         <div className="relative mt-auto px-6 pb-12 pt-6">
+          {/* Линия-разделитель — всегда вровень с верхом блока */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF7800]/50 to-transparent" />
 
           {/* Никнейм */}
           <p
