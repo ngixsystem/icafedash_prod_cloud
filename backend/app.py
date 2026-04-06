@@ -5441,7 +5441,8 @@ def cyberunion_teams():
         ]
         return jsonify({"items": items, "total": total, "page": page, "page_count": page_count})
     except Exception as e:
-        return jsonify({"error": "server", "detail": str(e)}), 500
+        import traceback
+        return jsonify({"error": "server", "detail": str(e), "trace": traceback.format_exc()}), 500
 
 
 @app.route("/api/public/cyberunion/players", methods=["GET"])
