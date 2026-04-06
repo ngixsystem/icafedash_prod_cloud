@@ -4562,9 +4562,8 @@ def get_shift():
     # Попытка 2: получаем список сотрудников и ищем активный сеанс по каждому
     if not data:
         today = date.today()
-        yesterday = today - timedelta(days=1)
-        # Ищем в диапазоне вчера–сегодня: смена могла начаться вчера
-        date_start_str = yesterday.isoformat()
+        # Ищем за последние 14 дней — чтобы набрать 7 закрытых смен
+        date_start_str = (today - timedelta(days=14)).isoformat()
         date_end_str = today.isoformat()
 
         staffs_r = icafe_get("/staffs")
