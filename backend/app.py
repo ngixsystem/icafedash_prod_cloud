@@ -4549,19 +4549,55 @@ def uploaded_file(filename):
 @app.get("/api/shift")
 @jwt_required()
 def get_shift():
-    """Возвращает данные текущего сеанса оператора через shiftXReport."""
-    raw = icafe_get("/staffs/action/shiftXReport")
-    if not raw or raw.get("code") != 200:
-        return jsonify({"shift": None}), 200
-    data = raw.get("data") or {}
+    """Возвращает данные текущего сеанса оператора."""
+    debug = {}
+
+    # Попытка 1: shiftXReport (текущий X-отчёт)
+    r1 = icafe_get("/staffs/action/shiftXReport")
+    debug["shiftXReport"] = r1
+    data = None
+    if r1 and r1.get("code") == 200:
+        data = r1.get("data") or {}
+
+    # Попытка 2: shiftList — берём последний открытый сеанс
+    if not data:
+        r2 = icafe_get("/reports/shiftList")
+        debug["shiftList"] = r2
+        if r2 and r2.get("code") == 200:
+            shifts = r2.get("data") or []
+            if isinstance(shifts, dict):
+                shifts = shifts.get("shifts") or shifts.get("list") or shifts.get("data") or []
+            # Ищем открытый сеанс (без end_time или status=open)
+            for s in shifts:
+                if not isinstance(s, dict):
+                    continue
+                status = str(s.get("status") or "").lower()
+                end = s.get("end_time") or s.get("shift_end") or s.get("close_time") or ""
+                if status in ("open", "active", "") or not end:
+                    data = s
+                    break
+            # Если не нашли открытый — берём самый последний
+            if not data and shifts:
+                data = shifts[0] if isinstance(shifts[0], dict) else None
+
+    if not data:
+        return jsonify({"shift": None, "debug": debug}), 200
+
+    def pick(*keys):
+        for k in keys:
+            v = data.get(k)
+            if v is not None and v != "":
+                return v
+        return None
+
     shift = {
-        "operator":   data.get("operator_name") or data.get("cashier_name") or data.get("staff_name") or "",
-        "start_time": data.get("shift_start") or data.get("start_time") or data.get("open_time") or "",
-        "end_time":   data.get("shift_end")   or data.get("end_time")   or data.get("close_time") or "",
-        "cash":       float(data.get("cash_amount") or data.get("total_cash") or data.get("cash") or 0),
-        "status":     data.get("status") or "open",
+        "operator":   pick("operator_name", "cashier_name", "staff_name", "username", "name") or "",
+        "start_time": pick("shift_start", "start_time", "open_time", "start_at", "opened_at") or "",
+        "end_time":   pick("shift_end", "end_time", "close_time", "end_at", "closed_at") or "",
+        "cash":       float(pick("cash_amount", "total_cash", "cash", "balance", "income") or 0),
+        "status":     pick("status") or "open",
     }
-    return jsonify({"shift": shift, "raw": data})
+    return jsonify({"shift": shift, "debug": debug})
 
 
 @app.get("/api/overview")
