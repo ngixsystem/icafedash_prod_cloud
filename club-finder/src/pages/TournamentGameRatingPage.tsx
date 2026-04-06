@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import cs2Banner from "@/assets/tournamentsgcs.jpg";
 import dota2Banner from "@/assets/tournamentsgdota.jpg";
 import pubgBanner from "@/assets/tournamentsgpubg.jpg";
+import playerCardBg from "@/assets/fon_JPG.jpg";
 import {
   useCyberUnionTeams,
   useCyberUnionPlayers,
@@ -46,19 +47,9 @@ function PlayerPhotoModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── ФОН ── */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#0d0a14 0%,#080b10 50%,#0a0c0a 100%)" }} />
-        {/* Фиолетовое свечение левый верх */}
-        <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#7c3aed]/15 blur-3xl pointer-events-none" />
-        {/* Оранжевое свечение правый низ */}
-        <div className="absolute -bottom-16 right-0 w-64 h-64 rounded-full bg-[#FF7800]/18 blur-3xl pointer-events-none" />
-        {/* Синее свечение правый верх */}
-        <div className="absolute top-10 right-0 w-48 h-48 rounded-full bg-[#1d4ed8]/12 blur-3xl pointer-events-none" />
-        {/* Размытый фон игрока */}
-        {!isDefault && (
-          <div className="absolute inset-0 overflow-hidden">
-            <img src={player.photo} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-15" style={{ filter: "blur(50px)", transform: "scale(1.4)" }} />
-          </div>
-        )}
+        <img src={playerCardBg} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+        {/* Затемнение для читаемости */}
+        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
         {/* Затемнение сверху */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
@@ -93,7 +84,7 @@ function PlayerPhotoModal({
         <div className="relative shrink-0 h-px mx-6 bg-gradient-to-r from-transparent via-[#FF7800]/60 to-transparent" />
 
         {/* ── ТЕКСТ СНИЗУ ── */}
-        <div className="relative shrink-0 px-6 pt-5 pb-12" style={{ background: "linear-gradient(to bottom,#080b10,#060809)" }}>
+        <div className="relative shrink-0 px-6 pt-5 pb-12" style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.7),rgba(0,0,0,0.85))" }}>
           {/* Никнейм */}
           <p
             className="text-[44px] font-black leading-none tracking-tight mb-1"
