@@ -5423,7 +5423,7 @@ def cyberunion_teams():
         if discipline_id is None:
             return jsonify({"error": "unknown game"}), 400
         all_raw = _cu_get_all_teams()
-        filtered = [t for t in all_raw if t.get("discipline", {}).get("id") == discipline_id]
+        filtered = [t for t in all_raw if t and (t.get("discipline") or {}).get("id") == discipline_id]
         filtered.sort(key=lambda t: t.get("points", 0), reverse=True)
         total = len(filtered)
         page_count = max(1, (total + per_page - 1) // per_page)
@@ -5455,7 +5455,7 @@ def cyberunion_players():
         if discipline_id is None:
             return jsonify({"error": "unknown game"}), 400
         all_raw = _cu_get_all_players()
-        filtered = [p for p in all_raw if p.get("discipline", {}).get("id") == discipline_id]
+        filtered = [p for p in all_raw if p and (p.get("discipline") or {}).get("id") == discipline_id]
         filtered.sort(key=lambda p: p.get("points", 0), reverse=True)
         total = len(filtered)
         page_count = max(1, (total + per_page - 1) // per_page)
@@ -5504,7 +5504,7 @@ def cyberunion_team_players():
             "photo": p.get("photo", ""),
         }
         for p in all_raw
-        if p.get("discipline", {}).get("id") == discipline_id
+        if p and (p.get("discipline") or {}).get("id") == discipline_id
         and (p.get("team") or {}).get("name", "").strip().upper() == target
     ]
     matched.sort(key=lambda x: x["points"], reverse=True)
