@@ -98,6 +98,17 @@ async function del<T>(path: string): Promise<T> {
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+export interface ShiftData {
+    shift: {
+        operator: string;
+        start_time: string;
+        end_time: string;
+        cash: number;
+        status: string;
+    } | null;
+    raw?: Record<string, unknown>;
+}
+
 export interface OverviewData {
     today_revenue: number;
     week_revenue: number;
@@ -361,6 +372,7 @@ export interface AdminTransferCreatePayload {
 
 export const api = {
     overview: () => get<OverviewData>("/overview"),
+    shift: () => get<ShiftData>("/shift"),
 
     dailyChart: () => get<DailyChartData>("/charts/daily"),
 

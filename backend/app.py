@@ -4546,6 +4546,24 @@ def uploaded_file(filename):
 
 # Overview / Stats
 
+@app.get("/api/shift")
+@jwt_required()
+def get_shift():
+    """Возвращает данные текущего сеанса оператора через shiftXReport."""
+    raw = icafe_get("/staffs/action/shiftXReport")
+    if not raw or raw.get("code") != 200:
+        return jsonify({"shift": None}), 200
+    data = raw.get("data") or {}
+    shift = {
+        "operator":   data.get("operator_name") or data.get("cashier_name") or data.get("staff_name") or "",
+        "start_time": data.get("shift_start") or data.get("start_time") or data.get("open_time") or "",
+        "end_time":   data.get("shift_end")   or data.get("end_time")   or data.get("close_time") or "",
+        "cash":       float(data.get("cash_amount") or data.get("total_cash") or data.get("cash") or 0),
+        "status":     data.get("status") or "open",
+    }
+    return jsonify({"shift": shift, "raw": data})
+
+
 @app.get("/api/overview")
 @jwt_required()
 def overview():
