@@ -5387,13 +5387,13 @@ def _cu_fetch_all(endpoint: str) -> list:
     return all_items
 
 
-def _cu_get_all_teams() -> list:
+def _cu_get_all_teams_ca() -> list:
     global _cu_teams_cache_raw, _cu_teams_cache_ts
     with _cu_cache_lock:
         if _cu_teams_cache_raw and _cu_teams_cache_ts and \
                 (datetime.utcnow() - _cu_teams_cache_ts).total_seconds() < _CU_CACHE_TTL:
             return _cu_teams_cache_raw
-    data = _cu_fetch_all("teams")
+    data = _cu_fetch_all("teams-ca")
     with _cu_cache_lock:
         _cu_teams_cache_raw = data
         _cu_teams_cache_ts = datetime.utcnow()
@@ -5422,7 +5422,7 @@ def cyberunion_teams():
         discipline_id = _CU_DISCIPLINE.get(game)
         if discipline_id is None:
             return jsonify({"error": "unknown game"}), 400
-        all_raw = _cu_get_all_teams()
+        all_raw = _cu_get_all_teams_ca()
         filtered = [t for t in all_raw if t and (t.get("discipline") or {}).get("id") == discipline_id]
         filtered.sort(key=lambda t: t.get("points", 0), reverse=True)
         total = len(filtered)
