@@ -4580,6 +4580,8 @@ def get_shift():
             r2 = icafe_get("/reports/shiftList", {
                 "date_start": today_str,
                 "date_end": today_str,
+                "time_start": "00:00",
+                "time_end": "23:59",
                 "shift_staff_name": staff_name,
             })
             debug["shiftList_attempts"][staff_name] = r2
@@ -4603,6 +4605,8 @@ def get_shift():
             r2 = icafe_get("/reports/shiftList", {
                 "date_start": today_str,
                 "date_end": today_str,
+                "time_start": "00:00",
+                "time_end": "23:59",
                 "shift_staff_name": staff_names[0],
             })
             if r2 and r2.get("code") == 200:
