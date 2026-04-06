@@ -5421,6 +5421,36 @@ def cyberunion_players():
     return jsonify({"items": items, "total": meta.get("totalCount", 0), "page": meta.get("currentPage", 1), "page_count": meta.get("pageCount", 1)})
 
 
+@app.route("/api/public/cyberunion/team-players", methods=["GET"])
+def cyberunion_team_players():
+    """Возвращает игроков конкретной команды с admin.cyberunion.gg."""
+    team_id = request.args.get("team_id", type=int)
+    if not team_id:
+        return jsonify({"error": "team_id required"}), 400
+    try:
+        resp = requests.get(
+            f"{CYBERUNION_BASE}/players/index",
+            headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
+            params={"team_id": team_id, "sort": "-points", "per-page": 20},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+    except Exception:
+        return jsonify({"error": "upstream"}), 502
+    items = [
+        {
+            "id": p["id"],
+            "name": p["name"],
+            "nickname": p.get("nickname", "").strip(),
+            "points": p["points"],
+            "photo": p.get("photo", ""),
+        }
+        for p in raw.get("data", [])
+    ]
+    return jsonify({"items": items})
+
+
 # ─────────────────────────────────────────────
 # TRANSFER MARKET — admin маршруты
 # ─────────────────────────────────────────────

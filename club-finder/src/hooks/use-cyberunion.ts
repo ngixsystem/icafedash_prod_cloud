@@ -52,3 +52,24 @@ export function useCyberUnionPlayers(game: string, page: number) {
     staleTime: 2 * 60 * 1000,
   });
 }
+
+export interface CyberUnionTeamPlayer {
+  id: number;
+  name: string;
+  nickname: string;
+  points: number;
+  photo: string;
+}
+
+export function useCyberUnionTeamPlayers(teamId: number | null) {
+  return useQuery<{ items: CyberUnionTeamPlayer[] }>({
+    queryKey: ["cu_team_players", teamId],
+    queryFn: async () => {
+      const resp = await fetch(`${API}/public/cyberunion/team-players?team_id=${teamId}`);
+      if (!resp.ok) throw new Error("Failed to fetch team players");
+      return resp.json();
+    },
+    enabled: teamId !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+}
