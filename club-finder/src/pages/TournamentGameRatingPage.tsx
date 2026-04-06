@@ -90,10 +90,10 @@ function PlayerPhotoModal({
         </div>
 
         {/* ── ЛИНИЯ — строго между flex-1 и текстом ── */}
-        <div className="shrink-0 h-px mx-6 bg-gradient-to-r from-transparent via-[#FF7800]/60 to-transparent" />
+        <div className="relative shrink-0 h-px mx-6 bg-gradient-to-r from-transparent via-[#FF7800]/60 to-transparent" />
 
         {/* ── ТЕКСТ СНИЗУ ── */}
-        <div className="shrink-0 px-6 pt-5 pb-12" style={{ background: "linear-gradient(to bottom,#080b10,#060809)" }}>
+        <div className="relative shrink-0 px-6 pt-5 pb-12" style={{ background: "linear-gradient(to bottom,#080b10,#060809)" }}>
           {/* Никнейм */}
           <p
             className="text-[44px] font-black leading-none tracking-tight mb-1"
