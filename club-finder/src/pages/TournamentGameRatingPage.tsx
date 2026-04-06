@@ -41,87 +41,63 @@ function PlayerPhotoModal({
 
   return (
     <div className="fixed inset-0 z-[1200]" onClick={onClose}>
-      {/* Карточка */}
       <div
         className="relative w-full max-w-[420px] h-full mx-auto overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-
-        {/* ── ФОН: сетка + глоу + цветовые акценты ── */}
-        <div className="absolute inset-0 bg-[#05060a]" />
-
-        {/* Сетка в киберпанк-стиле */}
-        <div
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,120,0,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,120,0,0.6) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-
-        {/* Диагональные акцентные линии */}
-        <div className="absolute inset-0 overflow-hidden opacity-20">
-          <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-[#FF7800] via-transparent to-transparent rotate-[20deg] origin-top-left translate-x-16" />
-          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-[#FF7800]/50 via-transparent to-transparent -rotate-[20deg] origin-top-right -translate-x-16" />
-        </div>
-
-        {/* Оранжевое свечение снизу */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-48 rounded-full bg-[#FF7800]/20 blur-3xl" />
-
-        {/* Синее свечение сверху — контраст */}
-        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#3b82f6]/10 blur-3xl" />
-
+        {/* ── ФОН ── */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#0d0a14 0%,#080b10 50%,#0a0c0a 100%)" }} />
+        {/* Фиолетовое свечение левый верх */}
+        <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#7c3aed]/15 blur-3xl pointer-events-none" />
+        {/* Оранжевое свечение правый низ */}
+        <div className="absolute -bottom-16 right-0 w-64 h-64 rounded-full bg-[#FF7800]/18 blur-3xl pointer-events-none" />
+        {/* Синее свечение правый верх */}
+        <div className="absolute top-10 right-0 w-48 h-48 rounded-full bg-[#1d4ed8]/12 blur-3xl pointer-events-none" />
         {/* Размытый фон игрока */}
         {!isDefault && (
-          <div className="absolute inset-0 overflow-hidden opacity-20">
-            <img
-              src={player.photo}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: "blur(48px)", transform: "scale(1.3)" }}
-            />
+          <div className="absolute inset-0 overflow-hidden">
+            <img src={player.photo} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-15" style={{ filter: "blur(50px)", transform: "scale(1.4)" }} />
           </div>
         )}
-
-        {/* Финальный градиент — подтемняет верх и низ */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#05060a] via-transparent to-[#05060a]/80" />
-
-        {/* ── ОСНОВНОЕ ФОТО ── */}
-        {!isDefault ? (
-          <div className="absolute inset-x-0 top-0 bottom-[200px] flex items-end justify-center">
-            <img
-              src={player.photo}
-              alt={player.nickname}
-              className="w-full h-full"
-              style={{ objectFit: "contain", objectPosition: "bottom center" }}
-            />
-          </div>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center pb-36">
-            <Users className="w-32 h-32 text-white/8" />
-          </div>
-        )}
+        {/* Затемнение сверху */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
         {/* Кнопка закрыть */}
         <button
           onClick={onClose}
           className="absolute top-12 right-5 z-10 w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors"
-          style={{ background: "rgba(255,120,0,0.12)", border: "1px solid rgba(255,120,0,0.25)" }}
+          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* ── ТЕКСТ СНИЗУ ── */}
-        <div className="relative mt-auto px-6 pb-12">
-          {/* Линия-разделитель вровень с верхом блока */}
-          <div className="h-px mb-5 bg-gradient-to-r from-transparent via-[#FF7800]/50 to-transparent" />
+        {/* ── ФОТО — flex-1, занимает всё пространство выше текста ── */}
+        <div className="relative flex-1 min-h-0">
+          {!isDefault ? (
+            <img
+              src={player.photo}
+              alt={player.nickname}
+              className="absolute inset-0 w-full h-full"
+              style={{ objectFit: "contain", objectPosition: "bottom center" }}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Users className="w-32 h-32 text-white/8" />
+            </div>
+          )}
+          {/* Мягкий fade снизу фото → в текстовый блок */}
+          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#080b10] to-transparent pointer-events-none" />
+        </div>
 
+        {/* ── ЛИНИЯ — строго между flex-1 и текстом ── */}
+        <div className="shrink-0 h-px mx-6 bg-gradient-to-r from-transparent via-[#FF7800]/60 to-transparent" />
+
+        {/* ── ТЕКСТ СНИЗУ ── */}
+        <div className="shrink-0 px-6 pt-5 pb-12" style={{ background: "linear-gradient(to bottom,#080b10,#060809)" }}>
           {/* Никнейм */}
           <p
             className="text-[44px] font-black leading-none tracking-tight mb-1"
-            style={{ background: "linear-gradient(90deg,#fff 60%,rgba(255,255,255,0.4))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+            style={{ background: "linear-gradient(90deg,#fff 60%,rgba(255,255,255,0.35))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
           >
             {player.nickname || lastName}
           </p>
@@ -129,8 +105,8 @@ function PlayerPhotoModal({
           {/* Имя Фамилия */}
           {player.name && (
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="text-sm font-semibold text-white/70 uppercase tracking-widest">{firstName}</span>
-              <span className="text-sm font-semibold text-white/35 uppercase tracking-widest">{lastName}</span>
+              <span className="text-sm font-semibold text-white/60 uppercase tracking-widest">{firstName}</span>
+              <span className="text-sm font-semibold text-white/30 uppercase tracking-widest">{lastName}</span>
             </div>
           )}
 
@@ -138,13 +114,12 @@ function PlayerPhotoModal({
           <div className="flex items-end justify-between">
             {player.team ? (
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#FF7800]/60 mb-1">Команда</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#FF7800]/50 mb-1">Команда</p>
                 <p className="text-base font-black text-white">{player.team}</p>
               </div>
             ) : <div />}
-
             <div className="text-right">
-              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#FF7800]/60 mb-1">Рейтинг</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#FF7800]/50 mb-1">Рейтинг</p>
               <div className="flex items-baseline gap-1">
                 <span
                   className="text-[40px] font-black leading-none"
@@ -152,7 +127,7 @@ function PlayerPhotoModal({
                 >
                   {player.points}
                 </span>
-                <span className="text-[10px] font-black text-[#FF7800]/60 uppercase tracking-widest mb-1">pts</span>
+                <span className="text-[10px] font-black text-[#FF7800]/50 uppercase tracking-widest mb-1">pts</span>
               </div>
             </div>
           </div>
