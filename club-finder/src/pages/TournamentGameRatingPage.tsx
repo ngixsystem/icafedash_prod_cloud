@@ -487,7 +487,7 @@ export default function TournamentGameRatingPage() {
       </div>
 
       {(gameId === "cs2" || gameId === "pubg-mobile") ? (
-        <TabContent gameId={gameId as GameId} />
+        <TabContent key={gameId} gameId={gameId as GameId} />
       ) : (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-16 h-16 rounded-2xl border border-[#2F3136] bg-[#151515] flex items-center justify-center">
