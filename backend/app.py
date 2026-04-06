@@ -3,6 +3,8 @@ import json
 import random
 import string
 import smtplib
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import date, timedelta, datetime
@@ -5421,11 +5423,54 @@ def cyberunion_players():
     return jsonify({"items": items, "total": meta.get("totalCount", 0), "page": meta.get("currentPage", 1), "page_count": meta.get("pageCount", 1)})
 
 
+# Кэш всех игроков по дисциплине: {discipline_id: (fetched_at, [raw_player, ...])}
+_cu_all_players_cache: dict = {}
+_cu_cache_lock = threading.Lock()
+_CU_CACHE_TTL = 300  # 5 минут
+
+
+def _cu_fetch_page(discipline_id: int, page: int) -> list:
+    resp = requests.get(
+        f"{CYBERUNION_BASE}/players/index",
+        headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
+        params={"discipline_id": discipline_id, "sort": "-points", "per-page": 100, "page": page},
+        timeout=10,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _cu_get_all_players(discipline_id: int) -> list:
+    """Возвращает всех игроков дисциплины из кэша или загружает параллельно."""
+    with _cu_cache_lock:
+        cached = _cu_all_players_cache.get(discipline_id)
+        if cached:
+            fetched_at, players = cached
+            if (datetime.utcnow() - fetched_at).total_seconds() < _CU_CACHE_TTL:
+                return players
+
+    # Кэш пустой или устарел — загружаем
+    # Шаг 1: получаем страницу 1 и узнаём общее число страниц
+    first = _cu_fetch_page(discipline_id, 1)
+    page_count = first.get("_meta", {}).get("pageCount", 1)
+    all_players = list(first.get("data", []))
+
+    # Шаг 2: остальные страницы — параллельно
+    if page_count > 1:
+        with ThreadPoolExecutor(max_workers=min(page_count - 1, 6)) as pool:
+            futures = {pool.submit(_cu_fetch_page, discipline_id, p): p for p in range(2, page_count + 1)}
+            for future in as_completed(futures):
+                all_players.extend(future.result().get("data", []))
+
+    with _cu_cache_lock:
+        _cu_all_players_cache[discipline_id] = (datetime.utcnow(), all_players)
+
+    return all_players
+
+
 @app.route("/api/public/cyberunion/team-players", methods=["GET"])
 def cyberunion_team_players():
-    """Возвращает игроков конкретной команды (фильтрация по имени на стороне сервера).
-    CyberUnion API не поддерживает фильтр по team_id — итерируем страницы и фильтруем сами.
-    """
+    """Возвращает игроков команды. Использует кэш + параллельную загрузку."""
     game = request.args.get("game", "cs2")
     team_name = request.args.get("team_name", "").strip()
     if not team_name:
@@ -5434,37 +5479,23 @@ def cyberunion_team_players():
     if discipline_id is None:
         return jsonify({"error": "unknown game"}), 400
 
-    matched = []
-    page = 1
-    while True:
-        try:
-            resp = requests.get(
-                f"{CYBERUNION_BASE}/players/index",
-                headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
-                params={"discipline_id": discipline_id, "sort": "-points", "per-page": 100, "page": page},
-                timeout=10,
-            )
-            resp.raise_for_status()
-            raw = resp.json()
-        except Exception:
-            return jsonify({"error": "upstream"}), 502
+    try:
+        all_players = _cu_get_all_players(discipline_id)
+    except Exception:
+        return jsonify({"error": "upstream"}), 502
 
-        for p in raw.get("data", []):
-            p_team = p.get("team") or {}
-            if p_team.get("name", "").strip().upper() == team_name.upper():
-                matched.append({
-                    "id": p["id"],
-                    "name": p["name"],
-                    "nickname": p.get("nickname", "").strip(),
-                    "points": p["points"],
-                    "photo": p.get("photo", ""),
-                })
-
-        meta = raw.get("_meta", {})
-        if page >= meta.get("pageCount", 1):
-            break
-        page += 1
-
+    target = team_name.upper()
+    matched = [
+        {
+            "id": p["id"],
+            "name": p["name"],
+            "nickname": p.get("nickname", "").strip(),
+            "points": p["points"],
+            "photo": p.get("photo", ""),
+        }
+        for p in all_players
+        if (p.get("team") or {}).get("name", "").strip().upper() == target
+    ]
     matched.sort(key=lambda x: x["points"], reverse=True)
     return jsonify({"items": matched})
 
