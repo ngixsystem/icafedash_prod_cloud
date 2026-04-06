@@ -161,7 +161,7 @@ function TeamPlayerRow({
     >
       <div className="w-8 h-8 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center">
         {!isDefault ? (
-          <img src={player.photo} alt={player.nickname} className="w-full h-full object-cover" />
+          <img src={player.photo} alt={player.nickname} className="w-full h-full object-cover object-top" />
         ) : (
           <Users className="w-3.5 h-3.5 text-white/20" />
         )}
@@ -285,7 +285,7 @@ function PlayerCard({
       </div>
       <div className="w-9 h-9 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center">
         {!isDefault ? (
-          <img src={player.photo} alt={player.nickname} className="w-full h-full object-cover" />
+          <img src={player.photo} alt={player.nickname} className="w-full h-full object-cover object-top" />
         ) : (
           <Users className="w-4 h-4 text-white/20" />
         )}
