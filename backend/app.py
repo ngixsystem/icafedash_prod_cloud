@@ -5347,26 +5347,61 @@ def public_transfer_delete(listing_id):
 # ─────────────────────────────────────────────
 # CYBERUNION PROXY — публичные рейтинги CA
 # ─────────────────────────────────────────────
-# ВАЖНО: CyberUnion API игнорирует discipline_id в параметрах запроса
-# и всегда возвращает все команды/игроков. Фильтрация по дисциплине
-# выполняется на нашей стороне по полю discipline.id в каждой записи.
 
 _CU_DISCIPLINE = {"cs2": 444, "dota2": 4, "pubg-mobile": 48}
 
-# Единый кэш для всех команд и всех игроков (не разбитый по дисциплине)
+# Кэш команд per-discipline: {discipline_id: (fetched_at, [teams])}
 _cu_cache_lock = threading.Lock()
 _CU_CACHE_TTL = 300  # 5 минут
-_cu_teams_cache_raw = None
-_cu_teams_cache_ts = None
+_cu_rating_teams_cache = {}
+# Кэш игроков единый (players/index не фильтрует по дисциплине на стороне API)
 _cu_players_cache_raw = None
 _cu_players_cache_ts = None
 
 
-def _cu_fetch_all(endpoint: str) -> list:
-    """Загружает все страницы указанного эндпоинта CyberUnion параллельно."""
+def _cu_fetch_rating_teams(discipline_id: int) -> list:
+    """Загружает все страницы /rating/teams-ca?discipline_id=X параллельно."""
     def fetch_page(page: int) -> dict:
         r = requests.get(
-            f"{CYBERUNION_BASE}/{endpoint}/index",
+            f"{CYBERUNION_BASE}/rating/teams-ca",
+            headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
+            params={"discipline_id": discipline_id, "per-page": 100, "page": page},
+            timeout=10,
+        )
+        r.raise_for_status()
+        return r.json()
+
+    first = fetch_page(1)
+    page_count = first.get("_meta", {}).get("pageCount", 1)
+    all_items = [x for x in first.get("data", []) if x is not None]
+
+    if page_count > 1:
+        with ThreadPoolExecutor(max_workers=min(page_count - 1, 6)) as pool:
+            futures = {pool.submit(fetch_page, p): p for p in range(2, page_count + 1)}
+            for future in as_completed(futures):
+                all_items.extend(x for x in future.result().get("data", []) if x is not None)
+
+    return all_items
+
+
+def _cu_get_rating_teams(discipline_id: int) -> list:
+    with _cu_cache_lock:
+        cached = _cu_rating_teams_cache.get(discipline_id)
+        if cached:
+            fetched_at, teams = cached
+            if (datetime.utcnow() - fetched_at).total_seconds() < _CU_CACHE_TTL:
+                return teams
+    data = _cu_fetch_rating_teams(discipline_id)
+    with _cu_cache_lock:
+        _cu_rating_teams_cache[discipline_id] = (datetime.utcnow(), data)
+    return data
+
+
+def _cu_fetch_all_players() -> list:
+    """Загружает все страницы players/index параллельно."""
+    def fetch_page(page: int) -> dict:
+        r = requests.get(
+            f"{CYBERUNION_BASE}/players/index",
             headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
             params={"sort": "-points", "per-page": 100, "page": page},
             timeout=10,
@@ -5387,26 +5422,13 @@ def _cu_fetch_all(endpoint: str) -> list:
     return all_items
 
 
-def _cu_get_all_teams_ca() -> list:
-    global _cu_teams_cache_raw, _cu_teams_cache_ts
-    with _cu_cache_lock:
-        if _cu_teams_cache_raw and _cu_teams_cache_ts and \
-                (datetime.utcnow() - _cu_teams_cache_ts).total_seconds() < _CU_CACHE_TTL:
-            return _cu_teams_cache_raw
-    data = _cu_fetch_all("teams")
-    with _cu_cache_lock:
-        _cu_teams_cache_raw = data
-        _cu_teams_cache_ts = datetime.utcnow()
-    return data
-
-
 def _cu_get_all_players() -> list:
     global _cu_players_cache_raw, _cu_players_cache_ts
     with _cu_cache_lock:
         if _cu_players_cache_raw and _cu_players_cache_ts and \
                 (datetime.utcnow() - _cu_players_cache_ts).total_seconds() < _CU_CACHE_TTL:
             return _cu_players_cache_raw
-    data = _cu_fetch_all("players")
+    data = _cu_fetch_all_players()
     with _cu_cache_lock:
         _cu_players_cache_raw = data
         _cu_players_cache_ts = datetime.utcnow()
@@ -5422,22 +5444,20 @@ def cyberunion_teams():
         discipline_id = _CU_DISCIPLINE.get(game)
         if discipline_id is None:
             return jsonify({"error": "unknown game"}), 400
-        all_raw = _cu_get_all_teams_ca()
-        filtered = [t for t in all_raw if t and (t.get("discipline") or {}).get("id") == discipline_id]
-        filtered.sort(key=lambda t: t.get("points", 0), reverse=True)
-        total = len(filtered)
+        all_raw = _cu_get_rating_teams(discipline_id)
+        total = len(all_raw)
         page_count = max(1, (total + per_page - 1) // per_page)
         start = (page - 1) * per_page
         items = [
             {
                 "id": t["id"],
-                "name": t["name"],
+                "name": t.get("name", ""),
                 "points": t.get("points", 0),
                 "photo": t.get("photo", ""),
                 "region": (t.get("region") or {}).get("name", ""),
                 "region_photo": (t.get("region") or {}).get("photo", ""),
             }
-            for t in filtered[start:start + per_page]
+            for t in all_raw[start:start + per_page]
         ]
         return jsonify({"items": items, "total": total, "page": page, "page_count": page_count})
     except Exception as e:
@@ -5480,35 +5500,33 @@ def cyberunion_players():
 
 @app.route("/api/public/cyberunion/team-players", methods=["GET"])
 def cyberunion_team_players():
-    """Возвращает игроков команды, фильтруя по дисциплине и названию команды."""
-    game = request.args.get("game", "cs2")
-    team_name = request.args.get("team_name", "").strip()
-    if not team_name:
-        return jsonify({"error": "team_name required"}), 400
-    discipline_id = _CU_DISCIPLINE.get(game)
-    if discipline_id is None:
-        return jsonify({"error": "unknown game"}), 400
-
+    """Игроки команды — берём из вложенного players[] в /rating/teams-ca."""
     try:
-        all_raw = _cu_get_all_players()
-    except Exception:
-        return jsonify({"error": "upstream"}), 502
-
-    target = team_name.upper()
-    matched = [
-        {
-            "id": p["id"],
-            "name": p["name"],
-            "nickname": p.get("nickname", "").strip(),
-            "points": p["points"],
-            "photo": p.get("photo", ""),
-        }
-        for p in all_raw
-        if p and (p.get("discipline") or {}).get("id") == discipline_id
-        and (p.get("team") or {}).get("name", "").strip().upper() == target
-    ]
-    matched.sort(key=lambda x: x["points"], reverse=True)
-    return jsonify({"items": matched})
+        game = request.args.get("game", "cs2")
+        team_name = request.args.get("team_name", "").strip()
+        if not team_name:
+            return jsonify({"error": "team_name required"}), 400
+        discipline_id = _CU_DISCIPLINE.get(game)
+        if discipline_id is None:
+            return jsonify({"error": "unknown game"}), 400
+        all_teams = _cu_get_rating_teams(discipline_id)
+        target = team_name.upper()
+        for team in all_teams:
+            if (team.get("name") or "").strip().upper() == target:
+                items = [
+                    {
+                        "id": p["id"],
+                        "name": p.get("name", ""),
+                        "nickname": p.get("nickname", "").strip(),
+                        "points": p.get("points", 0),
+                        "photo": p.get("photo", ""),
+                    }
+                    for p in (team.get("players") or []) if p
+                ]
+                return jsonify({"items": items})
+        return jsonify({"items": []})
+    except Exception as e:
+        return jsonify({"error": "server", "detail": str(e)}), 500
 
 
 # ─────────────────────────────────────────────
