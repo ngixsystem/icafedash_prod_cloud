@@ -486,7 +486,7 @@ export default function TournamentGameRatingPage() {
         <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">Сезон 2026</span>
       </div>
 
-      {gameId === "cs2" ? (
+      {(gameId === "cs2" || gameId === "pubg-mobile") ? (
         <TabContent gameId={gameId as GameId} />
       ) : (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
