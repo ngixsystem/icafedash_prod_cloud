@@ -713,6 +713,46 @@ def parse_icafe_datetime(value: str | None):
     return None
 
 
+def parse_duration_to_mins(duration: str | None) -> int:
+    """Парсит строку длительности в минуты. Например: '30 мин' → 30, '2 часа' → 120."""
+    if not duration:
+        return 60
+    d = duration.strip().lower()
+    import re as _re
+    m = _re.search(r"(\d+)", d)
+    if not m:
+        return 60
+    n = int(m.group(1))
+    if "час" in d or "hour" in d or "hr" in d:
+        return n * 60
+    return n  # минуты
+
+
+def _icafe_create_booking(club: Club, pc_name: str, start_dt, mins: int) -> bool:
+    """Создаёт бронирование в iCafeCloud. Возвращает True при успехе."""
+    if not club or not club.api_key or not club.cafe_id:
+        return False
+    start_date = start_dt.strftime("%Y-%m-%d")
+    start_time = start_dt.strftime("%H:%M:%S")
+    result = icafe_post_for_club(club, "/bookings", {
+        "pc_name": pc_name,
+        "member_account": None,
+        "start_date": start_date,
+        "start_time": start_time,
+        "mins": mins,
+        "guest_booking": 1,
+    })
+    if not result:
+        return False
+    # iCafeCloud возвращает {"status": true/false, ...} или {"data": {...}}
+    if isinstance(result, dict):
+        if result.get("status") is False:
+            return False
+        if result.get("error") or result.get("message", "").lower().startswith("error"):
+            return False
+    return True
+
+
 def parse_client_booking_datetime(value: str | None):
     raw = str(value or "").strip()
     if not raw:
@@ -3369,6 +3409,17 @@ def create_public_booking(club_id):
     selected_zones = sorted(list({entry["zone_name"] for entry in unique_entries}))
     zone_label = selected_zones[0] if len(selected_zones) == 1 else ", ".join(selected_zones[:3]) + ("..." if len(selected_zones) > 3 else "")
 
+    # Пробуем забронировать через iCafeCloud API автоматически
+    mins = parse_duration_to_mins(duration)
+    icafe_results = []
+    if club.api_key and club.cafe_id and booking_start_at:
+        for entry in unique_entries:
+            ok = _icafe_create_booking(club, entry["pc_name"], booking_start_at, mins)
+            icafe_results.append(ok)
+
+    icafe_booked = len(icafe_results) > 0 and all(icafe_results)
+    initial_status = "approved" if icafe_booked else "pending"
+
     booking = BookingRequest(
         club_id=club.id,
         user_id=user.id,
@@ -3378,13 +3429,14 @@ def create_public_booking(club_id):
         duration=duration or None,
         booking_start_at=booking_start_at,
         pc_names=json.dumps(unique_entries, ensure_ascii=False),
-        status="pending",
+        status=initial_status,
     )
     db.session.add(booking)
     db.session.commit()
 
     return jsonify({
         "message": "Booking created",
+        "icafe_booked": icafe_booked,
         "booking": {
             "id": booking.id,
             "club_id": booking.club_id,
