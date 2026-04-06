@@ -135,17 +135,19 @@ function TeamPlayerRow({
 function TeamCard({
   team,
   rank,
+  gameId,
   onPlayerPhotoClick,
 }: {
   team: CyberUnionTeam;
   rank: number;
+  gameId: string;
   onPlayerPhotoClick: (p: CyberUnionTeamPlayer) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const accentColor = rank <= 3 ? RANK_COLORS[rank - 1] : "#FF7800";
   const isDefault = team.photo.includes("star_default") || team.photo.includes("no_image");
 
-  const playersQuery = useCyberUnionTeamPlayers(expanded ? team.id : null);
+  const playersQuery = useCyberUnionTeamPlayers(expanded ? team.name : null, gameId);
 
   return (
     <div className="rounded-xl border border-[#2A2A2A] bg-[#141414] overflow-hidden">
@@ -346,6 +348,7 @@ function TabContent({ gameId }: { gameId: GameId }) {
                 key={team.id}
                 team={team}
                 rank={idx + 1}
+                gameId={gameId}
                 onPlayerPhotoClick={(p) => setModalPlayer({ ...p, team: team.name })}
               />
             ))}

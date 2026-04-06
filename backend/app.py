@@ -5423,32 +5423,50 @@ def cyberunion_players():
 
 @app.route("/api/public/cyberunion/team-players", methods=["GET"])
 def cyberunion_team_players():
-    """Возвращает игроков конкретной команды с admin.cyberunion.gg."""
-    team_id = request.args.get("team_id", type=int)
-    if not team_id:
-        return jsonify({"error": "team_id required"}), 400
-    try:
-        resp = requests.get(
-            f"{CYBERUNION_BASE}/players/index",
-            headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
-            params={"team_id": team_id, "sort": "-points", "per-page": 20},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        raw = resp.json()
-    except Exception:
-        return jsonify({"error": "upstream"}), 502
-    items = [
-        {
-            "id": p["id"],
-            "name": p["name"],
-            "nickname": p.get("nickname", "").strip(),
-            "points": p["points"],
-            "photo": p.get("photo", ""),
-        }
-        for p in raw.get("data", [])
-    ]
-    return jsonify({"items": items})
+    """Возвращает игроков конкретной команды (фильтрация по имени на стороне сервера).
+    CyberUnion API не поддерживает фильтр по team_id — итерируем страницы и фильтруем сами.
+    """
+    game = request.args.get("game", "cs2")
+    team_name = request.args.get("team_name", "").strip()
+    if not team_name:
+        return jsonify({"error": "team_name required"}), 400
+    discipline_id = _CU_DISCIPLINE.get(game)
+    if discipline_id is None:
+        return jsonify({"error": "unknown game"}), 400
+
+    matched = []
+    page = 1
+    while True:
+        try:
+            resp = requests.get(
+                f"{CYBERUNION_BASE}/players/index",
+                headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
+                params={"discipline_id": discipline_id, "sort": "-points", "per-page": 100, "page": page},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            raw = resp.json()
+        except Exception:
+            return jsonify({"error": "upstream"}), 502
+
+        for p in raw.get("data", []):
+            p_team = p.get("team") or {}
+            if p_team.get("name", "").strip().upper() == team_name.upper():
+                matched.append({
+                    "id": p["id"],
+                    "name": p["name"],
+                    "nickname": p.get("nickname", "").strip(),
+                    "points": p["points"],
+                    "photo": p.get("photo", ""),
+                })
+
+        meta = raw.get("_meta", {})
+        if page >= meta.get("pageCount", 1):
+            break
+        page += 1
+
+    matched.sort(key=lambda x: x["points"], reverse=True)
+    return jsonify({"items": matched})
 
 
 # ─────────────────────────────────────────────

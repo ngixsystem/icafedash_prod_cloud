@@ -61,15 +61,17 @@ export interface CyberUnionTeamPlayer {
   photo: string;
 }
 
-export function useCyberUnionTeamPlayers(teamId: number | null) {
+export function useCyberUnionTeamPlayers(teamName: string | null, game: string) {
   return useQuery<{ items: CyberUnionTeamPlayer[] }>({
-    queryKey: ["cu_team_players", teamId],
+    queryKey: ["cu_team_players", game, teamName],
     queryFn: async () => {
-      const resp = await fetch(`${API}/public/cyberunion/team-players?team_id=${teamId}`);
+      const resp = await fetch(
+        `${API}/public/cyberunion/team-players?game=${game}&team_name=${encodeURIComponent(teamName!)}`
+      );
       if (!resp.ok) throw new Error("Failed to fetch team players");
       return resp.json();
     },
-    enabled: teamId !== null,
+    enabled: teamName !== null && teamName !== "",
     staleTime: 5 * 60 * 1000,
   });
 }
