@@ -5376,13 +5376,13 @@ def _cu_fetch_all(endpoint: str) -> list:
 
     first = fetch_page(1)
     page_count = first.get("_meta", {}).get("pageCount", 1)
-    all_items = list(first.get("data", []))
+    all_items = [x for x in first.get("data", []) if x is not None]
 
     if page_count > 1:
         with ThreadPoolExecutor(max_workers=min(page_count - 1, 6)) as pool:
             futures = {pool.submit(fetch_page, p): p for p in range(2, page_count + 1)}
             for future in as_completed(futures):
-                all_items.extend(future.result().get("data", []))
+                all_items.extend(x for x in future.result().get("data", []) if x is not None)
 
     return all_items
 
