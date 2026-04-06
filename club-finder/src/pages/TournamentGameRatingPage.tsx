@@ -49,23 +49,35 @@ function PlayerPhotoModal({
         className="relative w-full max-w-[420px] h-full overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Фото на весь экран как фон */}
+        {/* Размытый фон */}
+        <div className="absolute inset-0 bg-[#0b0c0f]">
+          {!isDefault && (
+            <img
+              src={player.photo}
+              alt=""
+              aria-hidden
+              className="w-full h-full object-cover scale-110 blur-2xl opacity-40"
+            />
+          )}
+        </div>
+        {/* Градиент снизу поверх фона */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+
+        {/* Основное фото — по центру, в натуральную высоту без обрезки */}
         {!isDefault && (
-          <>
+          <div className="absolute inset-0 flex items-center justify-center pb-48">
             <img
               src={player.photo}
               alt={player.nickname}
-              className="absolute inset-0 w-full h-full object-cover object-top"
+              className="max-w-full max-h-[55vh] object-contain drop-shadow-2xl"
+              style={{ filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.8))" }}
             />
-            {/* Градиент снизу */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-          </>
+          </div>
         )}
         {/* Заглушка если нет фото */}
         {isDefault && (
-          <div className="absolute inset-0 bg-[#0e0f12] flex items-center justify-center">
-            <Users className="w-24 h-24 text-white/8" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 flex items-center justify-center pb-48">
+            <Users className="w-28 h-28 text-white/10" />
           </div>
         )}
 
