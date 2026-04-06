@@ -5343,6 +5343,85 @@ def public_transfer_delete(listing_id):
 
 
 # ─────────────────────────────────────────────
+# CYBERUNION PROXY — публичные рейтинги CA
+# ─────────────────────────────────────────────
+
+_CU_DISCIPLINE = {"cs2": 444, "dota2": 4, "pubg-mobile": 48}
+
+
+@app.route("/api/public/cyberunion/teams", methods=["GET"])
+def cyberunion_teams():
+    """Проксирует рейтинг команд с admin.cyberunion.gg."""
+    game = request.args.get("game", "cs2")
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    discipline_id = _CU_DISCIPLINE.get(game)
+    if discipline_id is None:
+        return jsonify({"error": "unknown game"}), 400
+    try:
+        resp = requests.get(
+            f"{CYBERUNION_BASE}/teams/index",
+            headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
+            params={"discipline_id": discipline_id, "sort": "-points", "page": page, "per-page": per_page},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+    except Exception:
+        return jsonify({"error": "upstream"}), 502
+    items = [
+        {
+            "id": t["id"],
+            "name": t["name"],
+            "points": t["points"],
+            "photo": t.get("photo", ""),
+            "region": t["region"]["name"],
+            "region_photo": t["region"].get("photo", ""),
+        }
+        for t in raw.get("data", [])
+    ]
+    meta = raw.get("_meta", {})
+    return jsonify({"items": items, "total": meta.get("totalCount", 0), "page": meta.get("currentPage", 1), "page_count": meta.get("pageCount", 1)})
+
+
+@app.route("/api/public/cyberunion/players", methods=["GET"])
+def cyberunion_players():
+    """Проксирует рейтинг игроков с admin.cyberunion.gg."""
+    game = request.args.get("game", "cs2")
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    discipline_id = _CU_DISCIPLINE.get(game)
+    if discipline_id is None:
+        return jsonify({"error": "unknown game"}), 400
+    try:
+        resp = requests.get(
+            f"{CYBERUNION_BASE}/players/index",
+            headers={"Authorization": f"Bearer {CYBERUNION_TOKEN}"},
+            params={"discipline_id": discipline_id, "sort": "-points", "page": page, "per-page": per_page},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+    except Exception:
+        return jsonify({"error": "upstream"}), 502
+    items = [
+        {
+            "id": p["id"],
+            "name": p["name"],
+            "nickname": p.get("nickname", "").strip(),
+            "points": p["points"],
+            "photo": p.get("photo", ""),
+            "team": p["team"]["name"] if p.get("team") else None,
+            "region": p["region"]["name"],
+            "region_photo": p["region"].get("photo", ""),
+        }
+        for p in raw.get("data", [])
+    ]
+    meta = raw.get("_meta", {})
+    return jsonify({"items": items, "total": meta.get("totalCount", 0), "page": meta.get("currentPage", 1), "page_count": meta.get("pageCount", 1)})
+
+
+# ─────────────────────────────────────────────
 # TRANSFER MARKET — admin маршруты
 # ─────────────────────────────────────────────
 
