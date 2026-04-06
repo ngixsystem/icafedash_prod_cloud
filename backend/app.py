@@ -5393,7 +5393,7 @@ def _cu_get_all_teams_ca() -> list:
         if _cu_teams_cache_raw and _cu_teams_cache_ts and \
                 (datetime.utcnow() - _cu_teams_cache_ts).total_seconds() < _CU_CACHE_TTL:
             return _cu_teams_cache_raw
-    data = _cu_fetch_all("teams-ca")
+    data = _cu_fetch_all("teams")
     with _cu_cache_lock:
         _cu_teams_cache_raw = data
         _cu_teams_cache_ts = datetime.utcnow()
