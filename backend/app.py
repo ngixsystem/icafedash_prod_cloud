@@ -43,6 +43,8 @@ SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
 FACEIT_CLIENT_ID = os.environ.get("FACEIT_CLIENT_ID", "0da47f41-e39b-4719-bebc-1d35f8065a26")
 FACEIT_CLIENT_SECRET = os.environ.get("FACEIT_CLIENT_SECRET", "TZmgOodyh0qG2y48aRXSADP7qVMeySQdS0MoI9PM")
 FACEIT_DATA_API_KEY = os.environ.get("FACEIT_DATA_API_KEY", "")
+CYBERUNION_TOKEN = os.environ.get("CYBERUNION_TOKEN", "pUVWr38gAXVXQb4ClL_zrUF3S_zCmvcV")
+CYBERUNION_BASE = "https://admin.cyberunion.gg/api"
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
