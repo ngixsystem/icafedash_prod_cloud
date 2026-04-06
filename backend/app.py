@@ -4559,22 +4559,35 @@ def get_shift():
     if r1 and r1.get("code") == 200:
         data = r1.get("data") or {}
 
-    # Попытка 2: shiftList — берём последний открытый сеанс
+    # Попытка 2: получаем список сотрудников и ищем активный сеанс по каждому
     if not data:
         today_str = date.today().isoformat()
-        r2 = icafe_get("/reports/shiftList", {
-            "date_start": today_str,
-            "date_end": today_str,
-            "time_start": today_str,
-            "time_end": today_str,
-            "shift_staff_name": "",
-        })
-        debug["shiftList"] = r2
-        if r2 and r2.get("code") == 200:
+        staffs_r = icafe_get("/staffs")
+        debug["staffs"] = staffs_r
+        staff_names = []
+        if staffs_r and staffs_r.get("code") == 200:
+            staffs_data = staffs_r.get("data") or []
+            if isinstance(staffs_data, dict):
+                staffs_data = staffs_data.get("staffs") or staffs_data.get("list") or staffs_data.get("data") or []
+            for st in staffs_data:
+                if isinstance(st, dict):
+                    name = st.get("staff_name") or st.get("name") or st.get("username") or ""
+                    if name:
+                        staff_names.append(name)
+
+        debug["shiftList_attempts"] = {}
+        for staff_name in staff_names[:5]:  # проверяем первых 5 сотрудников
+            r2 = icafe_get("/reports/shiftList", {
+                "date_start": today_str,
+                "date_end": today_str,
+                "shift_staff_name": staff_name,
+            })
+            debug["shiftList_attempts"][staff_name] = r2
+            if not (r2 and r2.get("code") == 200):
+                continue
             shifts = r2.get("data") or []
             if isinstance(shifts, dict):
                 shifts = shifts.get("shifts") or shifts.get("list") or shifts.get("data") or []
-            # Ищем открытый сеанс (без end_time или status=open)
             for s in shifts:
                 if not isinstance(s, dict):
                     continue
@@ -4583,9 +4596,21 @@ def get_shift():
                 if status in ("open", "active", "") or not end:
                     data = s
                     break
-            # Если не нашли открытый — берём самый последний
-            if not data and shifts:
-                data = shifts[0] if isinstance(shifts[0], dict) else None
+            if data:
+                break
+        # Если активный не найден — берём последний сеанс любого сотрудника
+        if not data and staff_names:
+            r2 = icafe_get("/reports/shiftList", {
+                "date_start": today_str,
+                "date_end": today_str,
+                "shift_staff_name": staff_names[0],
+            })
+            if r2 and r2.get("code") == 200:
+                shifts = r2.get("data") or []
+                if isinstance(shifts, dict):
+                    shifts = shifts.get("shifts") or shifts.get("list") or shifts.get("data") or []
+                if shifts and isinstance(shifts[0], dict):
+                    data = shifts[0]
 
     if not data:
         return jsonify({"shift": None, "debug": debug}), 200
