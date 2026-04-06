@@ -4561,7 +4561,8 @@ def get_shift():
 
     # Попытка 2: shiftList — берём последний открытый сеанс
     if not data:
-        r2 = icafe_get("/reports/shiftList")
+        today_str = date.today().isoformat()
+        r2 = icafe_get("/reports/shiftList", {"date_start": today_str, "date_end": today_str})
         debug["shiftList"] = r2
         if r2 and r2.get("code") == 200:
             shifts = r2.get("data") or []
