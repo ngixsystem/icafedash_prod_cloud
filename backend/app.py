@@ -4619,8 +4619,34 @@ def get_shift():
                     data = shifts[-1]  # последний по времени
                     break
 
+    # Собираем историю последних 7 закрытых сеансов по всем сотрудникам
+    all_shifts = []
+    for staff_name in staff_names:
+        cached = debug.get("shiftList_attempts", {}).get(staff_name)
+        shifts_for_staff = _extract_shifts(cached if cached else _fetch_shifts(staff_name))
+        all_shifts.extend(shifts_for_staff)
+
+    def _s_end(s):
+        e = s.get("shift_end_time") or ""
+        return e if e and e != "-" else ""
+
+    closed_shifts = [s for s in all_shifts if _s_end(s)]
+    closed_shifts.sort(key=lambda s: s.get("shift_start_time") or "", reverse=True)
+
+    def _fmt_shift(s):
+        end = _s_end(s)
+        return {
+            "operator":   s.get("shift_staff_name") or "",
+            "start_time": s.get("shift_start_time") or "",
+            "end_time":   end,
+            "cash":       float(s.get("total_amount") or 0),
+            "status":     "closed",
+        }
+
+    history = [_fmt_shift(s) for s in closed_shifts[:7]]
+
     if not data:
-        return jsonify({"shift": None, "debug": debug}), 200
+        return jsonify({"shift": None, "history": history, "debug": debug}), 200
 
     def pick(*keys):
         for k in keys:
@@ -4637,7 +4663,7 @@ def get_shift():
         "cash":       float(pick("total_amount", "cash_amount", "total_cash", "cash", "balance", "income") or 0),
         "status":     "open" if (not end_raw or end_raw == "-") else "closed",
     }
-    return jsonify({"shift": shift, "debug": debug})
+    return jsonify({"shift": shift, "history": history, "debug": debug})
 
 
 @app.get("/api/overview")

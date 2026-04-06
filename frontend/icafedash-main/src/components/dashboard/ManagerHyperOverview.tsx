@@ -283,6 +283,23 @@ const ManagerHyperOverview = () => {
           ) : (
             <p className="text-sm text-slate-500">Сеанс не найден или API недоступно</p>
           )}
+
+          {shiftData?.history && shiftData.history.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-white/5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3 font-mono">История сеансов</p>
+              <div className="space-y-2">
+                {shiftData.history.map((h, i) => (
+                  <div key={i} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-semibold text-white">{h.operator || "—"}</span>
+                      <span className="text-[10px] text-slate-500">{h.start_time || "—"} → {h.end_time || "—"}</span>
+                    </div>
+                    <span className="text-xs font-bold text-[#FF9500] ml-4 shrink-0">{formatMoney(h.cash)} сум</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

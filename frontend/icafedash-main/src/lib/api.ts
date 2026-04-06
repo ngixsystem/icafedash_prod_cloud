@@ -98,14 +98,17 @@ async function del<T>(path: string): Promise<T> {
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+export interface ShiftEntry {
+    operator: string;
+    start_time: string;
+    end_time: string;
+    cash: number;
+    status: string;
+}
+
 export interface ShiftData {
-    shift: {
-        operator: string;
-        start_time: string;
-        end_time: string;
-        cash: number;
-        status: string;
-    } | null;
+    shift: ShiftEntry | null;
+    history: ShiftEntry[];
     raw?: Record<string, unknown>;
 }
 
