@@ -41,42 +41,42 @@ function PlayerPhotoModal({
 
   return (
     <div className="fixed inset-0 z-[1200] flex items-center justify-center" onClick={onClose}>
-      {/* Размытый фон */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-xl" />
-
       {/* Карточка */}
       <div
         className="relative w-full max-w-[420px] h-full overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Размытый фон */}
-        <div className="absolute inset-0 bg-[#0b0c0f]">
-          {!isDefault && (
+        {/* Слой 1: тёмный базовый фон */}
+        <div className="absolute inset-0 bg-[#080909]" />
+
+        {/* Слой 2: размытый фон — строго изолирован */}
+        {!isDefault && (
+          <div className="absolute inset-0 overflow-hidden">
             <img
               src={player.photo}
               alt=""
               aria-hidden
-              className="w-full h-full object-cover scale-110 blur-2xl opacity-40"
-            />
-          )}
-        </div>
-        {/* Градиент снизу поверх фона */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-
-        {/* Основное фото — по центру, в натуральную высоту без обрезки */}
-        {!isDefault && (
-          <div className="absolute inset-0 flex items-center justify-center pb-48">
-            <img
-              src={player.photo}
-              alt={player.nickname}
-              className="max-w-full max-h-[55vh] object-contain drop-shadow-2xl"
-              style={{ filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.8))" }}
+              className="absolute inset-0 w-full h-full object-cover scale-125 opacity-30"
+              style={{ filter: "blur(40px)", transform: "scale(1.25)" }}
             />
           </div>
         )}
-        {/* Заглушка если нет фото */}
-        {isDefault && (
-          <div className="absolute inset-0 flex items-center justify-center pb-48">
+
+        {/* Слой 3: градиент */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
+
+        {/* Слой 4: основное фото — чистое, без фильтров */}
+        {!isDefault ? (
+          <div className="absolute inset-0 flex items-center justify-center pb-44">
+            <img
+              src={player.photo}
+              alt={player.nickname}
+              className="max-w-[85%] max-h-[52vh]"
+              style={{ objectFit: "contain", imageRendering: "auto" }}
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center pb-44">
             <Users className="w-28 h-28 text-white/10" />
           </div>
         )}
