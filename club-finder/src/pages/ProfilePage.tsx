@@ -1,4 +1,4 @@
-import { ChevronRight, Settings, LogOut, Wallet, Shield, Unlink, BarChart3, Swords, User as UserIcon, Monitor } from "lucide-react";
+import { ChevronRight, Settings, LogOut, Wallet, Shield, Unlink, BarChart3, Swords, User as UserIcon, Monitor, ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -6,6 +6,7 @@ import { useFaceitLink } from "@/hooks/useFaceitLink";
 import FaceitStats from "@/components/FaceitStats";
 import FaceitMatchHistory from "@/components/FaceitMatchHistory";
 import { FaceitLevelIcon, LEVEL_COLORS } from "@/components/FaceitLevelIcon";
+import TransferPage from "@/pages/TransferPage";
 
 const LEVEL_BG: Record<number, string> = {
   1: "#CCCCCC15",
@@ -21,7 +22,7 @@ export default function ProfilePage() {
   const { user, token, updateUser, logout } = useAuth();
   const { start: startFaceit, loading: faceitLoading } = useFaceitLink();
   const [unlinking, setUnlinking] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "stats" | "matches">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "stats" | "matches" | "transfer">("profile");
 
   const faceitConnected = !!user?.faceit_id;
   const level = user?.faceit_level ?? null;
@@ -80,13 +81,15 @@ export default function ProfilePage() {
       </div>
 
       {/* Tabs */}
-      {faceitConnected && (
-        <div className="flex gap-1 mx-4 mb-4 p-1 rounded-2xl glass border border-white/8">
-          {([
-            { id: "profile", label: "Профиль", icon: UserIcon },
-            { id: "stats", label: "Статистика", icon: BarChart3 },
-            { id: "matches", label: "Матчи", icon: Swords },
-          ] as const).map(({ id, label, icon: Icon }) => (
+      <div className="flex gap-1 mx-4 mb-4 p-1 rounded-2xl glass border border-white/8">
+        {([
+          { id: "profile", label: "Профиль", icon: UserIcon, always: true },
+          { id: "stats", label: "Стата", icon: BarChart3, always: false },
+          { id: "matches", label: "Матчи", icon: Swords, always: false },
+          { id: "transfer", label: "Трансфер", icon: ArrowLeftRight, always: true },
+        ] as const)
+          .filter(({ always }) => always || faceitConnected)
+          .map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
@@ -100,12 +103,12 @@ export default function ProfilePage() {
               {label}
             </button>
           ))}
-        </div>
-      )}
+      </div>
 
       {/* Tab content */}
       {activeTab === "stats" && faceitConnected && <FaceitStats token={token} />}
       {activeTab === "matches" && faceitConnected && <FaceitMatchHistory token={token} />}
+      {activeTab === "transfer" && <TransferPage />}
 
       {/* Menu */}
       {activeTab === "profile" && <div className="px-4 space-y-2">

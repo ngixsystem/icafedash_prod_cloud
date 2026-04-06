@@ -1,11 +1,11 @@
-﻿import { Home, Map, User, Trophy, ArrowLeftRight } from "lucide-react";
+﻿import { Home, Map, User, Trophy, BarChart2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const tabs = [
   { to: "/", icon: Home, end: true },
   { to: "/map", icon: Map },
   { to: "/tournaments", icon: Trophy },
-  { to: "/transfer", icon: ArrowLeftRight },
+  { to: "/ratings", icon: BarChart2 },
   { to: "/profile", icon: User },
 ];
 
