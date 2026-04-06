@@ -5356,10 +5356,10 @@ _CU_DISCIPLINE = {"cs2": 444, "dota2": 4, "pubg-mobile": 48}
 # Единый кэш для всех команд и всех игроков (не разбитый по дисциплине)
 _cu_cache_lock = threading.Lock()
 _CU_CACHE_TTL = 300  # 5 минут
-_cu_teams_cache_raw: list | None = None
-_cu_teams_cache_ts: datetime | None = None
-_cu_players_cache_raw: list | None = None
-_cu_players_cache_ts: datetime | None = None
+_cu_teams_cache_raw = None
+_cu_teams_cache_ts = None
+_cu_players_cache_raw = None
+_cu_players_cache_ts = None
 
 
 def _cu_fetch_all(endpoint: str) -> list:
