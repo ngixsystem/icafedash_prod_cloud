@@ -159,9 +159,9 @@ function TeamPlayerRow({
       onClick={() => onPhotoClick(player)}
       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 active:bg-white/8 transition-colors text-left"
     >
-      <div className="w-8 h-8 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center">
+      <div className="w-8 h-8 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center relative">
         {!isDefault ? (
-          <img src={player.photo} alt={player.nickname} className="w-full h-full object-cover object-top" />
+          <img src={player.photo} alt={player.nickname} className="absolute top-0 left-1/2 -translate-x-1/2 w-[300%] max-w-none" />
         ) : (
           <Users className="w-3.5 h-3.5 text-white/20" />
         )}
@@ -283,9 +283,9 @@ function PlayerCard({
       >
         {rank}
       </div>
-      <div className="w-9 h-9 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center">
+      <div className="w-9 h-9 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center relative">
         {!isDefault ? (
-          <img src={player.photo} alt={player.nickname} className="w-full h-full object-cover object-top" />
+          <img src={player.photo} alt={player.nickname} className="absolute top-0 left-1/2 -translate-x-1/2 w-[300%] max-w-none" />
         ) : (
           <Users className="w-4 h-4 text-white/20" />
         )}
