@@ -114,9 +114,9 @@ function PlayerPhotoModal({
         </button>
 
         {/* ── ТЕКСТ СНИЗУ ── */}
-        <div className="relative mt-auto px-6 pb-12 pt-6">
-          {/* Линия-разделитель — всегда вровень с верхом блока */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF7800]/50 to-transparent" />
+        <div className="relative mt-auto px-6 pb-12">
+          {/* Линия-разделитель вровень с верхом блока */}
+          <div className="h-px mb-5 bg-gradient-to-r from-transparent via-[#FF7800]/50 to-transparent" />
 
           {/* Никнейм */}
           <p
