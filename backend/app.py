@@ -4629,23 +4629,28 @@ def overview():
         data = chart_data.get("data", {})
         series = data.get("series", [])
         categories = data.get("categories", [])
-        
-        # Today is the last category
+
+        # Separate "Total" series from payment-method series
+        total_series = [s for s in series if str(s.get("name", "")).strip().lower() == "total"]
+        method_series = [s for s in series if str(s.get("name", "")).strip().lower() != "total"]
+
+        # Use Total series for revenue figures; fall back to summing methods if absent
+        revenue_series = total_series if total_series else method_series
+
         if categories:
             today_idx = len(categories) - 1
-            for s in series:
+            for s in revenue_series:
                 s_vals = s.get("data", [])
                 if today_idx < len(s_vals):
                     today_revenue += float(s_vals[today_idx] or 0)
-                
-                # Week total
                 week_revenue += sum(float(v or 0) for v in s_vals)
-                
-                # Build mock payment method list for UI breakdown
-                m_name = s.get("name", "Unknown")
-                m_total = sum(float(v or 0) for v in s_vals)
-                if m_total > 0:
-                    payment_methods.append({"name": m_name, "amount": m_total})
+
+        # Payment methods breakdown (exclude Total)
+        for s in method_series:
+            m_name = s.get("name", "Unknown")
+            m_total = sum(float(v or 0) for v in s.get("data", []))
+            if m_total > 0:
+                payment_methods.append({"name": m_name, "amount": m_total})
 
     # Active vs total PCs
     active_pcs = 0
