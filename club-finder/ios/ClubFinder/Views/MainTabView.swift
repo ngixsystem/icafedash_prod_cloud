@@ -10,7 +10,7 @@ struct MainTabView: View {
                 HomeView()
             }
             .tabItem {
-                Image(systemName: "magnifyingglass")
+                Image(systemName: "house")
                 Text("Клубы")
             }
             .tag(0)
@@ -34,11 +34,11 @@ struct MainTabView: View {
             .tag(2)
 
             NavigationStack {
-                TransferView()
+                RatingsHubView()
             }
             .tabItem {
-                Image(systemName: "arrow.left.arrow.right")
-                Text("Трансфер")
+                Image(systemName: "chart.bar.xaxis")
+                Text("Рейтинги")
             }
             .tag(3)
 
