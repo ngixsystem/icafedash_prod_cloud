@@ -2,37 +2,42 @@ import Foundation
 
 struct CyberUnionTeam: Codable, Identifiable {
     let id: Int
-    let team_name: String
-    let logo_url: String?
-    let score: Int
-    let rank: Int
+    let name: String
+    let points: Int
+    let photo: String
+    let region: String
+    let region_photo: String
 }
 
 struct CyberUnionPlayer: Codable, Identifiable {
     let id: Int
-    let username: String
-    let avatar_url: String?
-    let faceit_elo: Int?
-    let faceit_level: Int?
-    let score: Int
-    let rank: Int
-    let team_name: String?
+    let name: String
+    let nickname: String
+    let points: Int
+    let photo: String
+    let team: String?
+    let region: String
+    let region_photo: String
 }
 
 struct CyberUnionTeamPlayer: Codable, Identifiable {
     let id: Int
-    let username: String
-    let avatar_url: String?
-    let faceit_elo: Int?
-    let faceit_level: Int?
+    let name: String
+    let nickname: String
+    let points: Int
+    let photo: String
 }
 
 struct CyberUnionTeamsResponse: Codable {
     let items: [CyberUnionTeam]
     let total: Int
+    let page: Int
+    let page_count: Int
 }
 
 struct CyberUnionPlayersResponse: Codable {
     let items: [CyberUnionPlayer]
     let total: Int
+    let page: Int
+    let page_count: Int
 }
