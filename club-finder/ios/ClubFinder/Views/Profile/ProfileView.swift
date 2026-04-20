@@ -10,13 +10,71 @@ struct ProfileView: View {
     @State private var faceitLoading = false
     @State private var faceitToast: String?
     @State private var showFaceitToast = false
+    @State private var logoScale: CGFloat = 0.6
+    @State private var logoOpacity: Double = 0
+    @State private var glowOpacity: Double = 0
+    @State private var sloganOffset: CGFloat = 10
+    @State private var sloganOpacity: Double = 0
 
     private let accent = Color(hex: "#FF7800")
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                // Avatar + Info
+            VStack(spacing: 0) {
+                // Hero header
+                ZStack {
+                    // Background gradient
+                    LinearGradient(
+                        colors: [Color(hex: "#0B0D12"), Color(hex: "#13141A"), Color(hex: "#0B0D12")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+
+                    // Orange glow behind logo
+                    RadialGradient(
+                        colors: [accent.opacity(0.35), accent.opacity(0.08), Color.clear],
+                        center: .init(x: 0.5, y: 0.42),
+                        startRadius: 0,
+                        endRadius: 160
+                    )
+                    .opacity(glowOpacity)
+
+                    // Decorative ring
+                    Circle()
+                        .stroke(accent.opacity(0.12), lineWidth: 1)
+                        .frame(width: 200, height: 200)
+                        .offset(y: -10)
+                        .opacity(glowOpacity)
+
+                    VStack(spacing: 10) {
+                        Image("frag-logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 88, height: 88)
+                            .scaleEffect(logoScale)
+                            .opacity(logoOpacity)
+
+                        VStack(spacing: 4) {
+                            Text("FRAG.GG")
+                                .font(.system(size: 22, weight: .black))
+                                .foregroundColor(.white)
+                                .tracking(2)
+                                .opacity(sloganOpacity)
+                                .offset(y: sloganOffset)
+
+                            Text("Киберспортивный Портал")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(Color(hex: "#a5adba"))
+                                .tracking(0.5)
+                                .opacity(sloganOpacity)
+                                .offset(y: sloganOffset)
+                        }
+                    }
+                    .padding(.vertical, 36)
+                }
+                .frame(maxWidth: .infinity)
+
+                // Avatar + username
                 VStack(spacing: 12) {
                     if let avatar = auth.user?.avatar_url, !avatar.isEmpty {
                         AsyncImage(url: URL(string: avatar.hasPrefix("http") ? avatar : APIService.shared.baseHost + avatar)) { image in
@@ -27,10 +85,26 @@ struct ProfileView: View {
                         .frame(width: 80, height: 80)
                         .clipShape(Circle())
                         .overlay(Circle().stroke(accent, lineWidth: 2))
+                        .overlay(
+                            Circle()
+                                .stroke(accent.opacity(0.3), lineWidth: 6)
+                        )
+                        .shadow(color: accent.opacity(0.4), radius: 12)
                     } else {
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
+                        ZStack {
+                            Circle()
+                                .fill(LinearGradient(
+                                    colors: [Color(hex: "#1E1F22"), Color(hex: "#2a2b30")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ))
+                                .frame(width: 80, height: 80)
+                                .overlay(Circle().stroke(accent.opacity(0.5), lineWidth: 2))
+                                .shadow(color: accent.opacity(0.25), radius: 10)
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 36))
+                                .foregroundColor(Color(hex: "#a5adba"))
+                        }
                     }
 
                     Text(auth.user?.username ?? "")
@@ -41,119 +115,124 @@ struct ProfileView: View {
                         FaceitLevelBadge(level: level, elo: elo)
                     }
                 }
-                .padding(.top, 8)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
+                .padding(.horizontal)
 
-                // FACEIT Stats
-                if let stats = faceitStats {
-                    Picker("", selection: $selectedTab) {
-                        Text("Статистика").tag(0)
-                        Text("История").tag(1)
-                    }
-                    .pickerStyle(.segmented)
-
-                    if selectedTab == 0 {
-                        FaceitStatsGridView(stats: stats.lifetime)
-
-                        if !stats.maps.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Карты")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white)
-
-                                ForEach(stats.maps) { map in
-                                    HStack {
-                                        Text(map.name)
-                                            .font(.system(size: 14, weight: .semibold))
-                                            .foregroundColor(.white)
-                                        Spacer()
-                                        Text("WR: \(map.win_rate)%")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.gray)
-                                        Text("K/D: \(map.avg_kd)")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.gray)
-                                        Text("\(map.matches) игр")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.gray)
-                                    }
-                                    .padding(10)
-                                    .background(Color.white.opacity(0.05))
-                                    .cornerRadius(10)
-                                }
-                            }
+                VStack(spacing: 16) {
+                    // FACEIT Stats
+                    if let stats = faceitStats {
+                        Picker("", selection: $selectedTab) {
+                            Text("Статистика").tag(0)
+                            Text("История").tag(1)
                         }
-                    } else {
-                        ForEach(faceitHistory) { match in
-                            HStack(spacing: 10) {
-                                Circle()
-                                    .fill(match.is_win == true ? Color.green : Color.red)
-                                    .frame(width: 8, height: 8)
+                        .pickerStyle(.segmented)
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(match.team_name) vs \(match.opponent_name)")
-                                        .font(.system(size: 13, weight: .semibold))
+                        if selectedTab == 0 {
+                            FaceitStatsGridView(stats: stats.lifetime)
+
+                            if !stats.maps.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Карты")
+                                        .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white)
-                                    HStack(spacing: 8) {
-                                        Text(match.map ?? "")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.gray)
-                                        Text(match.score)
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.gray)
-                                    }
-                                }
 
-                                Spacer()
-
-                                if let stats = match.stats {
-                                    VStack(alignment: .trailing, spacing: 2) {
-                                        Text("K/D: \(stats.kd_ratio ?? "-")")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.gray)
-                                        Text("\(stats.kills ?? "0")/\(stats.deaths ?? "0")/\(stats.assists ?? "0")")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.gray)
+                                    ForEach(stats.maps) { map in
+                                        HStack {
+                                            Text(map.name)
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.white)
+                                            Spacer()
+                                            Text("WR: \(map.win_rate)%")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.gray)
+                                            Text("K/D: \(map.avg_kd)")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.gray)
+                                            Text("\(map.matches) игр")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.gray)
+                                        }
+                                        .padding(10)
+                                        .background(Color.white.opacity(0.05))
+                                        .cornerRadius(10)
                                     }
                                 }
                             }
-                            .padding(10)
-                            .background(Color.white.opacity(0.05))
-                            .cornerRadius(10)
+                        } else {
+                            ForEach(faceitHistory) { match in
+                                HStack(spacing: 10) {
+                                    Circle()
+                                        .fill(match.is_win == true ? Color.green : Color.red)
+                                        .frame(width: 8, height: 8)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(match.team_name) vs \(match.opponent_name)")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        HStack(spacing: 8) {
+                                            Text(match.map ?? "")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.gray)
+                                            Text(match.score)
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    if let stats = match.stats {
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            Text("K/D: \(stats.kd_ratio ?? "-")")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.gray)
+                                            Text("\(stats.kills ?? "0")/\(stats.deaths ?? "0")/\(stats.assists ?? "0")")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
+                                }
+                                .padding(10)
+                                .background(Color.white.opacity(0.05))
+                                .cornerRadius(10)
+                            }
+                        }
+                    }
+
+                    // FACEIT link/unlink
+                    faceitSection
+
+                    // Actions
+                    VStack(spacing: 8) {
+                        NavigationLink(destination: CashbackView()) {
+                            SettingsRow(icon: "creditcard", text: "Кэшбэк", iconBg: Color(hex: "#FF7800"))
+                        }
+
+                        NavigationLink(destination: BookingView()) {
+                            SettingsRow(icon: "calendar", text: "Мои бронирования", iconBg: Color(hex: "#FF7800"))
+                        }
+
+                        NavigationLink(destination: TransferView()) {
+                            SettingsRow(icon: "arrow.left.arrow.right", text: "Трансфер маркет", iconBg: Color(hex: "#7C3AED"))
+                        }
+
+                        NavigationLink(destination: ProfileSettingsView()) {
+                            SettingsRow(icon: "gearshape", text: "Настройки", iconBg: Color(hex: "#FF7800"))
+                        }
+
+                        Button {
+                            auth.logout()
+                        } label: {
+                            SettingsRow(icon: "rectangle.portrait.and.arrow.right", text: "Выйти", isDestructive: true, iconBg: Color(hex: "#ef4444"))
                         }
                     }
                 }
-
-                // FACEIT
-                faceitSection
-
-                // Actions
-                VStack(spacing: 8) {
-                    NavigationLink(destination: CashbackView()) {
-                        SettingsRow(icon: "creditcard", text: "Кэшбэк", iconBg: Color(hex: "#FF7800"))
-                    }
-
-                    NavigationLink(destination: BookingView()) {
-                        SettingsRow(icon: "calendar", text: "Мои бронирования", iconBg: Color(hex: "#FF7800"))
-                    }
-
-                    NavigationLink(destination: TransferView()) {
-                        SettingsRow(icon: "arrow.left.arrow.right", text: "Трансфер маркет", iconBg: Color(hex: "#7C3AED"))
-                    }
-
-                    NavigationLink(destination: ProfileSettingsView()) {
-                        SettingsRow(icon: "gearshape", text: "Настройки", iconBg: Color(hex: "#FF7800"))
-                    }
-
-                    Button {
-                        auth.logout()
-                    } label: {
-                        SettingsRow(icon: "rectangle.portrait.and.arrow.right", text: "Выйти", isDestructive: true, iconBg: Color(hex: "#ef4444"))
-                    }
-                }
+                .padding(.horizontal)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal)
         }
-        .background(Color(hex: "#121315"))
+        .background(Color(hex: "#0B0D12"))
         .overlay(alignment: .bottom) {
             if showFaceitToast, let msg = faceitToast {
                 Text(msg)
@@ -170,12 +249,15 @@ struct ProfileView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Image("frag-logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 32)
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
+                logoScale = 1.0
+                logoOpacity = 1.0
+                glowOpacity = 1.0
+            }
+            withAnimation(.easeOut(duration: 0.5).delay(0.35)) {
+                sloganOpacity = 1.0
+                sloganOffset = 0
             }
         }
         .task {
