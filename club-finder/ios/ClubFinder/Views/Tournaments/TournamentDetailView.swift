@@ -43,8 +43,8 @@ struct TournamentDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // Header
                         HStack(spacing: 12) {
-                            if !t.logo_url.isEmpty {
-                                AsyncImage(url: URL(string: APIService.shared.baseHost + t.logo_url)) { image in
+                            if let logoUrl = t.logo_url, !logoUrl.isEmpty {
+                                AsyncImage(url: URL(string: APIService.shared.baseHost + logoUrl)) { image in
                                     image.resizable().aspectRatio(contentMode: .fill)
                                 } placeholder: {
                                     RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
@@ -57,18 +57,18 @@ struct TournamentDetailView: View {
                                 Text(t.title)
                                     .font(.system(size: 22, weight: .bold))
                                     .foregroundColor(.white)
-                                Text("\(t.game) \u{2022} \(t.location.isEmpty ? "Онлайн" : t.location)")
+                                Text("\(t.game) \u{2022} \(t.location?.isEmpty == false ? t.location! : "Онлайн")")
                                     .font(.system(size: 13))
                                     .foregroundColor(.gray)
                             }
                         }
 
                         // Prize
-                        if !t.prize_pool.isEmpty {
+                        if let prize = t.prize_pool, !prize.isEmpty {
                             HStack {
                                 Image(systemName: "trophy.fill")
                                     .foregroundColor(accent)
-                                Text(t.prize_pool)
+                                Text(prize)
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(accent)
                             }
@@ -81,27 +81,27 @@ struct TournamentDetailView: View {
                         // Info grid
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                             InfoCell(label: "Старт", value: formatDate(t.starts_at))
-                            InfoCell(label: "Формат", value: t.team_format)
+                            InfoCell(label: "Формат", value: t.team_format ?? "-")
                             InfoCell(label: "Чек-ин", value: formatDate(t.check_in_at))
-                            InfoCell(label: "Сетка", value: t.format)
-                            InfoCell(label: "Взнос", value: t.entry_fee.isEmpty ? "-" : t.entry_fee)
+                            InfoCell(label: "Сетка", value: t.format ?? "-")
+                            InfoCell(label: "Взнос", value: t.entry_fee?.isEmpty == false ? t.entry_fee! : "-")
                             InfoCell(label: "Команд", value: "\(t.registered_teams)/\(t.max_teams)")
                         }
 
                         // Description
-                        if !t.description.isEmpty {
+                        if let desc = t.description, !desc.isEmpty {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Описание")
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white)
-                                Text(t.description)
+                                Text(desc)
                                     .font(.system(size: 13))
                                     .foregroundColor(.gray)
                             }
                         }
 
                         // Stream
-                        if !t.stream_url.isEmpty, let url = URL(string: t.stream_url) {
+                        if let streamUrl = t.stream_url, !streamUrl.isEmpty, let url = URL(string: streamUrl) {
                             Link(destination: url) {
                                 HStack {
                                     Image(systemName: "play.tv.fill")

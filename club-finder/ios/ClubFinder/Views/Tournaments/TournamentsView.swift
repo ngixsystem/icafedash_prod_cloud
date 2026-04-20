@@ -117,8 +117,8 @@ struct TournamentCardView: View {
             VStack(alignment: .leading, spacing: 10) {
                 // Logo + Title + Prize
                 HStack(spacing: 10) {
-                    if !tournament.logo_url.isEmpty {
-                        AsyncImage(url: URL(string: APIService.shared.baseHost + tournament.logo_url)) { image in
+                    if let logoUrl = tournament.logo_url, !logoUrl.isEmpty {
+                        AsyncImage(url: URL(string: APIService.shared.baseHost + logoUrl)) { image in
                             image.resizable().aspectRatio(contentMode: .fill)
                         } placeholder: {
                             RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.1))
@@ -138,8 +138,8 @@ struct TournamentCardView: View {
 
                     Spacer()
 
-                    if !tournament.prize_pool.isEmpty {
-                        Text(tournament.prize_pool)
+                    if let prize = tournament.prize_pool, !prize.isEmpty {
+                        Text(prize)
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(accent)
                             .padding(.horizontal, 10)
@@ -154,7 +154,9 @@ struct TournamentCardView: View {
                     if let days = daysUntil {
                         ChipView(icon: "clock", text: days)
                     }
-                    ChipView(icon: "gamecontroller", text: tournament.team_format)
+                    if let teamFormat = tournament.team_format {
+                        ChipView(icon: "gamecontroller", text: teamFormat)
+                    }
                 }
 
                 // Progress
