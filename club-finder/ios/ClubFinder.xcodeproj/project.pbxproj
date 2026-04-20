@@ -1,0 +1,559 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CF1401CF1401CF1401CF1401 /* ClubFinderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1301CF1301CF1301CF1301 /* ClubFinderApp.swift */; };
+		CF1402CF1402CF1402CF1402 /* Banner.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1302CF1302CF1302CF1302 /* Banner.swift */; };
+		CF1403CF1403CF1403CF1403 /* Booking.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1303CF1303CF1303CF1303 /* Booking.swift */; };
+		CF1404CF1404CF1404CF1404 /* Cashback.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1304CF1304CF1304CF1304 /* Cashback.swift */; };
+		CF1405CF1405CF1405CF1405 /* Club.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1305CF1305CF1305CF1305 /* Club.swift */; };
+		CF1406CF1406CF1406CF1406 /* Faceit.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1306CF1306CF1306CF1306 /* Faceit.swift */; };
+		CF1407CF1407CF1407CF1407 /* Tournament.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1307CF1307CF1307CF1307 /* Tournament.swift */; };
+		CF1408CF1408CF1408CF1408 /* Transfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1308CF1308CF1308CF1308 /* Transfer.swift */; };
+		CF1409CF1409CF1409CF1409 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1309CF1309CF1309CF1309 /* User.swift */; };
+		CF140ACF140ACF140ACF140A /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF130ACF130ACF130ACF130A /* APIService.swift */; };
+		CF140BCF140BCF140BCF140B /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF130BCF130BCF130BCF130B /* AuthService.swift */; };
+		CF140CCF140CCF140CCF140C /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF130CCF130CCF130CCF130C /* LocationService.swift */; };
+		CF140DCF140DCF140DCF140D /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF130DCF130DCF130DCF130D /* AuthView.swift */; };
+		CF140ECF140ECF140ECF140E /* BookingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF130ECF130ECF130ECF130E /* BookingView.swift */; };
+		CF140FCF140FCF140FCF140F /* ClubDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF130FCF130FCF130FCF130F /* ClubDetailView.swift */; };
+		CF1410CF1410CF1410CF1410 /* FaceitLevelBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1310CF1310CF1310CF1310 /* FaceitLevelBadge.swift */; };
+		CF1411CF1411CF1411CF1411 /* ClubCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1311CF1311CF1311CF1311 /* ClubCardView.swift */; };
+		CF1412CF1412CF1412CF1412 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1312CF1312CF1312CF1312 /* HomeView.swift */; };
+		CF1413CF1413CF1413CF1413 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1313CF1313CF1313CF1313 /* MainTabView.swift */; };
+		CF1414CF1414CF1414CF1414 /* MapScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1314CF1314CF1314CF1314 /* MapScreenView.swift */; };
+		CF1415CF1415CF1415CF1415 /* CashbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1315CF1315CF1315CF1315 /* CashbackView.swift */; };
+		CF1416CF1416CF1416CF1416 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1316CF1316CF1316CF1316 /* ProfileSettingsView.swift */; };
+		CF1417CF1417CF1417CF1417 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1317CF1317CF1317CF1317 /* ProfileView.swift */; };
+		CF1418CF1418CF1418CF1418 /* FaceitRankingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1318CF1318CF1318CF1318 /* FaceitRankingsView.swift */; };
+		CF1419CF1419CF1419CF1419 /* RatingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1319CF1319CF1319CF1319 /* RatingsView.swift */; };
+		CF141ACF141ACF141ACF141A /* TournamentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131ACF131ACF131ACF131A /* TournamentDetailView.swift */; };
+		CF141BCF141BCF141BCF141B /* TournamentGameRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131BCF131BCF131BCF131B /* TournamentGameRatingView.swift */; };
+		CF141CCF141CCF141CCF141C /* TournamentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131CCF131CCF131CCF131C /* TournamentsView.swift */; };
+		CF141DCF141DCF141DCF141D /* PlayerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131DCF131DCF131DCF131D /* PlayerProfileView.swift */; };
+		CF141ECF141ECF141ECF141E /* TransferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131ECF131ECF131ECF131E /* TransferView.swift */; };
+		CF141FCF141FCF141FCF141F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF1320CF1320CF1320CF1320 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		CF1301CF1301CF1301CF1301 /* ClubFinderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubFinderApp.swift; sourceTree = "<group>"; };
+		CF1302CF1302CF1302CF1302 /* Banner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Banner.swift; sourceTree = "<group>"; };
+		CF1303CF1303CF1303CF1303 /* Booking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Booking.swift; sourceTree = "<group>"; };
+		CF1304CF1304CF1304CF1304 /* Cashback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cashback.swift; sourceTree = "<group>"; };
+		CF1305CF1305CF1305CF1305 /* Club.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Club.swift; sourceTree = "<group>"; };
+		CF1306CF1306CF1306CF1306 /* Faceit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Faceit.swift; sourceTree = "<group>"; };
+		CF1307CF1307CF1307CF1307 /* Tournament.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tournament.swift; sourceTree = "<group>"; };
+		CF1308CF1308CF1308CF1308 /* Transfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transfer.swift; sourceTree = "<group>"; };
+		CF1309CF1309CF1309CF1309 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		CF130ACF130ACF130ACF130A /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		CF130BCF130BCF130BCF130B /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		CF130CCF130CCF130CCF130C /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		CF130DCF130DCF130DCF130D /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		CF130ECF130ECF130ECF130E /* BookingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingView.swift; sourceTree = "<group>"; };
+		CF130FCF130FCF130FCF130F /* ClubDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubDetailView.swift; sourceTree = "<group>"; };
+		CF1310CF1310CF1310CF1310 /* FaceitLevelBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceitLevelBadge.swift; sourceTree = "<group>"; };
+		CF1311CF1311CF1311CF1311 /* ClubCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubCardView.swift; sourceTree = "<group>"; };
+		CF1312CF1312CF1312CF1312 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		CF1313CF1313CF1313CF1313 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		CF1314CF1314CF1314CF1314 /* MapScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapScreenView.swift; sourceTree = "<group>"; };
+		CF1315CF1315CF1315CF1315 /* CashbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashbackView.swift; sourceTree = "<group>"; };
+		CF1316CF1316CF1316CF1316 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
+		CF1317CF1317CF1317CF1317 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		CF1318CF1318CF1318CF1318 /* FaceitRankingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceitRankingsView.swift; sourceTree = "<group>"; };
+		CF1319CF1319CF1319CF1319 /* RatingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingsView.swift; sourceTree = "<group>"; };
+		CF131ACF131ACF131ACF131A /* TournamentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TournamentDetailView.swift; sourceTree = "<group>"; };
+		CF131BCF131BCF131BCF131B /* TournamentGameRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TournamentGameRatingView.swift; sourceTree = "<group>"; };
+		CF131CCF131CCF131CCF131C /* TournamentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TournamentsView.swift; sourceTree = "<group>"; };
+		CF131DCF131DCF131DCF131D /* PlayerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerProfileView.swift; sourceTree = "<group>"; };
+		CF131ECF131ECF131ECF131E /* TransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferView.swift; sourceTree = "<group>"; };
+		CF131FCF131FCF131FCF131F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CF1320CF1320CF1320CF1320 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CF1321CF1321CF1321CF1321 /* ClubFinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClubFinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CF1215CF1215CF1215CF1215 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CF1201CF1201CF1201CF1201 = {
+			isa = PBXGroup;
+			children = (
+				CF1204CF1204CF1204CF1204 /* ClubFinder */,
+				CF1203CF1203CF1203CF1203 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CF1203CF1203CF1203CF1203 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CF1321CF1321CF1321CF1321 /* ClubFinder.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CF1204CF1204CF1204CF1204 /* ClubFinder */ = {
+			isa = PBXGroup;
+			children = (
+				CF1222CF1222CF1222CF1222 /* App */,
+				CF1205CF1205CF1205CF1205 /* Models */,
+				CF1206CF1206CF1206CF1206 /* Services */,
+				CF1207CF1207CF1207CF1207 /* Views */,
+				CF1320CF1320CF1320CF1320 /* Assets.xcassets */,
+				CF131FCF131FCF131FCF131F /* Info.plist */,
+			);
+			path = ClubFinder;
+			sourceTree = "<group>";
+		};
+		CF1222CF1222CF1222CF1222 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				CF1301CF1301CF1301CF1301 /* ClubFinderApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		CF1205CF1205CF1205CF1205 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				CF1302CF1302CF1302CF1302 /* Banner.swift */,
+				CF1303CF1303CF1303CF1303 /* Booking.swift */,
+				CF1304CF1304CF1304CF1304 /* Cashback.swift */,
+				CF1305CF1305CF1305CF1305 /* Club.swift */,
+				CF1306CF1306CF1306CF1306 /* Faceit.swift */,
+				CF1307CF1307CF1307CF1307 /* Tournament.swift */,
+				CF1308CF1308CF1308CF1308 /* Transfer.swift */,
+				CF1309CF1309CF1309CF1309 /* User.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CF1206CF1206CF1206CF1206 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CF130ACF130ACF130ACF130A /* APIService.swift */,
+				CF130BCF130BCF130BCF130B /* AuthService.swift */,
+				CF130CCF130CCF130CCF130C /* LocationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		CF1207CF1207CF1207CF1207 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CF1208CF1208CF1208CF1208 /* Auth */,
+				CF1209CF1209CF1209CF1209 /* Booking */,
+				CF120ACF120ACF120ACF120A /* Club */,
+				CF120BCF120BCF120BCF120B /* Components */,
+				CF120CCF120CCF120CCF120C /* Home */,
+				CF1313CF1313CF1313CF1313 /* MainTabView.swift */,
+				CF120DCF120DCF120DCF120D /* Map */,
+				CF120ECF120ECF120ECF120E /* Profile */,
+				CF120FCF120FCF120FCF120F /* Ratings */,
+				CF1210CF1210CF1210CF1210 /* Tournaments */,
+				CF1211CF1211CF1211CF1211 /* Transfer */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		CF1208CF1208CF1208CF1208 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				CF130DCF130DCF130DCF130D /* AuthView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		CF1209CF1209CF1209CF1209 /* Booking */ = {
+			isa = PBXGroup;
+			children = (
+				CF130ECF130ECF130ECF130E /* BookingView.swift */,
+			);
+			path = Booking;
+			sourceTree = "<group>";
+		};
+		CF120ACF120ACF120ACF120A /* Club */ = {
+			isa = PBXGroup;
+			children = (
+				CF130FCF130FCF130FCF130F /* ClubDetailView.swift */,
+			);
+			path = Club;
+			sourceTree = "<group>";
+		};
+		CF120BCF120BCF120BCF120B /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				CF1310CF1310CF1310CF1310 /* FaceitLevelBadge.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		CF120CCF120CCF120CCF120C /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				CF1311CF1311CF1311CF1311 /* ClubCardView.swift */,
+				CF1312CF1312CF1312CF1312 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		CF120DCF120DCF120DCF120D /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				CF1314CF1314CF1314CF1314 /* MapScreenView.swift */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
+		CF120ECF120ECF120ECF120E /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				CF1315CF1315CF1315CF1315 /* CashbackView.swift */,
+				CF1316CF1316CF1316CF1316 /* ProfileSettingsView.swift */,
+				CF1317CF1317CF1317CF1317 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		CF120FCF120FCF120FCF120F /* Ratings */ = {
+			isa = PBXGroup;
+			children = (
+				CF1318CF1318CF1318CF1318 /* FaceitRankingsView.swift */,
+				CF1319CF1319CF1319CF1319 /* RatingsView.swift */,
+			);
+			path = Ratings;
+			sourceTree = "<group>";
+		};
+		CF1210CF1210CF1210CF1210 /* Tournaments */ = {
+			isa = PBXGroup;
+			children = (
+				CF131ACF131ACF131ACF131A /* TournamentDetailView.swift */,
+				CF131BCF131BCF131BCF131B /* TournamentGameRatingView.swift */,
+				CF131CCF131CCF131CCF131C /* TournamentsView.swift */,
+			);
+			path = Tournaments;
+			sourceTree = "<group>";
+		};
+		CF1211CF1211CF1211CF1211 /* Transfer */ = {
+			isa = PBXGroup;
+			children = (
+				CF131DCF131DCF131DCF131D /* PlayerProfileView.swift */,
+				CF131ECF131ECF131ECF131E /* TransferView.swift */,
+			);
+			path = Transfer;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CF1212CF1212CF1212CF1212 /* ClubFinder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CF1217CF1217CF1217CF1217 /* Build configuration list for PBXNativeTarget "ClubFinder" */;
+			buildPhases = (
+				CF1215CF1215CF1215CF1215 /* Frameworks */,
+				CF1213CF1213CF1213CF1213 /* Sources */,
+				CF1214CF1214CF1214CF1214 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ClubFinder;
+			productName = ClubFinder;
+			productReference = CF1321CF1321CF1321CF1321 /* ClubFinder.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CF1202CF1202CF1202CF1202 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					CF1212CF1212CF1212CF1212 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = CF1216CF1216CF1216CF1216 /* Build configuration list for PBXProject "ClubFinder" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				ru,
+			);
+			mainGroup = CF1201CF1201CF1201CF1201;
+			productRefGroup = CF1203CF1203CF1203CF1203 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CF1212CF1212CF1212CF1212 /* ClubFinder */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CF1214CF1214CF1214CF1214 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF141FCF141FCF141FCF141F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CF1213CF1213CF1213CF1213 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF1401CF1401CF1401CF1401 /* ClubFinderApp.swift in Sources */,
+				CF1402CF1402CF1402CF1402 /* Banner.swift in Sources */,
+				CF1403CF1403CF1403CF1403 /* Booking.swift in Sources */,
+				CF1404CF1404CF1404CF1404 /* Cashback.swift in Sources */,
+				CF1405CF1405CF1405CF1405 /* Club.swift in Sources */,
+				CF1406CF1406CF1406CF1406 /* Faceit.swift in Sources */,
+				CF1407CF1407CF1407CF1407 /* Tournament.swift in Sources */,
+				CF1408CF1408CF1408CF1408 /* Transfer.swift in Sources */,
+				CF1409CF1409CF1409CF1409 /* User.swift in Sources */,
+				CF140ACF140ACF140ACF140A /* APIService.swift in Sources */,
+				CF140BCF140BCF140BCF140B /* AuthService.swift in Sources */,
+				CF140CCF140CCF140CCF140C /* LocationService.swift in Sources */,
+				CF140DCF140DCF140DCF140D /* AuthView.swift in Sources */,
+				CF140ECF140ECF140ECF140E /* BookingView.swift in Sources */,
+				CF140FCF140FCF140FCF140F /* ClubDetailView.swift in Sources */,
+				CF1410CF1410CF1410CF1410 /* FaceitLevelBadge.swift in Sources */,
+				CF1411CF1411CF1411CF1411 /* ClubCardView.swift in Sources */,
+				CF1412CF1412CF1412CF1412 /* HomeView.swift in Sources */,
+				CF1413CF1413CF1413CF1413 /* MainTabView.swift in Sources */,
+				CF1414CF1414CF1414CF1414 /* MapScreenView.swift in Sources */,
+				CF1415CF1415CF1415CF1415 /* CashbackView.swift in Sources */,
+				CF1416CF1416CF1416CF1416 /* ProfileSettingsView.swift in Sources */,
+				CF1417CF1417CF1417CF1417 /* ProfileView.swift in Sources */,
+				CF1418CF1418CF1418CF1418 /* FaceitRankingsView.swift in Sources */,
+				CF1419CF1419CF1419CF1419 /* RatingsView.swift in Sources */,
+				CF141ACF141ACF141ACF141A /* TournamentDetailView.swift in Sources */,
+				CF141BCF141BCF141BCF141B /* TournamentGameRatingView.swift in Sources */,
+				CF141CCF141CCF141CCF141C /* TournamentsView.swift in Sources */,
+				CF141DCF141DCF141DCF141D /* PlayerProfileView.swift in Sources */,
+				CF141ECF141ECF141ECF141E /* TransferView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CF1218CF1218CF1218CF1218 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_CYCLE = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CF1219CF1219CF1219CF1219 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_CYCLE = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CF121ACF121ACF121ACF121A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClubFinder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.icafedash.clubfinder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		CF121BCF121BCF121BCF121B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClubFinder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.icafedash.clubfinder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CF1216CF1216CF1216CF1216 /* Build configuration list for PBXProject "ClubFinder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF1218CF1218CF1218CF1218 /* Debug */,
+				CF1219CF1219CF1219CF1219 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CF1217CF1217CF1217CF1217 /* Build configuration list for PBXNativeTarget "ClubFinder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF121ACF121ACF121ACF121A /* Debug */,
+				CF121BCF121BCF121BCF121B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CF1202CF1202CF1202CF1202 /* Project object */;
+}

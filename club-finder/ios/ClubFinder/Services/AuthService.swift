@@ -47,6 +47,7 @@ class AuthService: ObservableObject {
     private let faceitClientID  = "38961025-aebd-41f7-8424-86879eb9f6af"
     private let faceitRedirect  = "https://cloud.icafedash.com/api/auth/faceit/oauth-callback"
     private var faceitWindowProvider = FaceitWindowProvider()
+    private var activeAuthSession: ASWebAuthenticationSession?
 
     init() { loadFromStorage() }
 
@@ -101,6 +102,7 @@ class AuthService: ObservableObject {
 
         let callbackURL: URL = try await withCheckedThrowingContinuation { cont in
             let session = ASWebAuthenticationSession(url: url, callbackURLScheme: "fraggg") { url, error in
+                self.activeAuthSession = nil
                 if let error = error {
                     cont.resume(throwing: error)
                 } else if let url = url {
@@ -111,6 +113,7 @@ class AuthService: ObservableObject {
             }
             session.presentationContextProvider = self.faceitWindowProvider
             session.prefersEphemeralWebBrowserSession = false
+            self.activeAuthSession = session
             session.start()
         }
 
