@@ -18,49 +18,64 @@ struct ClubCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Photo
-            if let photo = club.main_photo_url ?? club.photos?.first {
-                AsyncImage(url: photo.hasPrefix("http") ? URL(string: photo) : URL(string: APIService.shared.baseHost + photo)) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle().fill(Color(hex: "#2F3136"))
+            ZStack(alignment: .bottomLeading) {
+                let photo = club.main_photo_url ?? club.photos?.first
+                if let photo {
+                    AsyncImage(url: photo.hasPrefix("http") ? URL(string: photo) : URL(string: APIService.shared.baseHost + photo)) { image in
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle().fill(Color(hex: "#1E1F22"))
+                    }
+                    .frame(height: 200)
+                    .clipped()
+                } else {
+                    Rectangle()
+                        .fill(Color(hex: "#1E1F22"))
+                        .frame(height: 200)
                 }
-                .frame(height: 140)
-                .clipped()
+                // gradient overlay for readability
+                LinearGradient(
+                    colors: [Color.clear, Color(hex: "#0B0D12").opacity(0.7)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 200)
+
+                // Open/Closed badge over photo
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
+                        .frame(width: 7, height: 7)
+                    Text(club.isOpen ? "Открыто" : "Закрыто")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .cornerRadius(6)
+                .padding(10)
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 // Name row
-                HStack(spacing: 10) {
-                    if let logo = club.logo {
+                HStack(spacing: 8) {
+                    if let logo = club.logo, !logo.isEmpty {
                         AsyncImage(url: logo.hasPrefix("http") ? URL(string: logo) : URL(string: APIService.shared.baseHost + logo)) { image in
                             image.resizable().aspectRatio(contentMode: .fill)
                         } placeholder: {
-                            Circle().fill(Color(hex: "#2F3136"))
+                            RoundedRectangle(cornerRadius: 8).fill(Color(hex: "#2F3136"))
                         }
-                        .frame(width: 36, height: 36)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .frame(width: 32, height: 32)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
 
                     Text(club.name)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white)
                         .lineLimit(1)
 
                     Spacer()
-
-                    // Open/Closed badge
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
-                            .frame(width: 7, height: 7)
-                        Text(club.isOpen ? "Открыто" : "Закрыто")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background((club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245")).opacity(0.15))
-                    .cornerRadius(6)
                 }
 
                 // Address

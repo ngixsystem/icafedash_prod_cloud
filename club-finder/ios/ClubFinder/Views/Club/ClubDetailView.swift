@@ -323,6 +323,7 @@ struct ClubBookingSheet: View {
     @State private var zonePCs: [ZonePCItem] = []
     @State private var loadingPCs = false
     @State private var selectedPCNames: Set<String> = []
+    @State private var pcCount = 1
     @State private var clientName: String
     @State private var phone = ""
     @State private var duration = "1 час"
@@ -330,6 +331,8 @@ struct ClubBookingSheet: View {
     @State private var isSubmitting = false
     @State private var errorMsg: String?
     @State private var success = false
+
+    private var useFallback: Bool { !loadingPCs && zonePCs.isEmpty }
 
     private let accent = Color(hex: "#FF7800")
     private let durations = ["30 минут", "1 час", "2 часа", "3 часа", "4 часа", "5 часов", "6 часов"]
@@ -374,14 +377,33 @@ struct ClubBookingSheet: View {
                             }
                         }
 
-                        // PCs grid
+                        // PCs grid or fallback counter
                         VStack(alignment: .leading, spacing: 8) {
-                            label("ВЫБЕРИТЕ ПК (\(selectedZone.pcsFreeInt) свободно)")
                             if loadingPCs {
+                                label("ЗАГРУЗКА ПК...")
                                 ProgressView().tint(accent).frame(maxWidth: .infinity)
-                            } else if zonePCs.isEmpty {
-                                Text("ПК не найдены").foregroundColor(.gray).font(.system(size: 13))
+                            } else if useFallback {
+                                label("КОЛИЧЕСТВО ПК")
+                                HStack(spacing: 16) {
+                                    Button { if pcCount > 1 { pcCount -= 1 } } label: {
+                                        Image(systemName: "minus.circle.fill")
+                                            .font(.system(size: 28)).foregroundColor(accent)
+                                    }
+                                    Text("\(pcCount)")
+                                        .font(.system(size: 24, weight: .bold)).foregroundColor(.white)
+                                        .frame(minWidth: 40, alignment: .center)
+                                    Button { if pcCount < 10 { pcCount += 1 } } label: {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 28)).foregroundColor(accent)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(14)
+                                .background(Color(hex: "#1E1F22"))
+                                .cornerRadius(10)
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(hex: "#2F3136"), lineWidth: 1))
                             } else {
+                                label("ВЫБЕРИТЕ ПК (\(selectedZone.pcsFreeInt) свободно)")
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                                     ForEach(zonePCs) { pc in
                                         let isFree = pc.status == "free"
@@ -392,8 +414,7 @@ struct ClubBookingSheet: View {
                                             else { selectedPCNames.insert(pc.name) }
                                         } label: {
                                             VStack(spacing: 3) {
-                                                Image(systemName: "desktopcomputer")
-                                                    .font(.system(size: 16))
+                                                Image(systemName: "desktopcomputer").font(.system(size: 16))
                                                 Text(pc.name).font(.system(size: 10, weight: .bold))
                                             }
                                             .foregroundColor(isSelected ? .white : isFree ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
@@ -479,7 +500,8 @@ struct ClubBookingSheet: View {
     }
 
     private var canSubmit: Bool {
-        !selectedPCNames.isEmpty && !clientName.isEmpty && !phone.isEmpty
+        let hasPC = useFallback ? pcCount >= 1 : !selectedPCNames.isEmpty
+        return hasPC && !clientName.isEmpty && !phone.isEmpty
     }
 
     private var successView: some View {
@@ -532,6 +554,10 @@ struct ClubBookingSheet: View {
         fmt.formatOptions = [.withInternetDateTime]
         let startStr = fmt.string(from: startDate)
 
+        let pcNames: [String] = useFallback
+            ? (1...pcCount).map { "ПК-\($0)" }
+            : Array(selectedPCNames)
+
         do {
             _ = try await APIService.shared.createBooking(
                 clubId: club.id,
@@ -539,7 +565,7 @@ struct ClubBookingSheet: View {
                 phone: phone,
                 zoneName: selectedZone.name,
                 duration: duration,
-                pcNames: Array(selectedPCNames),
+                pcNames: pcNames,
                 startAt: startStr,
                 token: token
             )
