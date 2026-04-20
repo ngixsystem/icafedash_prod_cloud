@@ -40,7 +40,7 @@ struct MapScreenView: View {
                     }
                 }
             }
-            .mapStyle(.dark)
+            .mapStyle(.standard)
         }
         .navigationTitle("Карта")
         .navigationBarTitleDisplayMode(.inline)
