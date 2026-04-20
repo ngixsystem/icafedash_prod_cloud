@@ -32,37 +32,9 @@ struct TournamentsView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                 }
-
-                // Game ratings section
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Рейтинги по играм")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-
-                    ForEach([("cs2", "CS2"), ("dota2", "Dota 2"), ("pubg-mobile", "PUBG Mobile")], id: \.0) { gameId, title in
-                        NavigationLink(destination: TournamentGameRatingView(tournamentId: nil, game: title)) {
-                            HStack {
-                                Image(systemName: "trophy.fill")
-                                    .foregroundColor(Color(hex: "#FF7800"))
-                                Text(title)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(14)
-                            .background(Color.white.opacity(0.05))
-                            .cornerRadius(12)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
             }
         }
-        .background(Color(hex: "#121315"))
+        .background(Color(hex: "#0B0D12"))
         .navigationTitle("Турниры")
         .navigationBarTitleDisplayMode(.large)
         .task {
@@ -190,11 +162,18 @@ struct TournamentCardView: View {
             }
             .padding(14)
         }
-        .background(Color(hex: "#0D0E12"))
+        .background(Color(hex: "#1E1F22"))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color(hex: "#FF7800").opacity(0.3), Color.clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
         )
     }
 }
