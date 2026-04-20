@@ -10,8 +10,8 @@ struct RatingsHubView: View {
                 VStack(spacing: 8) {
                     NavigationLink(value: "cs2") {
                         HubCard(
-                            iconName: "gamecontroller",
-                            iconBg: Color(hex: "#FF7800"),
+                            imageName: "cs2-logo",
+                            iconBg: Color(hex: "#1a2a5e"),
                             title: "CS2",
                             subtitle: "Команды и игроки"
                         )
@@ -20,8 +20,8 @@ struct RatingsHubView: View {
 
                     NavigationLink(value: "pubg-mobile") {
                         HubCard(
-                            iconName: "iphone",
-                            iconBg: Color(hex: "#FF7800"),
+                            imageName: "pubg-logo",
+                            iconBg: Color(hex: "#111111"),
                             title: "PUBG Mobile",
                             subtitle: "Команды и игроки"
                         )
@@ -38,8 +38,8 @@ struct RatingsHubView: View {
 
                 NavigationLink(destination: FaceitRankingsView()) {
                     HubCard(
-                        iconName: "crown",
-                        iconBg: Color(hex: "#FF6309"),
+                        imageName: "faceit-logo",
+                        iconBg: Color(hex: "#111111"),
                         title: "FACEIT Uzbekistan",
                         subtitle: "Топ-100 CS2 игроков"
                     )
@@ -55,7 +55,7 @@ struct RatingsHubView: View {
 
                 NavigationLink(destination: TransferView()) {
                     HubCard(
-                        iconName: "arrow.left.arrow.right",
+                        systemIcon: "arrow.left.arrow.right",
                         iconBg: Color(hex: "#7C3AED"),
                         title: "Трансфер маркет",
                         subtitle: "LFT / LFS объявления"
@@ -90,7 +90,8 @@ struct RatingsHubView: View {
 }
 
 struct HubCard: View {
-    let iconName: String
+    var imageName: String? = nil
+    var systemIcon: String? = nil
     let iconBg: Color
     let title: String
     let subtitle: String
@@ -100,10 +101,19 @@ struct HubCard: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(iconBg)
-                    .frame(width: 44, height: 44)
-                Image(systemName: iconName)
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
+                    .frame(width: 48, height: 48)
+
+                if let imageName {
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else if let systemIcon {
+                    Image(systemName: systemIcon)
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                }
             }
 
             VStack(alignment: .leading, spacing: 3) {
