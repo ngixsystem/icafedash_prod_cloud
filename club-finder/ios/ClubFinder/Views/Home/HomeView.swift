@@ -85,16 +85,22 @@ struct HomeView: View {
         .background(Color(hex: "#0B0D12"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                if UIImage(named: "frag-logo") != nil {
+            ToolbarItem(placement: .topBarLeading) {
+                HStack(spacing: 10) {
                     Image("frag-logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(height: 28)
-                } else {
-                    Text("FRAG.GG")
-                        .font(.system(size: 18, weight: .black))
-                        .foregroundColor(accent)
+                        .frame(width: 44, height: 44)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("FRAG.GG")
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundColor(.white)
+                            .tracking(1)
+                        Text("Киберспортивный Портал")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(Color(hex: "#a5adba"))
+                    }
                 }
             }
         }
