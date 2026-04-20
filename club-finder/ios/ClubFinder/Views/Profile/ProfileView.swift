@@ -128,22 +128,26 @@ struct ProfileView: View {
 
                 // Actions
                 VStack(spacing: 8) {
-                    NavigationLink(destination: ProfileSettingsView()) {
-                        SettingsRow(icon: "gearshape", text: "Настройки")
-                    }
-
                     NavigationLink(destination: CashbackView()) {
-                        SettingsRow(icon: "creditcard", text: "Кэшбэк")
+                        SettingsRow(icon: "creditcard", text: "Кэшбэк", iconBg: Color(hex: "#FF7800"))
                     }
 
                     NavigationLink(destination: BookingView()) {
-                        SettingsRow(icon: "calendar", text: "Мои бронирования")
+                        SettingsRow(icon: "calendar", text: "Мои бронирования", iconBg: Color(hex: "#FF7800"))
+                    }
+
+                    NavigationLink(destination: TransferView()) {
+                        SettingsRow(icon: "arrow.left.arrow.right", text: "Трансфер маркет", iconBg: Color(hex: "#7C3AED"))
+                    }
+
+                    NavigationLink(destination: ProfileSettingsView()) {
+                        SettingsRow(icon: "gearshape", text: "Настройки", iconBg: Color(hex: "#FF7800"))
                     }
 
                     Button {
                         auth.logout()
                     } label: {
-                        SettingsRow(icon: "rectangle.portrait.and.arrow.right", text: "Выйти", isDestructive: true)
+                        SettingsRow(icon: "rectangle.portrait.and.arrow.right", text: "Выйти", isDestructive: true, iconBg: Color(hex: "#ef4444"))
                     }
                 }
             }
@@ -293,23 +297,32 @@ struct SettingsRow: View {
     let icon: String
     let text: String
     var isDestructive = false
+    var iconBg = Color(hex: "#FF7800")
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 16))
-                .foregroundColor(isDestructive ? .red : .gray)
-                .frame(width: 24)
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isDestructive ? Color(hex: "#ef4444") : iconBg)
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+            }
+
             Text(text)
                 .font(.system(size: 15))
-                .foregroundColor(isDestructive ? .red : .white)
+                .foregroundColor(isDestructive ? Color(hex: "#ef4444") : .white)
+
             Spacer()
+
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
-                .foregroundColor(.gray.opacity(0.5))
+                .foregroundColor(Color(hex: "#a5adba").opacity(0.5))
         }
         .padding(14)
-        .background(Color.white.opacity(0.05))
+        .background(Color(hex: "#1E1F22"))
         .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#2F3136"), lineWidth: 1))
     }
 }
