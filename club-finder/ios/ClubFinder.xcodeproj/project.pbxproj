@@ -31,13 +31,14 @@
 		CF1416CF1416CF1416CF1416 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1316CF1316CF1316CF1316 /* ProfileSettingsView.swift */; };
 		CF1417CF1417CF1417CF1417 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1317CF1317CF1317CF1317 /* ProfileView.swift */; };
 		CF1418CF1418CF1418CF1418 /* FaceitRankingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1318CF1318CF1318CF1318 /* FaceitRankingsView.swift */; };
-		CF1419CF1419CF1419CF1419 /* RatingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1319CF1319CF1319CF1319 /* RatingsView.swift */; };
 		CF141ACF141ACF141ACF141A /* TournamentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131ACF131ACF131ACF131A /* TournamentDetailView.swift */; };
-		CF141BCF141BCF141BCF141B /* TournamentGameRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131BCF131BCF131BCF131B /* TournamentGameRatingView.swift */; };
 		CF141CCF141CCF141CCF141C /* TournamentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131CCF131CCF131CCF131C /* TournamentsView.swift */; };
 		CF141DCF141DCF141DCF141D /* PlayerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131DCF131DCF131DCF131D /* PlayerProfileView.swift */; };
 		CF141ECF141ECF141ECF141E /* TransferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF131ECF131ECF131ECF131E /* TransferView.swift */; };
 		CF141FCF141FCF141FCF141F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF1320CF1320CF1320CF1320 /* Assets.xcassets */; };
+		CF1420CF1420CF1420CF1420 /* CyberUnion.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1322CF1322CF1322CF1322 /* CyberUnion.swift */; };
+		CF1421CF1421CF1421CF1421 /* CyberUnionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1323CF1323CF1323CF1323 /* CyberUnionView.swift */; };
+		CF1422CF1422CF1422CF1422 /* RatingsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1324CF1324CF1324CF1324 /* RatingsHubView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,15 +66,16 @@
 		CF1316CF1316CF1316CF1316 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
 		CF1317CF1317CF1317CF1317 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		CF1318CF1318CF1318CF1318 /* FaceitRankingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceitRankingsView.swift; sourceTree = "<group>"; };
-		CF1319CF1319CF1319CF1319 /* RatingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingsView.swift; sourceTree = "<group>"; };
 		CF131ACF131ACF131ACF131A /* TournamentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TournamentDetailView.swift; sourceTree = "<group>"; };
-		CF131BCF131BCF131BCF131B /* TournamentGameRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TournamentGameRatingView.swift; sourceTree = "<group>"; };
 		CF131CCF131CCF131CCF131C /* TournamentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TournamentsView.swift; sourceTree = "<group>"; };
 		CF131DCF131DCF131DCF131D /* PlayerProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerProfileView.swift; sourceTree = "<group>"; };
 		CF131ECF131ECF131ECF131E /* TransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferView.swift; sourceTree = "<group>"; };
 		CF131FCF131FCF131FCF131F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CF1320CF1320CF1320CF1320 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CF1321CF1321CF1321CF1321 /* ClubFinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClubFinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CF1322CF1322CF1322CF1322 /* CyberUnion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyberUnion.swift; sourceTree = "<group>"; };
+		CF1323CF1323CF1323CF1323 /* CyberUnionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyberUnionView.swift; sourceTree = "<group>"; };
+		CF1324CF1324CF1324CF1324 /* RatingsHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingsHubView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +135,7 @@
 				CF1305CF1305CF1305CF1305 /* Club.swift */,
 				CF1306CF1306CF1306CF1306 /* Faceit.swift */,
 				CF1307CF1307CF1307CF1307 /* Tournament.swift */,
+				CF1322CF1322CF1322CF1322 /* CyberUnion.swift */,
 				CF1308CF1308CF1308CF1308 /* Transfer.swift */,
 				CF1309CF1309CF1309CF1309 /* User.swift */,
 			);
@@ -230,7 +233,8 @@
 			isa = PBXGroup;
 			children = (
 				CF1318CF1318CF1318CF1318 /* FaceitRankingsView.swift */,
-				CF1319CF1319CF1319CF1319 /* RatingsView.swift */,
+				CF1323CF1323CF1323CF1323 /* CyberUnionView.swift */,
+				CF1324CF1324CF1324CF1324 /* RatingsHubView.swift */,
 			);
 			path = Ratings;
 			sourceTree = "<group>";
@@ -239,7 +243,6 @@
 			isa = PBXGroup;
 			children = (
 				CF131ACF131ACF131ACF131A /* TournamentDetailView.swift */,
-				CF131BCF131BCF131BCF131B /* TournamentGameRatingView.swift */,
 				CF131CCF131CCF131CCF131C /* TournamentsView.swift */,
 			);
 			path = Tournaments;
@@ -348,10 +351,11 @@
 				CF1416CF1416CF1416CF1416 /* ProfileSettingsView.swift in Sources */,
 				CF1417CF1417CF1417CF1417 /* ProfileView.swift in Sources */,
 				CF1418CF1418CF1418CF1418 /* FaceitRankingsView.swift in Sources */,
-				CF1419CF1419CF1419CF1419 /* RatingsView.swift in Sources */,
 				CF141ACF141ACF141ACF141A /* TournamentDetailView.swift in Sources */,
-				CF141BCF141BCF141BCF141B /* TournamentGameRatingView.swift in Sources */,
 				CF141CCF141CCF141CCF141C /* TournamentsView.swift in Sources */,
+				CF1420CF1420CF1420CF1420 /* CyberUnion.swift in Sources */,
+				CF1421CF1421CF1421CF1421 /* CyberUnionView.swift in Sources */,
+				CF1422CF1422CF1422CF1422 /* RatingsHubView.swift in Sources */,
 				CF141DCF141DCF141DCF141D /* PlayerProfileView.swift in Sources */,
 				CF141ECF141ECF141ECF141E /* TransferView.swift in Sources */,
 			);
