@@ -67,13 +67,16 @@ struct HomeView: View {
                 } else {
                     LazyVStack(spacing: 12) {
                         ForEach(filteredClubs) { club in
-                            NavigationLink(destination: ClubDetailView(clubId: club.id)) {
+                            NavigationLink(value: club.id) {
                                 ClubCardView(club: club)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal)
+                    .navigationDestination(for: Int.self) { clubId in
+                        ClubDetailView(clubId: clubId)
+                    }
                 }
             }
             .padding(.top, 8)
