@@ -168,8 +168,16 @@ struct ProfileView: View {
                     .animation(.easeInOut(duration: 0.3), value: showFaceitToast)
             }
         }
-        .navigationTitle("Профиль")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Image("frag-logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 32)
+            }
+        }
         .task {
             guard let token = auth.token, auth.user?.faceit_id != nil else { return }
             faceitStats = try? await APIService.shared.getFaceitStats(token: token)

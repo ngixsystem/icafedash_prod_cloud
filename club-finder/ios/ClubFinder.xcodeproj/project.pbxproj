@@ -39,6 +39,7 @@
 		CF1420CF1420CF1420CF1420 /* CyberUnion.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1322CF1322CF1322CF1322 /* CyberUnion.swift */; };
 		CF1421CF1421CF1421CF1421 /* CyberUnionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1323CF1323CF1323CF1323 /* CyberUnionView.swift */; };
 		CF1422CF1422CF1422CF1422 /* RatingsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1324CF1324CF1324CF1324 /* RatingsHubView.swift */; };
+		CF1423CF1423CF1423CF1423 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1325CF1325CF1325CF1325 /* SplashView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -76,6 +77,7 @@
 		CF1322CF1322CF1322CF1322 /* CyberUnion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyberUnion.swift; sourceTree = "<group>"; };
 		CF1323CF1323CF1323CF1323 /* CyberUnionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyberUnionView.swift; sourceTree = "<group>"; };
 		CF1324CF1324CF1324CF1324 /* RatingsHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingsHubView.swift; sourceTree = "<group>"; };
+		CF1325CF1325CF1325CF1325 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +163,7 @@
 				CF120BCF120BCF120BCF120B /* Components */,
 				CF120CCF120CCF120CCF120C /* Home */,
 				CF1313CF1313CF1313CF1313 /* MainTabView.swift */,
+				CF1325CF1325CF1325CF1325 /* SplashView.swift */,
 				CF120DCF120DCF120DCF120D /* Map */,
 				CF120ECF120ECF120ECF120E /* Profile */,
 				CF120FCF120FCF120FCF120F /* Ratings */,
@@ -356,6 +359,7 @@
 				CF1420CF1420CF1420CF1420 /* CyberUnion.swift in Sources */,
 				CF1421CF1421CF1421CF1421 /* CyberUnionView.swift in Sources */,
 				CF1422CF1422CF1422CF1422 /* RatingsHubView.swift in Sources */,
+				CF1423CF1423CF1423CF1423 /* SplashView.swift in Sources */,
 				CF141DCF141DCF141DCF141D /* PlayerProfileView.swift in Sources */,
 				CF141ECF141ECF141ECF141E /* TransferView.swift in Sources */,
 			);
