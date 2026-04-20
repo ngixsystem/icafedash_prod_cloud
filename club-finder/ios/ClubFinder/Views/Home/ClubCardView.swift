@@ -19,7 +19,8 @@ struct ClubCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Photo
             ZStack(alignment: .bottomLeading) {
-                let photo = club.main_photo_url ?? club.photos?.first
+                let rawPhoto = club.main_photo_url ?? club.photos?.first
+                let photo = rawPhoto.flatMap { $0.isEmpty ? nil : $0 }
                 if let photo {
                     AsyncImage(url: photo.hasPrefix("http") ? URL(string: photo) : URL(string: APIService.shared.baseHost + photo)) { image in
                         image.resizable().aspectRatio(contentMode: .fill)
