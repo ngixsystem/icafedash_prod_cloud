@@ -47,13 +47,14 @@ struct HomeView: View {
                 // Search
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color(hex: "#a5adba"))
                     TextField("Поиск клуба...", text: $searchText)
                         .foregroundColor(.white)
                 }
                 .padding(12)
-                .background(Color.white.opacity(0.08))
-                .cornerRadius(14)
+                .background(Color(hex: "#1E1F22"))
+                .cornerRadius(12)
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#2F3136"), lineWidth: 1))
                 .padding(.horizontal)
 
                 if isLoading {
@@ -81,7 +82,7 @@ struct HomeView: View {
             }
             .padding(.top, 8)
         }
-        .background(Color(hex: "#121315"))
+        .background(Color(hex: "#0B0D12"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
