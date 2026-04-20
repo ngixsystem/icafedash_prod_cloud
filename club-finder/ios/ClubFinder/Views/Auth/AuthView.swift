@@ -17,14 +17,11 @@ struct AuthView: View {
         ScrollView {
             VStack(spacing: 20) {
                 // Logo
-                Image(systemName: "gamecontroller.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(accent)
+                Image("frag-logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 100, height: 100)
                     .padding(.top, 40)
-
-                Text("Club Finder")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
 
                 if showVerification {
                     verificationView

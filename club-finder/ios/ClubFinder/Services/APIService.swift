@@ -160,8 +160,21 @@ class APIService {
         try await request("/public/bookings/my", token: token)
     }
 
-    func createBooking(clubId: Int, zoneName: String, duration: String, pcNames: [String], token: String) async throws -> [String: String] {
-        let params: [String: Any] = ["zone_name": zoneName, "duration": duration, "pc_names": pcNames]
+    func getZonePCs(clubId: Int, zoneName: String) async throws -> ZonePCsResponse {
+        try await request("/public/clubs/\(clubId)/zone-pcs",
+                          queryItems: [URLQueryItem(name: "zone_name", value: zoneName)])
+    }
+
+    func createBooking(clubId: Int, clientName: String, phone: String, zoneName: String,
+                       duration: String, pcNames: [String], startAt: String, token: String) async throws -> [String: String] {
+        let params: [String: Any] = [
+            "client_name": clientName,
+            "phone": phone,
+            "zone_name": zoneName,
+            "duration": duration,
+            "pc_names": pcNames,
+            "booking_start_at": startAt
+        ]
         let body = try JSONSerialization.data(withJSONObject: params)
         return try await request("/public/clubs/\(clubId)/bookings", method: "POST", body: body, token: token)
     }

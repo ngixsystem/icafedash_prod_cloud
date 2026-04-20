@@ -37,6 +37,35 @@ struct Zone: Codable, Identifiable {
     let pcsFree: AnyCodableValue
     let price: String?
     let specs: String?
+
+    var capacityInt: Int {
+        switch capacity {
+        case .int(let v): return v
+        case .double(let v): return Int(v)
+        case .string(let v): return Int(v) ?? 0
+        }
+    }
+
+    var pcsFreeInt: Int {
+        switch pcsFree {
+        case .int(let v): return v
+        case .double(let v): return Int(v)
+        case .string(let v): return Int(v) ?? 0
+        }
+    }
+}
+
+struct ZonePCItem: Codable, Identifiable {
+    let id: String
+    let name: String
+    let status: String
+    let zone: String
+}
+
+struct ZonePCsResponse: Codable {
+    let pcs: [ZonePCItem]
+    let total: Int
+    let free: Int
 }
 
 struct Tariff: Codable, Identifiable {
