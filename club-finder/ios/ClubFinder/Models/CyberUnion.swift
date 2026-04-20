@@ -41,3 +41,7 @@ struct CyberUnionPlayersResponse: Codable {
     let page: Int
     let page_count: Int
 }
+
+struct CyberUnionTeamPlayersResponse: Codable {
+    let items: [CyberUnionTeamPlayer]
+}

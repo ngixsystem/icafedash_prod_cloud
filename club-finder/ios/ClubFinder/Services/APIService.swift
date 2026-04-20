@@ -242,8 +242,7 @@ class APIService {
     }
 
     func getCyberUnionTeamPlayers(game: String, teamName: String) async throws -> [CyberUnionTeamPlayer] {
-        struct Wrapper: Decodable { let items: [CyberUnionTeamPlayer] }
-        let resp: Wrapper = try await request("/public/cyberunion/team-players", queryItems: [
+        let resp: CyberUnionTeamPlayersResponse = try await request("/public/cyberunion/team-players", queryItems: [
             .init(name: "game", value: game),
             .init(name: "team_name", value: teamName)
         ])
