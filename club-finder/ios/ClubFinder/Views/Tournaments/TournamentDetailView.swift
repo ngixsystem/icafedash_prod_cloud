@@ -57,7 +57,7 @@ struct TournamentDetailView: View {
                                 Text(t.title)
                                     .font(.system(size: 22, weight: .bold))
                                     .foregroundColor(.white)
-                                Text("\(t.game) \u{2022} \(t.location?.isEmpty == false ? t.location! : "Онлайн")")
+                                Text("\(t.game) \u{2022} \(t.location ?? "Онлайн")")
                                     .font(.system(size: 13))
                                     .foregroundColor(.gray)
                             }
@@ -84,7 +84,7 @@ struct TournamentDetailView: View {
                             InfoCell(label: "Формат", value: t.team_format ?? "-")
                             InfoCell(label: "Чек-ин", value: formatDate(t.check_in_at))
                             InfoCell(label: "Сетка", value: t.format ?? "-")
-                            InfoCell(label: "Взнос", value: t.entry_fee?.isEmpty == false ? t.entry_fee! : "-")
+                            InfoCell(label: "Взнос", value: t.entry_fee ?? "-")
                             InfoCell(label: "Команд", value: "\(t.registered_teams)/\(t.max_teams)")
                         }
 
