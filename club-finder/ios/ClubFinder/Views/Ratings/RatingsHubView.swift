@@ -1,0 +1,129 @@
+import SwiftUI
+
+struct RatingsHubView: View {
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                // CYBER UNION section
+                sectionHeader("CYBER UNION")
+
+                VStack(spacing: 8) {
+                    NavigationLink(value: "cs2") {
+                        HubCard(
+                            iconName: "gamecontroller",
+                            iconBg: Color(hex: "#FF7800"),
+                            title: "CS2",
+                            subtitle: "Команды и игроки"
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink(value: "pubg-mobile") {
+                        HubCard(
+                            iconName: "iphone",
+                            iconBg: Color(hex: "#FF7800"),
+                            title: "PUBG Mobile",
+                            subtitle: "Команды и игроки"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+
+                Divider().background(Color(hex: "#2F3136")).padding(.horizontal, 16)
+
+                // FACEIT section
+                sectionHeader("FACEIT")
+
+                NavigationLink(destination: FaceitRankingsView()) {
+                    HubCard(
+                        iconName: "crown",
+                        iconBg: Color(hex: "#FF6309"),
+                        title: "FACEIT Uzbekistan",
+                        subtitle: "Топ-100 CS2 игроков"
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+
+                Divider().background(Color(hex: "#2F3136")).padding(.horizontal, 16)
+
+                // TRANSFER section
+                sectionHeader("ТРАНСФЕР")
+
+                NavigationLink(destination: TransferView()) {
+                    HubCard(
+                        iconName: "arrow.left.arrow.right",
+                        iconBg: Color(hex: "#7C3AED"),
+                        title: "Трансфер маркет",
+                        subtitle: "LFT / LFS объявления"
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+            }
+            .padding(.top, 8)
+        }
+        .background(Color(hex: "#0B0D12"))
+        .navigationTitle("Рейтинги")
+        .navigationBarTitleDisplayMode(.large)
+        .navigationDestination(for: String.self) { game in
+            CyberUnionView(game: game)
+        }
+    }
+
+    private func sectionHeader(_ text: String) -> some View {
+        HStack {
+            Text(text)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(Color(hex: "#949BA4"))
+                .tracking(1)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
+    }
+}
+
+struct HubCard: View {
+    let iconName: String
+    let iconBg: Color
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(iconBg)
+                    .frame(width: 44, height: 44)
+                Image(systemName: iconName)
+                    .font(.system(size: 20))
+                    .foregroundColor(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
+                Text(subtitle)
+                    .font(.system(size: 12))
+                    .foregroundColor(Color(hex: "#a5adba"))
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12))
+                .foregroundColor(Color(hex: "#a5adba"))
+        }
+        .padding(14)
+        .background(Color(hex: "#1a1b1f"))
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#2F3136"), lineWidth: 1))
+    }
+}
