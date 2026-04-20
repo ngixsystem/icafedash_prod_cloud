@@ -40,6 +40,7 @@
 		CF1421CF1421CF1421CF1421 /* CyberUnionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1323CF1323CF1323CF1323 /* CyberUnionView.swift */; };
 		CF1422CF1422CF1422CF1422 /* RatingsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1324CF1324CF1324CF1324 /* RatingsHubView.swift */; };
 		CF1423CF1423CF1423CF1423 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1325CF1325CF1325CF1325 /* SplashView.swift */; };
+		CF1424CF1424CF1424CF1424 /* StreamPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1326CF1326CF1326CF1326 /* StreamPlayerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -78,6 +79,7 @@
 		CF1323CF1323CF1323CF1323 /* CyberUnionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyberUnionView.swift; sourceTree = "<group>"; };
 		CF1324CF1324CF1324CF1324 /* RatingsHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingsHubView.swift; sourceTree = "<group>"; };
 		CF1325CF1325CF1325CF1325 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		CF1326CF1326CF1326CF1326 /* StreamPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamPlayerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -201,6 +203,7 @@
 			isa = PBXGroup;
 			children = (
 				CF1310CF1310CF1310CF1310 /* FaceitLevelBadge.swift */,
+				CF1326CF1326CF1326CF1326 /* StreamPlayerView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -360,6 +363,7 @@
 				CF1421CF1421CF1421CF1421 /* CyberUnionView.swift in Sources */,
 				CF1422CF1422CF1422CF1422 /* RatingsHubView.swift in Sources */,
 				CF1423CF1423CF1423CF1423 /* SplashView.swift in Sources */,
+				CF1424CF1424CF1424CF1424 /* StreamPlayerView.swift in Sources */,
 				CF141DCF141DCF141DCF141D /* PlayerProfileView.swift in Sources */,
 				CF141ECF141ECF141ECF141E /* TransferView.swift in Sources */,
 			);

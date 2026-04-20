@@ -100,20 +100,9 @@ struct TournamentDetailView: View {
                             }
                         }
 
-                        // Stream
-                        if let streamUrl = t.stream_url, !streamUrl.isEmpty, let url = URL(string: streamUrl) {
-                            Link(destination: url) {
-                                HStack {
-                                    Image(systemName: "play.tv.fill")
-                                    Text("Смотреть стрим")
-                                        .font(.system(size: 14, weight: .semibold))
-                                }
-                                .foregroundColor(.white)
-                                .padding(12)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.red.opacity(0.2))
-                                .cornerRadius(12)
-                            }
+                        // Stream player
+                        if let streamUrl = t.stream_url, !streamUrl.isEmpty {
+                            StreamSection(rawURL: streamUrl)
                         }
 
                         // Tabs: Teams / Bracket
@@ -259,5 +248,53 @@ struct InfoCell: View {
         .padding(10)
         .background(Color.white.opacity(0.05))
         .cornerRadius(10)
+    }
+}
+
+struct StreamSection: View {
+    let rawURL: String
+    @State private var isExpanded = false
+
+    private let accent = Color(hex: "#FF7800")
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.3)) { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle().fill(Color.red.opacity(0.15)).frame(width: 36, height: 36)
+                        Image(systemName: isExpanded ? "stop.fill" : "play.tv.fill")
+                            .font(.system(size: 15))
+                            .foregroundColor(.red)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Прямой эфир")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                        Text(isExpanded ? "Нажмите чтобы скрыть" : "Нажмите чтобы смотреть")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(hex: "#a5adba"))
+                    }
+                    Spacer()
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "#a5adba"))
+                }
+                .padding(12)
+                .background(Color(hex: "#1E1F22"))
+                .cornerRadius(isExpanded ? 12 : 12)
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(isExpanded ? Color.red.opacity(0.4) : Color(hex: "#2F3136"), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded, let embedURL = streamEmbedURL(from: rawURL) {
+                StreamPlayerView(embedURL: embedURL)
+                    .frame(height: 210)
+                    .cornerRadius(12)
+                    .padding(.top, 6)
+            }
+        }
     }
 }
