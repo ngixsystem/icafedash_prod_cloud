@@ -116,24 +116,6 @@ struct TournamentDetailView: View {
                             }
                         }
 
-                        // Game rating
-                        NavigationLink(destination: TournamentGameRatingView(tournamentId: t.id, game: t.game)) {
-                            HStack {
-                                Image(systemName: "trophy.fill")
-                                    .foregroundColor(Color(hex: "#FF7800"))
-                                Text("Рейтинг — \(t.game)")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(14)
-                            .background(Color.white.opacity(0.05))
-                            .cornerRadius(12)
-                        }
-
                         // Tabs: Teams / Bracket
                         Picker("", selection: $selectedTab) {
                             Text("Команды").tag(0)
