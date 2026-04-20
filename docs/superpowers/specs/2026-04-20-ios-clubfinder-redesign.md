@@ -164,23 +164,155 @@ func getCyberUnionTeamPlayers(game: String, teamName: String) async throws -> [C
 
 ## 6. Порядок реализации
 
-1. Исправить баги (тап клуб, турниры) — быстрая проверка и fix
-2. Создать `CyberUnion.swift` модели
-3. Добавить API методы в `APIService.swift`
-4. Создать `CyberUnionView.swift`
-5. Создать `RatingsHubView.swift`
-6. Обновить `MainTabView.swift` (вкладка Рейтинги)
-7. Обновить `ProfileView.swift` (добавить Трансфер)
-8. Обновить `TournamentsView.swift` (убрать game ratings секцию)
-9. Обновить `TournamentDetailView.swift`
-10. Удалить устаревшие файлы
-11. Обновить `project.pbxproj` (новые файлы, удалённые файлы)
-12. Коммит и пуш
+1. Добавить цветовую палитру и шрифт Oswald в `Theme.swift` / `AppConstants.swift`
+2. Исправить баг тап по клубу — `NavigationLink(value:)` + `.navigationDestination`
+3. Исправить турниры — выровнять модель `PublicTournament` с реальным API
+4. Создать `CyberUnion.swift` модели
+5. Добавить API методы в `APIService.swift`
+6. Создать `CyberUnionView.swift` (дизайн 1:1)
+7. Создать `RatingsHubView.swift` (дизайн 1:1)
+8. Обновить `MainTabView.swift` — вкладка Рейтинги, иконки и цвета 1:1
+9. Обновить `ProfileView.swift` — меню с Transfer, дизайн строк 1:1
+10. Редизайн `HomeView.swift` — карточки клубов, search bar, цвета
+11. Редизайн `ClubDetailView.swift` — Oswald заголовок, цвета секций
+12. Редизайн `TournamentsView.swift` — карточки с gradient border, убрать game ratings
+13. Обновить `TournamentDetailView.swift` — убрать ссылку на TournamentGameRatingView
+14. Удалить `RatingsView.swift` и `TournamentGameRatingView.swift`
+15. Обновить `project.pbxproj` (новые файлы, удалённые файлы)
+16. Коммит и пуш
 
 ---
 
-## 7. Не входит в скоуп
+## 7. Дизайн-система — 1:1 с вебом
 
-- Редизайн существующих экранов (цвета, типографика уже совпадают с вебом)
+Все экраны должны точно соответствовать веб-версии по цветам, иконкам, типографике и компоновке.
+
+### 7.1 Цветовая палитра
+```swift
+// Backgrounds
+bgPrimary      = #0B0D12   // основной фон приложения
+bgCard         = #1E1F22   // карточки клубов, турниров
+bgInput        = #1a1b1f   // инпуты, строки списка
+bgSecondary    = #121315   // вторичный фон (секции внутри страниц)
+
+// Borders
+borderDefault  = #2F3136   // все границы карточек и секций
+
+// Accent
+accentOrange   = #FF7800   // активный таб, кнопки, хайлайты
+accentPurple   = #7C3AED   // Transfer карточка в хабе
+
+// Text
+textPrimary    = #FFFFFF
+textSecondary  = #a5adba   // неактивные табы, подписи
+textMuted      = #949BA4   // заголовки секций (uppercase)
+
+// Status
+statusOpen     = #57F287   // онлайн-индикатор клуба
+statusClosed   = #ED4245   // закрыт
+
+// Rank colors
+rankGold       = #FEE75C   // #1
+rankSilver     = #C0C0C0   // #2
+rankBronze     = #CD7F32   // #3
+```
+
+### 7.2 Типографика
+- **Display (названия клубов, заголовки экранов):** шрифт Oswald, Bold, uppercase
+  - Загрузить через Google Fonts или встроить TTF в bundle
+  - Название клуба в ClubDetailView: Oswald 32px Bold uppercase
+  - Заголовки навигационных экранов: Oswald 20px Bold
+- **Body / UI:** системный шрифт SF Pro (`.body`, `.caption`, `.headline`) — без изменений
+
+### 7.3 Bottom Navigation Bar
+```
+Высота: 60px
+Фон: #0B0D12
+Верхняя граница: 1px #2F3136
+Активный цвет: #FF7800
+Неактивный цвет: #a5adba
+```
+
+**Иконки (lucide → SF Symbols):**
+| Вкладка    | Lucide (веб) | SF Symbol (iOS)         |
+|------------|-------------|-------------------------|
+| Клубы      | Home        | `house`                 |
+| Карта      | Map         | `map`                   |
+| Турниры    | Trophy      | `trophy`                |
+| Рейтинги   | BarChart2   | `chart.bar.xaxis`       |
+| Профиль    | User        | `person`                |
+
+### 7.4 HomeView (список клубов)
+- Фон экрана: `#0B0D12`
+- Поле поиска: фон `#1E1F22`, граница `#2F3136`, иконка `magnifyingglass` цвет `#a5adba`
+- **Карточка клуба:**
+  - Фон: `#1E1F22`, граница `#2F3136`, радиус 12px
+  - Название: Oswald Bold uppercase, белый
+  - Статус-бейдж: точка 8px + текст; open=`#57F287`, closed=`#ED4245`; анимация pulse для "открыт"
+  - Capacity bar: фон `#272727`, градиент заполнения зелёный→жёлтый→красный в зависимости от загрузки
+  - Расстояние: иконка `location.fill` + текст `#a5adba`
+
+### 7.5 ClubDetailView
+- Заголовок клуба: Oswald 32px Bold uppercase
+- Секции: `#1E1F22` фон с `#2F3136` границей
+- Кнопка "Забронировать": фон `#FF7800`, текст белый, full-width, радиус 12px
+- Теги/фичи: `#2F3136` фон, `#a5adba` текст
+
+### 7.6 TournamentsView
+- Фон: `#0B0D12`
+- **Карточка турнира:**
+  - Фон: `#0D0E12`
+  - Граница с градиентом: `from-[#FF7800]/30` (30% оранжевый → прозрачный)
+  - Hover/press эффект: scale 1.02 + тень `rgba(255,120,0,0.15)`
+  - Статус-бейдж: "Активный"=зелёный, "Скоро"=синий, "Завершён"=серый
+- Статус-фильтр (Picker): сегментированный, цвета аналогично веб
+
+### 7.7 RatingsHubView
+- Фон: `#0B0D12`
+- Секция-заголовки: uppercase `#949BA4` 11px letter-spacing
+- **Карточки навигации:**
+  - CYBER UNION CS2: иконка-квадрат `#FF7800` фон, SF Symbol `gamecontroller`, текст "CS2", подпись "Команды и игроки"
+  - CYBER UNION PUBG: иконка-квадрат `#FF7800` фон, SF Symbol `iphone`, текст "PUBG Mobile"
+  - FACEIT UZ: иконка-квадрат `#FF6309` фон, SF Symbol `crown`, текст "FACEIT Uzbekistan", подпись "Топ-100 CS2"
+  - Transfer: иконка-квадрат `#7C3AED` фон, SF Symbol `arrow.left.arrow.right`, текст "Трансфер маркет", подпись "LFT / LFS"
+- Разделители между секциями: 1px `#2F3136`
+- Стрелка `›` справа каждой строки: `#a5adba`
+
+### 7.8 CyberUnionView
+- Заголовок: Oswald Bold uppercase — "CYBER UNION CS2" / "CYBER UNION PUBG MOBILE"
+- Picker (Команды/Игроки): сегментированный, активный `#FF7800` фон белый текст
+- **Строка команды:**
+  - Rank: `#FEE75C`/#1, `#C0C0C0`/#2, `#CD7F32`/#3, `#a5adba` остальные; ширина 28px
+  - Лого: AsyncImage, 32×32px, радиус 6px, фон `#2F3136` placeholder
+  - Название: белый Bold
+  - WINS: `#FF7800` Bold + подпись "WINS" `#a5adba` 10px
+  - Шеврон `chevron.right`: `#a5adba`, поворачивается при раскрытии
+- **Состав команды (expandable):** список игроков с аватаром 24px + ник + faceit elo/level badge
+- **Строка игрока:** аналогично команде (rank + аватар + ник + faceit badge + wins)
+- **Кнопка "Загрузить ещё":** текст `#FF7800`, нижний отступ 16px
+
+### 7.9 ProfileView
+- Аватар: круг 80px, фон `#2F3136` placeholder
+- Имя пользователя: Oswald Bold 20px
+- **Строки меню:**
+  - Фон `#1E1F22`, граница `#2F3136`, радиус 10px
+  - Иконка SF Symbol в квадрате 36px (оранжевый фон `#FF7800`)
+  - Стрелка `chevron.right` справа
+  - Порядок: Кэшбэк → Мои бронирования → Трансфер маркет → Настройки → Выйти
+  - "Выйти": иконка `rectangle.portrait.and.arrow.right`, красный текст `#ef4444`
+
+### 7.10 FaceitLevelBadge
+Переиспользуемый компонент (уже используется, выровнять с вебом):
+- Уровень 1-4: серый `#808080`
+- Уровень 5-7: жёлтый `#FFC500`
+- Уровень 8-9: оранжевый `#FF6500`
+- Уровень 10: красный `#FF0000`
+- Размер бейджа: 20×20px + текст elo рядом `#a5adba`
+
+---
+
+## 8. Не входит в скоуп
+
 - Admin panels
 - Онбординг / туториал
+- iPad layout
