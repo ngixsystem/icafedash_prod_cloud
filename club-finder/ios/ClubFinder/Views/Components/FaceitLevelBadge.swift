@@ -6,17 +6,11 @@ struct FaceitLevelBadge: View {
 
     private var levelColor: Color {
         switch level {
-        case 1: return Color(hex: "#EEE")
-        case 2: return Color(hex: "#1CE400")
-        case 3: return Color(hex: "#1CE400")
-        case 4: return Color(hex: "#FFC800")
-        case 5: return Color(hex: "#FFC800")
-        case 6: return Color(hex: "#FFC800")
-        case 7: return Color(hex: "#FF6309")
-        case 8: return Color(hex: "#FF6309")
-        case 9: return Color(hex: "#FF6309")
-        case 10: return Color(hex: "#FE1F00")
-        default: return .gray
+        case 1...4: return Color(hex: "#808080")
+        case 5...7: return Color(hex: "#FFC500")
+        case 8...9: return Color(hex: "#FF6500")
+        case 10: return Color(hex: "#FF0000")
+        default: return Color(hex: "#808080")
         }
     }
 
