@@ -23,8 +23,28 @@ struct PublicTournament: Codable, Identifiable {
 }
 
 struct TournamentDetails: Codable {
-    let tournament: PublicTournament
+    let id: Int
+    let title: String
+    let game: String
+    let description: String?
+    let team_format: String?
+    let location: String?
+    let starts_at: String?
+    let check_in_at: String?
+    let status: String
+    let format: String?
+    let max_teams: Int
+    let prize_pool: String?
+    let entry_fee: String?
+    let stream_url: String?
+    let faceit_championship_id: String?
+    let region: String?
+    let logo_url: String?
+    let banner_url: String?
+    let registered_teams: Int
     let registrations: [TournamentRegistration]
+
+    var tournament: TournamentDetails { self }
 }
 
 struct TournamentRegistration: Codable, Identifiable {

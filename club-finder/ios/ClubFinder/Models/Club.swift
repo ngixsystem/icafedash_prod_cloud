@@ -33,8 +33,8 @@ struct Club: Codable, Identifiable {
 struct Zone: Codable, Identifiable {
     var id: String { name }
     let name: String
-    let capacity: String
-    let pcsFree: String
+    let capacity: AnyCodableValue
+    let pcsFree: AnyCodableValue
     let price: String?
     let specs: String?
 }

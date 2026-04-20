@@ -19,7 +19,7 @@ struct ClubCardView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Photo
             if let photo = club.main_photo_url ?? club.photos?.first {
-                AsyncImage(url: URL(string: APIService.shared.baseHost + photo)) { image in
+                AsyncImage(url: photo.hasPrefix("http") ? URL(string: photo) : URL(string: APIService.shared.baseHost + photo)) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Rectangle().fill(Color(hex: "#2F3136"))
@@ -32,7 +32,7 @@ struct ClubCardView: View {
                 // Name row
                 HStack(spacing: 10) {
                     if let logo = club.logo {
-                        AsyncImage(url: URL(string: APIService.shared.baseHost + logo)) { image in
+                        AsyncImage(url: logo.hasPrefix("http") ? URL(string: logo) : URL(string: APIService.shared.baseHost + logo)) { image in
                             image.resizable().aspectRatio(contentMode: .fill)
                         } placeholder: {
                             Circle().fill(Color(hex: "#2F3136"))
