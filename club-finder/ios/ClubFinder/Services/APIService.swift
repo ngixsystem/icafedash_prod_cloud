@@ -94,7 +94,8 @@ class APIService {
     }
 
     func getClubReviews(id: Int) async throws -> [ClubReview] {
-        try await request("/public/clubs/\(id)/reviews")
+        let response: ClubReviewsResponse = try await request("/public/clubs/\(id)/reviews")
+        return response.reviews
     }
 
     func submitReview(clubId: Int, rating: Int, text: String, token: String) async throws -> [String: String] {

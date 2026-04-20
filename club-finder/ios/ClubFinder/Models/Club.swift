@@ -105,6 +105,10 @@ enum AnyCodableValue: Codable {
     }
 }
 
+struct ClubReviewsResponse: Codable {
+    let reviews: [ClubReview]
+}
+
 struct ClubReview: Codable, Identifiable {
     let id: Int
     let user_id: Int
