@@ -224,6 +224,32 @@ class APIService {
         try await request("/public/faceit/rankings/uzbekistan", queryItems: [.init(name: "limit", value: "\(limit)")])
     }
 
+    // MARK: - CYBER UNION
+    func getCyberUnionTeams(game: String, page: Int, perPage: Int = 20) async throws -> CyberUnionTeamsResponse {
+        try await request("/public/cyberunion/teams", queryItems: [
+            .init(name: "game", value: game),
+            .init(name: "page", value: "\(page)"),
+            .init(name: "per_page", value: "\(perPage)")
+        ])
+    }
+
+    func getCyberUnionPlayers(game: String, page: Int, perPage: Int = 20) async throws -> CyberUnionPlayersResponse {
+        try await request("/public/cyberunion/players", queryItems: [
+            .init(name: "game", value: game),
+            .init(name: "page", value: "\(page)"),
+            .init(name: "per_page", value: "\(perPage)")
+        ])
+    }
+
+    func getCyberUnionTeamPlayers(game: String, teamName: String) async throws -> [CyberUnionTeamPlayer] {
+        struct Wrapper: Decodable { let items: [CyberUnionTeamPlayer] }
+        let resp: Wrapper = try await request("/public/cyberunion/team-players", queryItems: [
+            .init(name: "game", value: game),
+            .init(name: "team_name", value: teamName)
+        ])
+        return resp.items
+    }
+
     // MARK: - Cashback
     func getCashback(token: String) async throws -> CashbackResponse {
         try await request("/public/cashback/me", token: token)
