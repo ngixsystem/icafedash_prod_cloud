@@ -221,7 +221,8 @@ class APIService {
 
     // MARK: - Rankings
     func getFaceitRankings(limit: Int = 100) async throws -> [FaceitRankingPlayer] {
-        try await request("/public/faceit/rankings/uzbekistan", queryItems: [.init(name: "limit", value: "\(limit)")])
+        let response: FaceitRankingsResponse = try await request("/public/faceit/rankings/uzbekistan", queryItems: [.init(name: "limit", value: "\(limit)")])
+        return response.items
     }
 
     // MARK: - CYBER UNION

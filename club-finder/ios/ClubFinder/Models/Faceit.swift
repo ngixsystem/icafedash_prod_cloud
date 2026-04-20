@@ -60,7 +60,13 @@ struct FaceitRankingPlayer: Codable, Identifiable {
     let nickname: String
     let avatar: String
     let country: String
-    let faceit_elo: Int
-    let skill_level: Int
+    let faceit_elo: Int?
+    let skill_level: Int?
     let position: Int
+}
+
+struct FaceitRankingsResponse: Codable {
+    let total: Int
+    let offset: Int
+    let items: [FaceitRankingPlayer]
 }

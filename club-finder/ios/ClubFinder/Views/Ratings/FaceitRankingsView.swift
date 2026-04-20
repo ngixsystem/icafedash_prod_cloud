@@ -35,7 +35,7 @@ struct FaceitRankingsView: View {
 
                             Spacer()
 
-                            FaceitLevelBadge(level: player.skill_level, elo: player.faceit_elo)
+                            FaceitLevelBadge(level: player.skill_level ?? 0, elo: player.faceit_elo ?? 0)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
