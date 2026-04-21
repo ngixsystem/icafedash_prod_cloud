@@ -4,34 +4,36 @@ struct TournamentsView: View {
     @State private var tournaments: [PublicTournament] = []
     @State private var isLoading = true
 
+    private let accent = Color(hex: "#FF7800")
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                if isLoading {
-                    ProgressView()
-                        .tint(Color(hex: "#FF7800"))
-                        .padding(.top, 60)
-                } else if tournaments.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "trophy")
-                            .font(.system(size: 40))
-                            .foregroundColor(.gray)
-                        Text("Турниров пока нет")
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.top, 60)
-                } else {
-                    LazyVStack(spacing: 12) {
-                        ForEach(tournaments) { t in
-                            NavigationLink(destination: TournamentDetailView(tournamentId: t.id)) {
-                                TournamentCardView(tournament: t)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 8)
+            if isLoading {
+                ProgressView()
+                    .tint(accent)
+                    .padding(.top, 80)
+            } else if tournaments.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "trophy")
+                        .font(.system(size: 48, weight: .thin))
+                        .foregroundColor(Color(hex: "#2F3136"))
+                    Text("Турниров пока нет")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(Color(hex: "#5c6068"))
                 }
+                .padding(.top, 80)
+            } else {
+                LazyVStack(spacing: 16) {
+                    ForEach(tournaments) { t in
+                        NavigationLink(destination: TournamentDetailView(tournamentId: t.id)) {
+                            TournamentCardView(tournament: t)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 20)
             }
         }
         .background(Color(hex: "#0B0D12"))
@@ -47,6 +49,8 @@ struct TournamentsView: View {
     }
 }
 
+// MARK: - Card
+
 struct TournamentCardView: View {
     let tournament: PublicTournament
     private let accent = Color(hex: "#FF7800")
@@ -58,90 +62,209 @@ struct TournamentCardView: View {
     }()
     private static let isoFormatterShort = ISO8601DateFormatter()
 
-    var daysUntil: String? {
-        guard let startsAt = tournament.starts_at else { return nil }
-        guard let date = Self.isoFormatter.date(from: startsAt) ?? Self.isoFormatterShort.date(from: startsAt) else { return nil }
+    private var dateInfo: (label: String, color: Color) {
+        guard let startsAt = tournament.starts_at,
+              let date = Self.isoFormatter.date(from: startsAt) ?? Self.isoFormatterShort.date(from: startsAt)
+        else { return ("Скоро", Color(hex: "#a5adba")) }
+
         let days = Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0
-        if days < 0 { return "Завершён" }
-        if days == 0 { return "Сегодня" }
-        return "через \(days) дн."
+        if days < 0   { return ("Завершён",      Color(hex: "#ED4245")) }
+        if days == 0  { return ("Сегодня",        Color(hex: "#57F287")) }
+        if days <= 3  { return ("через \(days) дн.", Color(hex: "#FEE75C")) }
+        return ("через \(days) дн.", Color(hex: "#a5adba"))
     }
 
-    var progressPercent: Double {
+    private var statusInfo: (label: String, color: Color) {
+        switch tournament.status.lowercased() {
+        case "active", "ongoing", "live":
+            return ("LIVE", Color(hex: "#ED4245"))
+        case "finished", "completed", "ended":
+            return ("Завершён", Color(hex: "#a5adba"))
+        case "registration", "open":
+            return ("Регистрация", Color(hex: "#57F287"))
+        default:
+            return ("Скоро", Color(hex: "#FEE75C"))
+        }
+    }
+
+    private var progressPercent: Double {
         guard tournament.max_teams > 0 else { return 0 }
-        return Double(tournament.registered_teams) / Double(tournament.max_teams)
+        return min(Double(tournament.registered_teams) / Double(tournament.max_teams), 1)
+    }
+
+    private var progressColor: Color {
+        if progressPercent >= 1.0 { return Color(hex: "#ED4245") }
+        if progressPercent >= 0.7 { return Color(hex: "#FEE75C") }
+        return accent
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Banner
+            bannerSection
+            contentSection
+        }
+        .background(Color(hex: "#16171C"))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.white.opacity(0.07), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 6)
+    }
+
+    // MARK: Banner
+
+    private var bannerSection: some View {
+        ZStack(alignment: .bottom) {
             if let banner = tournament.banner_url, !banner.isEmpty {
-                AsyncImage(url: URL(string: APIService.shared.baseHost + banner)) { image in
-                    image.resizable().aspectRatio(2340.0/600.0, contentMode: .fill)
-                        .saturation(0)
-                } placeholder: {
-                    Rectangle().fill(Color.white.opacity(0.05))
-                        .aspectRatio(2340.0/600.0, contentMode: .fill)
+                AsyncImage(url: URL(string: banner.hasPrefix("http") ? banner : APIService.shared.baseHost + banner)) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    default:
+                        bannerPlaceholder
+                    }
                 }
-                .clipped()
+                .frame(maxWidth: .infinity)
+            } else {
+                bannerPlaceholder
             }
 
-            VStack(alignment: .leading, spacing: 10) {
-                // Logo + Title + Prize
-                HStack(spacing: 10) {
-                    if let logoUrl = tournament.logo_url, !logoUrl.isEmpty {
-                        AsyncImage(url: URL(string: APIService.shared.baseHost + logoUrl)) { image in
-                            image.resizable().aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.1))
-                        }
-                        .frame(width: 40, height: 40)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
+            // bottom fade into card
+            LinearGradient(
+                colors: [Color(hex: "#16171C"), Color(hex: "#16171C").opacity(0.5), .clear],
+                startPoint: .bottom,
+                endPoint: .top
+            )
+            .frame(height: 80)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(tournament.title)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                        Text(tournament.game)
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
-                    }
-
-                    Spacer()
-
-                    if let prize = tournament.prize_pool, !prize.isEmpty {
-                        Text(prize)
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(accent)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(accent.opacity(0.12))
-                            .cornerRadius(8)
-                    }
-                }
-
-                // Info chips
-                HStack(spacing: 8) {
-                    if let days = daysUntil {
-                        ChipView(icon: "clock", text: days)
-                    }
-                    if let teamFormat = tournament.team_format {
-                        ChipView(icon: "gamecontroller", text: teamFormat)
-                    }
-                }
-
-                // Progress
+            // status badge top-right
+            VStack {
                 HStack {
-                    Image(systemName: "person.2")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
-                    Text("\(tournament.registered_teams)")
-                        .font(.system(size: 14, weight: .bold))
+                    Spacer()
+                    statusBadge
+                }
+                Spacer()
+            }
+            .padding(12)
+        }
+        .frame(height: 164)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 18))  // top corners
+    }
+
+    private var bannerPlaceholder: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(hex: "#1a1c24"), Color(hex: "#0f1018")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Image(systemName: "trophy.fill")
+                .font(.system(size: 40))
+                .foregroundColor(Color(hex: "#2F3136"))
+        }
+    }
+
+    private var statusBadge: some View {
+        HStack(spacing: 5) {
+            if statusInfo.label == "LIVE" {
+                Circle().fill(Color(hex: "#ED4245")).frame(width: 6, height: 6)
+            }
+            Text(statusInfo.label)
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(statusInfo.color)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+    }
+
+    // MARK: Content
+
+    private var contentSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Title row
+            HStack(alignment: .top, spacing: 10) {
+                if let logoUrl = tournament.logo_url, !logoUrl.isEmpty {
+                    AsyncImage(url: URL(string: logoUrl.hasPrefix("http") ? logoUrl : APIService.shared.baseHost + logoUrl)) { phase in
+                        switch phase {
+                        case .success(let img):
+                            img.resizable().scaledToFill()
+                        default:
+                            RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.06))
+                        }
+                    }
+                    .frame(width: 46, height: 46)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(tournament.title)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                    Text("/ \(tournament.max_teams)")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .lineLimit(1)
+                    Text(tournament.game.uppercased())
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .foregroundColor(accent)
+                        .tracking(1.2)
+                }
+
+                Spacer()
+
+                if let prize = tournament.prize_pool, !prize.isEmpty {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Image(systemName: "trophy.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(accent)
+                        Text(prize)
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .foregroundColor(accent)
+                            .lineLimit(1)
+                    }
+                }
+            }
+
+            // Divider
+            Rectangle()
+                .fill(Color.white.opacity(0.06))
+                .frame(height: 1)
+
+            // Bottom row
+            HStack(spacing: 0) {
+                // Date chip
+                HStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(dateInfo.color)
+                    Text(dateInfo.label)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(dateInfo.color)
+                }
+
+                if let fmt = tournament.team_format {
+                    Color.white.opacity(0.12)
+                        .frame(width: 1, height: 14)
+                        .padding(.horizontal, 10)
+
+                    HStack(spacing: 5) {
+                        Image(systemName: "gamecontroller.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(Color(hex: "#a5adba"))
+                        Text(fmt)
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundColor(Color(hex: "#a5adba"))
+                    }
+                }
+
+                Spacer()
+
+                // Teams + progress bar
+                HStack(spacing: 6) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(hex: "#5c6068"))
 
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
@@ -149,54 +272,23 @@ struct TournamentCardView: View {
                                 .fill(Color.white.opacity(0.1))
                                 .frame(height: 4)
                             Capsule()
-                                .fill(accent)
+                                .fill(LinearGradient(
+                                    colors: [progressColor, progressColor.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ))
                                 .frame(width: geo.size.width * progressPercent, height: 4)
                         }
                     }
-                    .frame(height: 4)
+                    .frame(width: 48, height: 4)
 
-                    Text("\(Int(progressPercent * 100))%")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                    Text("\(tournament.registered_teams)/\(tournament.max_teams)")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
                 }
             }
-            .padding(14)
         }
-        .background(Color(hex: "#1E1F22"))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(
-                    LinearGradient(
-                        colors: [Color(hex: "#FF7800").opacity(0.3), Color.clear],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
-    }
-}
-
-struct ChipView: View {
-    let icon: String
-    let text: String
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.system(size: 10))
-            Text(text)
-                .font(.system(size: 12))
-        }
-        .foregroundColor(.gray)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(Color.white.opacity(0.06))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
     }
 }
