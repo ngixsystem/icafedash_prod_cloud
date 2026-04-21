@@ -31,13 +31,45 @@ struct TournamentDetailView: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     // Banner
-                    if let banner = t.banner_url, !banner.isEmpty {
-                        AsyncImage(url: URL(string: APIService.shared.baseHost + banner)) { image in
-                            image.resizable().aspectRatio(2340.0/600.0, contentMode: .fill)
-                        } placeholder: {
-                            Rectangle().fill(Color.white.opacity(0.05))
-                                .aspectRatio(2340.0/600.0, contentMode: .fill)
+                    if let banner = t.banner_url, !banner.isEmpty,
+                       let url = URL(string: banner.hasPrefix("http") ? banner : APIService.shared.baseHost + banner) {
+                        ZStack(alignment: .bottomLeading) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let img):
+                                    img.resizable()
+                                        .scaledToFill()
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 240)
+                                        .clipped()
+                                default:
+                                    Rectangle()
+                                        .fill(Color(hex: "#1a1c24"))
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 240)
+                                }
+                            }
+                            // gradient fade bottom
+                            LinearGradient(
+                                colors: [Color(hex: "#0B0D12"), .clear],
+                                startPoint: .bottom, endPoint: .top
+                            )
+                            .frame(height: 100)
                         }
+                        .frame(height: 240)
+                        .clipped()
+                    } else {
+                        ZStack {
+                            LinearGradient(
+                                colors: [Color(hex: "#1a1c24"), Color(hex: "#0f1018")],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                            Image(systemName: "trophy.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(Color(hex: "#2F3136"))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 240)
                     }
 
                     VStack(alignment: .leading, spacing: 16) {
