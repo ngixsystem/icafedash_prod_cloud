@@ -3283,7 +3283,7 @@ def public_zone_pcs(club_id):
         if status == "free" and (pc_zone.casefold(), p_name.casefold()) in approved_pc_keys:
             status = "busy"
         return {
-            "id": pc.get("pc_icafe_id") or pc.get("pc_mac") or pc.get("pc_name"),
+            "id": p_name or pc.get("pc_icafe_id") or pc.get("pc_mac") or "unknown",
             "name": p_name or "Unknown",
             "status": status,
             "member": pc.get("member_account", ""),

@@ -56,7 +56,8 @@ struct Zone: Codable, Identifiable {
 }
 
 struct ZonePCItem: Codable, Identifiable {
-    let id: String
+    // Use name as the stable unique key — pc_icafe_id from iCafeCloud is not unique across PCs
+    var id: String { name }
     let name: String
     let status: String
     let zone: String
@@ -65,24 +66,6 @@ struct ZonePCItem: Codable, Identifiable {
 
     var isFree: Bool { status == "free" }
     var isBusy: Bool { status == "busy" }
-
-    enum CodingKeys: String, CodingKey {
-        case id, name, status, zone, member, time_left
-    }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        if let intId = try? c.decode(Int.self, forKey: .id) {
-            id = "\(intId)"
-        } else {
-            id = (try? c.decode(String.self, forKey: .id)) ?? UUID().uuidString
-        }
-        name = try c.decode(String.self, forKey: .name)
-        status = try c.decode(String.self, forKey: .status)
-        zone = (try? c.decode(String.self, forKey: .zone)) ?? ""
-        member = try? c.decode(String.self, forKey: .member)
-        time_left = try? c.decode(String.self, forKey: .time_left)
-    }
 }
 
 struct ZonePCsResponse: Codable {
