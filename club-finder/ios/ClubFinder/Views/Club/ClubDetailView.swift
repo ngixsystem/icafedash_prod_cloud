@@ -1,11 +1,5 @@
 import SwiftUI
 
-// MARK: - Bebas Neue helper
-extension Font {
-    static func bebas(_ size: CGFloat) -> Font {
-        .custom("BebasNeue-Regular", size: size)
-    }
-}
 
 struct ClubDetailView: View {
     let clubId: Int
