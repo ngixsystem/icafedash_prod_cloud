@@ -381,7 +381,7 @@ struct ClubBookingSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             if loadingPCs {
                                 label("ЗАГРУЗКА ПК...")
-                                ProgressView().tint(accent).frame(maxWidth: .infinity)
+                                ProgressView().tint(accent).frame(maxWidth: .infinity).padding(.vertical, 20)
                             } else if useFallback {
                                 label("КОЛИЧЕСТВО ПК")
                                 HStack(spacing: 16) {
@@ -403,31 +403,29 @@ struct ClubBookingSheet: View {
                                 .cornerRadius(10)
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(hex: "#2F3136"), lineWidth: 1))
                             } else {
-                                label("ВЫБЕРИТЕ ПК (\(selectedZone.pcsFreeInt) свободно)")
+                                // Legend + count
+                                HStack(spacing: 12) {
+                                    label("ВЫБЕРИТЕ ПК")
+                                    Spacer()
+                                    HStack(spacing: 10) {
+                                        legendDot(color: Color(hex: "#57F287"), text: "Свободно")
+                                        legendDot(color: Color(hex: "#ED4245"), text: "Занято")
+                                        legendDot(color: Color(hex: "#5c6068"), text: "Офлайн")
+                                    }
+                                }
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                                     ForEach(zonePCs) { pc in
-                                        let isFree = pc.status == "free"
-                                        let isSelected = selectedPCNames.contains(pc.name)
-                                        Button {
-                                            guard isFree else { return }
-                                            if isSelected { selectedPCNames.remove(pc.name) }
-                                            else { selectedPCNames.insert(pc.name) }
-                                        } label: {
-                                            VStack(spacing: 3) {
-                                                Image(systemName: "desktopcomputer").font(.system(size: 16))
-                                                Text(pc.name).font(.system(size: 10, weight: .bold))
+                                        PCCell(pc: pc,
+                                               isSelected: selectedPCNames.contains(pc.name),
+                                               accent: accent) {
+                                            if pc.isFree {
+                                                if selectedPCNames.contains(pc.name) {
+                                                    selectedPCNames.remove(pc.name)
+                                                } else {
+                                                    selectedPCNames.insert(pc.name)
+                                                }
                                             }
-                                            .foregroundColor(isSelected ? .white : isFree ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 10)
-                                            .background(isSelected ? accent : Color(hex: "#1E1F22"))
-                                            .cornerRadius(8)
-                                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(
-                                                isSelected ? accent : isFree ? Color(hex: "#57F287").opacity(0.4) : Color(hex: "#ED4245").opacity(0.3),
-                                                lineWidth: 1))
                                         }
-                                        .disabled(!isFree)
-                                        .opacity(isFree ? 1 : 0.4)
                                     }
                                 }
                             }
@@ -528,6 +526,13 @@ struct ClubBookingSheet: View {
             .tracking(1)
     }
 
+    private func legendDot(color: Color, text: String) -> some View {
+        HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(text).font(.system(size: 10)).foregroundColor(color)
+        }
+    }
+
     private func field(_ placeholder: String, text: Binding<String>, keyboard: UIKeyboardType = .default) -> some View {
         TextField(placeholder, text: text)
             .keyboardType(keyboard)
@@ -574,6 +579,75 @@ struct ClubBookingSheet: View {
             errorMsg = "Ошибка: \(error.localizedDescription)"
         }
         isSubmitting = false
+    }
+}
+
+// MARK: - PC Cell
+
+private struct PCCell: View {
+    let pc: ZonePCItem
+    let isSelected: Bool
+    let accent: Color
+    let onTap: () -> Void
+
+    private var statusColor: Color {
+        if isSelected { return accent }
+        switch pc.status {
+        case "free":    return Color(hex: "#57F287")
+        case "busy":    return Color(hex: "#ED4245")
+        default:        return Color(hex: "#5c6068")
+        }
+    }
+
+    private var bgColor: Color {
+        if isSelected { return accent.opacity(0.25) }
+        switch pc.status {
+        case "free":    return Color(hex: "#57F287").opacity(0.08)
+        case "busy":    return Color(hex: "#ED4245").opacity(0.08)
+        default:        return Color.white.opacity(0.04)
+        }
+    }
+
+    private var icon: String {
+        if isSelected       { return "checkmark.circle.fill" }
+        if pc.isFree        { return "desktopcomputer" }
+        if pc.status == "busy" { return "lock.fill" }
+        return "desktopcomputer.slash"
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(statusColor)
+                Text(pc.name)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(isSelected ? accent : .white)
+                    .lineLimit(1)
+                if pc.isBusy, let m = pc.member, !m.isEmpty {
+                    Text(m)
+                        .font(.system(size: 8))
+                        .foregroundColor(Color(hex: "#ED4245").opacity(0.8))
+                        .lineLimit(1)
+                } else {
+                    Text(pc.isFree ? "Свободно" : (pc.status == "busy" ? "Занято" : "Офлайн"))
+                        .font(.system(size: 8))
+                        .foregroundColor(statusColor.opacity(0.8))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(bgColor)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(statusColor.opacity(isSelected ? 0.8 : 0.35), lineWidth: 1)
+            )
+        }
+        .disabled(!pc.isFree && !isSelected)
+        .opacity(pc.status == "offline" ? 0.4 : 1)
+        .buttonStyle(.plain)
     }
 }
 

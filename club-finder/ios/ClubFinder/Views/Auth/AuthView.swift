@@ -23,27 +23,38 @@ struct AuthView: View {
     private let accent = Color(hex: "#FF7800")
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Hero header
-                heroHeader
+        ZStack {
+            // Full-screen background image
+            Image("auth-bg")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-                // Form
-                VStack(spacing: 16) {
-                    if showVerification {
-                        verificationView
-                    } else {
-                        authFormView
+            // Dark overlay for readability
+            Color.black.opacity(0.62)
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Hero header
+                    heroHeader
+
+                    // Form
+                    VStack(spacing: 16) {
+                        if showVerification {
+                            verificationView
+                        } else {
+                            authFormView
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 32)
+                    .offset(y: formOffset)
+                    .opacity(formOpacity)
+                    .padding(.bottom, 40)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 32)
-                .offset(y: formOffset)
-                .opacity(formOpacity)
-                .padding(.bottom, 40)
             }
         }
-        .background(Color(hex: "#0B0D12"))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { runAnimations() }
@@ -53,17 +64,8 @@ struct AuthView: View {
 
     private var heroHeader: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                colors: [
-                    Color(hex: "#0f1018"),
-                    Color(hex: "#0B0D12"),
-                    Color(hex: "#13141A"),
-                    Color(hex: "#0B0D12")
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            // Transparent — background image shows through
+            Color.clear
             .frame(height: 320)
 
             // Outer glow ring
@@ -286,9 +288,9 @@ struct DarkFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding(14)
-            .background(Color.white.opacity(0.06))
+            .background(.ultraThinMaterial)
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.15), lineWidth: 1))
             .foregroundColor(.white)
     }
 }

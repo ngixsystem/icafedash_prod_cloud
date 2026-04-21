@@ -60,6 +60,15 @@ struct ZonePCItem: Codable, Identifiable {
     let name: String
     let status: String
     let zone: String
+    let member: String?
+    let time_left: String?
+
+    var isFree: Bool { status == "free" }
+    var isBusy: Bool { status == "busy" }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, status, zone, member, time_left
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -71,6 +80,8 @@ struct ZonePCItem: Codable, Identifiable {
         name = try c.decode(String.self, forKey: .name)
         status = try c.decode(String.self, forKey: .status)
         zone = (try? c.decode(String.self, forKey: .zone)) ?? ""
+        member = try? c.decode(String.self, forKey: .member)
+        time_left = try? c.decode(String.self, forKey: .time_left)
     }
 }
 
