@@ -86,15 +86,13 @@ extension Color {
 }
 
 extension Font {
-    // Rajdhani — основной UI шрифт (body, labels, stats)
+    static func road(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .custom("RoadRadio-Thin", size: size)
+    }
     static func raj(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        let name: String
-        switch weight {
-        case .bold, .heavy, .black:  name = "Rajdhani-Bold"
-        case .semibold:              name = "Rajdhani-SemiBold"
-        case .medium:                name = "Rajdhani-Medium"
-        default:                     name = "Rajdhani-Regular"
-        }
-        return .custom(name, size: size)
+        road(size, weight: weight)
+    }
+    static func bebas(_ size: CGFloat) -> Font {
+        road(size)
     }
 }

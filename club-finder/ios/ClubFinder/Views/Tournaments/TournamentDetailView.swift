@@ -245,6 +245,7 @@ struct TournamentDetailView: View {
                     }
                     .padding(16)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .background(.clear)
