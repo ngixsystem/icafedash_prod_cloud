@@ -9,6 +9,7 @@ struct MainTabView: View {
             NavigationStack {
                 HomeView()
             }
+            .background(.clear)
             .tabItem {
                 Image(systemName: "house")
                 Text("Клубы")
@@ -18,6 +19,7 @@ struct MainTabView: View {
             NavigationStack {
                 MapScreenView()
             }
+            .background(.clear)
             .tabItem {
                 Image(systemName: "map")
                 Text("Карта")
@@ -27,6 +29,7 @@ struct MainTabView: View {
             NavigationStack {
                 TournamentsView()
             }
+            .background(.clear)
             .tabItem {
                 Image(systemName: "trophy")
                 Text("Турниры")
@@ -36,6 +39,7 @@ struct MainTabView: View {
             NavigationStack {
                 RatingsHubView()
             }
+            .background(.clear)
             .tabItem {
                 Image(systemName: "chart.bar.xaxis")
                 Text("Рейтинги")
@@ -49,6 +53,7 @@ struct MainTabView: View {
                     AuthView()
                 }
             }
+            .background(.clear)
             .tabItem {
                 Image(systemName: "person")
                 Text("Профиль")

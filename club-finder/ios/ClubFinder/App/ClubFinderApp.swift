@@ -6,15 +6,19 @@ struct ClubFinderApp: App {
     @State private var showSplash = true
 
     init() {
-        // Transparent tab bar so global background shows through
+        let darkBg = UIColor(red: 0.04, green: 0.05, blue: 0.07, alpha: 1)
+
+        // Dark opaque tab bar
         let tabApp = UITabBarAppearance()
-        tabApp.configureWithTransparentBackground()
+        tabApp.configureWithOpaqueBackground()
+        tabApp.backgroundColor = UIColor(red: 0.06, green: 0.07, blue: 0.09, alpha: 0.97)
         UITabBar.appearance().standardAppearance = tabApp
         UITabBar.appearance().scrollEdgeAppearance = tabApp
 
-        // Transparent navigation bar
+        // Dark opaque navigation bar
         let navApp = UINavigationBarAppearance()
-        navApp.configureWithTransparentBackground()
+        navApp.configureWithOpaqueBackground()
+        navApp.backgroundColor = darkBg
         navApp.titleTextAttributes = [.foregroundColor: UIColor.white]
         navApp.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         UINavigationBar.appearance().standardAppearance = navApp
