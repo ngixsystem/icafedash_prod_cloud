@@ -8,9 +8,9 @@ private struct FallbackBanner: Identifiable {
 }
 
 private let fallbackBanners: [FallbackBanner] = [
-    FallbackBanner(id: 1, title: "Турнирный сезон",  subtitle: "CS2 / Dota 2 / Valorant",        imageName: "club1"),
-    FallbackBanner(id: 2, title: "Ночные скидки",    subtitle: "Пакеты до -25% после 23:00",      imageName: "club2"),
-    FallbackBanner(id: 3, title: "VIP-зоны",         subtitle: "Комфортные кабины для сквадов",   imageName: "club3"),
+    FallbackBanner(id: 1, title: "Турнирный сезон",  subtitle: "CS2 / Dota 2 / Valorant",      imageName: "club1"),
+    FallbackBanner(id: 2, title: "Ночные скидки",    subtitle: "Пакеты до -25% после 23:00",    imageName: "club2"),
+    FallbackBanner(id: 3, title: "VIP-зоны",         subtitle: "Комфортные кабины для сквадов", imageName: "club3"),
 ]
 
 struct HomeView: View {
@@ -39,34 +39,32 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 12) {
+            VStack(spacing: 0) {
+                // Search bar
+                searchBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 14)
+
                 // Banner carousel
                 bannerCarousel
-                    .padding(.top, 4)
+                    .padding(.horizontal, 16)
 
-                // Search
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(Color(hex: "#a5adba"))
-                    TextField("Поиск клуба...", text: $searchText)
-                        .foregroundColor(.white)
-                }
-                .padding(12)
-                .background(Color(hex: "#1E1F22"))
-                .cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#2F3136"), lineWidth: 1))
-                .padding(.horizontal)
+                // Section header
+                sectionHeader("ПОПУЛЯРНЫЕ ЛОКАЦИИ")
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
+                    .padding(.bottom, 12)
 
+                // Club list
                 if isLoading {
-                    ProgressView()
-                        .tint(accent)
-                        .padding(.top, 40)
+                    ProgressView().tint(accent).padding(.top, 40)
                 } else if filteredClubs.isEmpty {
                     Text("Клубы не найдены")
                         .foregroundColor(.gray)
                         .padding(.top, 40)
                 } else {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 16) {
                         ForEach(filteredClubs) { club in
                             NavigationLink(value: club.id) {
                                 ClubCardView(club: club)
@@ -74,42 +72,23 @@ struct HomeView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 16)
                     .navigationDestination(for: Int.self) { clubId in
                         ClubDetailView(clubId: clubId)
                     }
                 }
+
+                Spacer().frame(height: 24)
             }
-            .padding(.top, 8)
         }
         .background(Color(hex: "#0B0D12"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                HStack(spacing: 10) {
-                    Image("frag-logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 44, height: 44)
-
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("FRAG.GG")
-                            .font(.system(size: 18, weight: .black))
-                            .foregroundColor(.white)
-                            .tracking(1)
-                        Text("Киберспортивный Портал")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(Color(hex: "#a5adba"))
-                    }
-                }
-            }
-        }
+        .toolbar { toolbarContent }
         .task {
             location.requestPermission()
-            async let clubsTask: () = loadClubs()
-            async let bannersTask: () = loadBanners()
-            await clubsTask
-            await bannersTask
+            async let c: () = loadClubs()
+            async let b: () = loadBanners()
+            await c; await b
         }
         .refreshable {
             await loadClubs()
@@ -117,57 +96,118 @@ struct HomeView: View {
         }
     }
 
-    private var bannerCarousel: some View {
-        TabView(selection: $currentBanner) {
-            if banners.isEmpty {
-                ForEach(fallbackBanners) { b in
-                    fallbackSlide(b).tag(b.id)
-                }
-            } else {
-                ForEach(banners) { banner in
-                    apiBannerSlide(banner)
-                        .tag(banner.id)
-                        .onTapGesture {
-                            if let link = banner.link_url, !link.isEmpty,
-                               let url = URL(string: link) {
-                                UIApplication.shared.open(url)
-                            }
-                        }
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            HStack(spacing: 10) {
+                Image("frag-logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40, height: 40)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("FRAG.GG")
+                        .font(.bebas(20))
+                        .foregroundColor(.white)
+                        .tracking(1)
+                    Text("КИБЕРСПОРТИВНЫЙ ПОРТАЛ")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(Color(hex: "#FF7800"))
+                        .tracking(0.5)
                 }
             }
         }
-        .tabViewStyle(.page(indexDisplayMode: .automatic))
-        .frame(height: 180)
-        .cornerRadius(16)
-        .padding(.horizontal)
     }
 
-    private func fallbackSlide(_ b: FallbackBanner) -> some View {
+    // MARK: - Search bar
+
+    private var searchBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(Color(hex: "#5c6068"))
+            TextField("Поиск по названию или адресу...", text: $searchText)
+                .font(.system(size: 14))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .background(Color(hex: "#16171C"))
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#2F3136"), lineWidth: 1))
+    }
+
+    // MARK: - Section header
+
+    private func sectionHeader(_ title: String) -> some View {
+        HStack(spacing: 8) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color(hex: "#FF7800"))
+                .frame(width: 4, height: 18)
+            Text(title)
+                .font(.bebas(20))
+                .foregroundColor(.white)
+                .tracking(1)
+            Spacer()
+        }
+    }
+
+    // MARK: - Banner carousel
+
+    private var bannerCarousel: some View {
+        GeometryReader { geo in
+            TabView(selection: $currentBanner) {
+                if banners.isEmpty {
+                    ForEach(fallbackBanners) { b in
+                        fallbackSlide(b, width: geo.size.width).tag(b.id)
+                    }
+                } else {
+                    ForEach(banners) { banner in
+                        apiBannerSlide(banner, width: geo.size.width)
+                            .tag(banner.id)
+                            .onTapGesture {
+                                if let link = banner.link_url, !link.isEmpty,
+                                   let url = URL(string: link) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                    }
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .frame(width: geo.size.width, height: 190)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .frame(height: 190)
+    }
+
+    private func fallbackSlide(_ b: FallbackBanner, width: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
             Image(b.imageName)
                 .resizable()
                 .scaledToFill()
-                .frame(maxWidth: .infinity)
+                .frame(width: width, height: 190)
                 .clipped()
             LinearGradient(
-                gradient: Gradient(colors: [.black.opacity(0.7), .clear]),
-                startPoint: .bottom,
-                endPoint: .center
+                colors: [.black.opacity(0.75), .clear],
+                startPoint: .bottom, endPoint: .center
             )
+            .frame(width: width, height: 190)
             VStack(alignment: .leading, spacing: 2) {
-                Text(b.title)
-                    .font(.system(size: 18, weight: .bold))
+                Text(b.title.uppercased())
+                    .font(.bebas(24))
                     .foregroundColor(.white)
                 Text(b.subtitle)
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.75))
             }
-            .padding(14)
+            .padding(16)
         }
-        .cornerRadius(16)
     }
 
-    private func apiBannerSlide(_ banner: Banner) -> some View {
+    private func apiBannerSlide(_ banner: Banner, width: CGFloat) -> some View {
         let imageURL: URL? = banner.image_url.hasPrefix("http")
             ? URL(string: banner.image_url)
             : URL(string: APIService.shared.baseHost + banner.image_url)
@@ -176,40 +216,35 @@ struct HomeView: View {
                 switch phase {
                 case .success(let image):
                     image.resizable().scaledToFill()
+                        .frame(width: width, height: 190).clipped()
                 default:
                     LinearGradient(
                         colors: [Color(hex: "#1a1b1f"), Color(hex: "#12131a")],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                        startPoint: .topLeading, endPoint: .bottomTrailing
                     )
+                    .frame(width: width, height: 190)
                 }
             }
-            .frame(maxWidth: .infinity)
-            .clipped()
             LinearGradient(
-                gradient: Gradient(colors: [.black.opacity(0.7), .clear]),
-                startPoint: .bottom,
-                endPoint: .center
+                colors: [.black.opacity(0.75), .clear],
+                startPoint: .bottom, endPoint: .center
             )
+            .frame(width: width, height: 190)
             VStack(alignment: .leading, spacing: 2) {
-                Text(banner.title)
-                    .font(.system(size: 18, weight: .bold))
+                Text(banner.title.uppercased())
+                    .font(.bebas(24))
                     .foregroundColor(.white)
                 Text(banner.subtitle)
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.75))
             }
-            .padding(14)
+            .padding(16)
         }
-        .cornerRadius(16)
     }
 
     func loadClubs() async {
-        do {
-            clubs = try await APIService.shared.getClubs()
-        } catch {
-            print("Error loading clubs: \(error)")
-        }
+        do { clubs = try await APIService.shared.getClubs() }
+        catch { print("Error loading clubs: \(error)") }
         isLoading = false
     }
 

@@ -4,160 +4,213 @@ struct ClubCardView: View {
     let club: Club
     @ObservedObject private var location = LocationService.shared
 
-    private var capacityFraction: Double {
-        guard club.pcsTotal > 0 else { return 0 }
-        return Double(club.pcsFree) / Double(club.pcsTotal)
-    }
+    private let accent = Color(hex: "#FF7800")
 
-    private var capacityColor: Color {
-        if capacityFraction > 0.5 { return Color(hex: "#57F287") }
-        if capacityFraction > 0.2 { return Color(hex: "#FEE75C") }
-        return Color(hex: "#ED4245")
-    }
-
-    private var photoPlaceholder: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(hex: "#1a1b1f"), Color(hex: "#12131a")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            Image(systemName: "photo")
-                .font(.system(size: 36))
-                .foregroundColor(Color(hex: "#2F3136"))
-        }
+    private var distanceText: String {
+        guard let lat = club.lat, let lng = club.lng else { return "-" }
+        return location.formatDistance(to: lat, lng: lng) ?? "-"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Photo
-            ZStack(alignment: .bottomLeading) {
-                let rawPhoto = club.main_photo_url ?? club.logo ?? club.photos?.first
-                let photo = rawPhoto.flatMap { $0.isEmpty ? nil : $0 }
-                if let photo {
-                    AsyncImage(url: photo.hasPrefix("http") ? URL(string: photo) : URL(string: APIService.shared.baseHost + photo)) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image.resizable().aspectRatio(contentMode: .fill)
-                        default:
-                            photoPlaceholder
-                        }
-                    }
-                    .frame(height: 200)
-                    .clipped()
-                } else {
-                    photoPlaceholder
-                        .frame(height: 200)
-                }
-                // gradient overlay for readability
-                LinearGradient(
-                    colors: [Color.clear, Color(hex: "#0B0D12").opacity(0.7)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 200)
-
-                // Open/Closed badge over photo
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
-                        .frame(width: 7, height: 7)
-                    Text(club.isOpen ? "Открыто" : "Закрыто")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(.ultraThinMaterial)
-                .cornerRadius(6)
-                .padding(10)
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                // Name row
-                HStack(spacing: 8) {
-                    Text(club.name)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-
-                    Spacer()
-                }
-
-                // Address
-                HStack(spacing: 4) {
-                    Image(systemName: "location.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(hex: "#a5adba"))
-                    Text(club.address)
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#a5adba"))
-                        .lineLimit(1)
-                }
-
-                // Capacity bar
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("\(club.pcsFree) свободно")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color(hex: "#a5adba"))
-                        Spacer()
-                        Text("\(club.pcsTotal) всего")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color(hex: "#a5adba"))
-                    }
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(Color(hex: "#272727"))
-                                .frame(height: 4)
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(capacityColor)
-                                .frame(width: geo.size.width * capacityFraction, height: 4)
-                        }
-                    }
-                    .frame(height: 4)
-                }
-
-                // Bottom row: rating + distance + price
-                HStack(spacing: 12) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "#FF7800"))
-                        Text(String(format: "%.1f", club.rating))
-                            .font(.system(size: 12))
-                            .foregroundColor(Color(hex: "#a5adba"))
-                    }
-
-                    if let lat = club.lat, let lng = club.lng,
-                       let dist = location.formatDistance(to: lat, lng: lng) {
-                        HStack(spacing: 3) {
-                            Image(systemName: "location")
-                                .font(.system(size: 10))
-                                .foregroundColor(Color(hex: "#a5adba"))
-                            Text(dist)
-                                .font(.system(size: 12))
-                                .foregroundColor(Color(hex: "#a5adba"))
-                        }
-                    }
-
-                    Spacer()
-
-                    if let price = club.pricePerHour {
-                        Text("\(Int(price)) сум/ч")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(Color(hex: "#FF7800"))
-                    }
-                }
-            }
-            .padding(12)
+            photoSection
+            infoSection
         }
-        .background(Color(hex: "#1E1F22"))
-        .cornerRadius(16)
+        .background(Color(hex: "#16171C"))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "#2F3136"), lineWidth: 1)
+                .stroke(Color.white.opacity(0.07), lineWidth: 1)
         )
+        .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
+    }
+
+    // MARK: - Photo section (top part with overlays)
+
+    private var photoSection: some View {
+        GeometryReader { geo in
+            ZStack {
+                // Background photo
+                let rawPhoto = club.main_photo_url ?? club.logo ?? club.photos?.first
+                let photo = rawPhoto.flatMap { $0.isEmpty ? nil : $0 }
+
+                if let photo {
+                    AsyncImage(url: photo.hasPrefix("http")
+                               ? URL(string: photo)
+                               : URL(string: APIService.shared.baseHost + photo)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                                .frame(width: geo.size.width, height: 200)
+                                .clipped()
+                        default:
+                            photoPlaceholder(width: geo.size.width)
+                        }
+                    }
+                } else {
+                    photoPlaceholder(width: geo.size.width)
+                }
+
+                // Bottom gradient
+                LinearGradient(
+                    colors: [Color(hex: "#16171C"), Color(hex: "#16171C").opacity(0.4), .clear],
+                    startPoint: .bottom, endPoint: .top
+                )
+                .frame(width: geo.size.width, height: 200)
+
+                // Club logo watermark (center, large, faded)
+                if let logo = club.logo, !logo.isEmpty {
+                    AsyncImage(url: logo.hasPrefix("http")
+                               ? URL(string: logo)
+                               : URL(string: APIService.shared.baseHost + logo)) { phase in
+                        if case .success(let img) = phase {
+                            img.resizable().scaledToFit()
+                                .frame(width: 110, height: 110)
+                                .opacity(0.18)
+                        }
+                    }
+                }
+
+                // Overlaid content
+                VStack {
+                    // Top row: open/close badge + rating
+                    HStack {
+                        openBadge
+                        Spacer()
+                        ratingBadge
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 10)
+
+                    Spacer()
+
+                    // Club name at bottom
+                    HStack {
+                        Text(club.name.uppercased())
+                            .font(.bebas(28))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.6), radius: 4, y: 2)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 10)
+                }
+                .frame(width: geo.size.width, height: 200)
+            }
+        }
+        .frame(height: 200)
+    }
+
+    // MARK: - Info section (bottom part)
+
+    private var infoSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Address
+            HStack(spacing: 5) {
+                Image(systemName: "mappin.circle.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(accent)
+                Text(club.address)
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "#a5adba"))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
+            .padding(.bottom, 10)
+
+            // Orange separator line
+            Rectangle()
+                .fill(accent)
+                .frame(height: 2)
+                .padding(.horizontal, 12)
+
+            // Bottom stats row
+            HStack(spacing: 0) {
+                // PC availability
+                HStack(spacing: 8) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: "#1E1F22"))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "desktopcomputer")
+                            .font(.system(size: 16))
+                            .foregroundColor(accent)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("СВОБОДНО")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(Color(hex: "#5c6068"))
+                            .tracking(0.5)
+                        Text("\(club.pcsFree) / \(club.pcsTotal) ПК")
+                            .font(.bebas(16))
+                            .foregroundColor(.white)
+                    }
+                }
+
+                Spacer()
+
+                // Distance
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("РАССТОЯНИЕ")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(Color(hex: "#5c6068"))
+                        .tracking(0.5)
+                    Text(distanceText)
+                        .font(.bebas(16))
+                        .foregroundColor(.white)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+        }
+    }
+
+    // MARK: - Badges
+
+    private var openBadge: some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
+                .frame(width: 6, height: 6)
+            Text(club.isOpen ? "ОТКРЫТО" : "ЗАКРЫТО")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+    }
+
+    private var ratingBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "star.fill")
+                .font(.system(size: 10))
+                .foregroundColor(Color(hex: "#FEE75C"))
+            Text(String(format: "%.1f", club.rating))
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+    }
+
+    // MARK: - Placeholder
+
+    private func photoPlaceholder(width: CGFloat) -> some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(hex: "#1a1b22"), Color(hex: "#0f1018")],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+            Image(systemName: "photo")
+                .font(.system(size: 40))
+                .foregroundColor(Color(hex: "#2F3136"))
+        }
+        .frame(width: width, height: 200)
     }
 }
