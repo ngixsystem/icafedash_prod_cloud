@@ -87,7 +87,7 @@ extension Color {
 
 extension Font {
     static func road(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .custom("RoadRadio-Thin", size: size)
+        .custom("Play-Bold", size: size)
     }
     static func raj(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         road(size, weight: weight)
