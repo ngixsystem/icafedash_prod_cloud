@@ -101,93 +101,73 @@ struct TournamentCardView: View {
         .shadow(color: .black.opacity(0.4), radius: 10, y: 4)
     }
 
-    // MARK: - Banner (no GeometryReader — uses maxWidth: .infinity + fixed height + clipped)
+    // MARK: - Banner
 
     private var bannerSection: some View {
-        ZStack(alignment: .top) {
-            // Background image
-            if let raw = tournament.banner_url, !raw.isEmpty,
-               let url = URL(string: raw.hasPrefix("http") ? raw : APIService.shared.baseHost + raw) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let img):
-                        img.resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 170)
-                            .clipped()
-                    default:
-                        placeholder
-                    }
-                }
-            } else {
-                placeholder
-            }
+        let bannerURL: URL? = {
+            guard let raw = tournament.banner_url, !raw.isEmpty else { return nil }
+            return URL(string: raw.hasPrefix("http") ? raw : APIService.shared.baseHost + raw)
+        }()
 
-            // Bottom fade
-            VStack {
-                Spacer()
+        return Color(hex: "#1a1c24")          // sizing anchor — takes full card width
+            .frame(height: 170)
+            .overlay {
+                if let url = bannerURL {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let img) = phase {
+                            img.resizable().scaledToFill()
+                        } else {
+                            placeholderBg
+                        }
+                    }
+                } else {
+                    placeholderBg
+                }
+            }
+            .overlay(alignment: .bottom) {
                 LinearGradient(
-                    colors: [Color(hex: "#16171C"), Color(hex: "#16171C").opacity(0.5), .clear],
+                    colors: [Color(hex: "#16171C"), Color(hex: "#16171C").opacity(0.3), .clear],
                     startPoint: .bottom, endPoint: .top
                 )
                 .frame(height: 80)
             }
-            .frame(height: 170)
-
-            // Top row overlays
-            HStack {
-                // Game tag
-                Text(tournament.game.uppercased())
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(accent)
-                    .tracking(1)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(Color.black.opacity(0.55))
-                    .clipShape(Capsule())
-
-                Spacer()
-
-                // Status badge
-                HStack(spacing: 4) {
-                    if statusInfo.label == "LIVE" {
-                        Circle().fill(Color(hex: "#ED4245")).frame(width: 5, height: 5)
-                    }
-                    Text(statusInfo.label)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(statusInfo.color)
-                }
-                .padding(.horizontal, 10).padding(.vertical, 5)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-            }
-            .padding(.horizontal, 12).padding(.top, 10)
-
-            // Prize pool bottom-right
-            if let prize = tournament.prize_pool, !prize.isEmpty {
-                VStack {
+            .overlay(alignment: .top) {
+                HStack {
+                    Text(tournament.game.uppercased())
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(accent)
+                        .tracking(1)
+                        .padding(.horizontal, 8).padding(.vertical, 4)
+                        .background(Color.black.opacity(0.55))
+                        .clipShape(Capsule())
                     Spacer()
-                    HStack {
-                        Spacer()
-                        HStack(spacing: 5) {
-                            Image(systemName: "trophy.fill")
-                                .font(.system(size: 10))
-                                .foregroundColor(accent)
-                            Text(prize)
-                                .font(.bebas(18))
-                                .foregroundColor(accent)
+                    HStack(spacing: 4) {
+                        if statusInfo.label == "LIVE" {
+                            Circle().fill(Color(hex: "#ED4245")).frame(width: 5, height: 5)
                         }
+                        Text(statusInfo.label)
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(statusInfo.color)
+                    }
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
+                }
+                .padding(.horizontal, 12).padding(.top, 10)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if let prize = tournament.prize_pool, !prize.isEmpty {
+                    HStack(spacing: 5) {
+                        Image(systemName: "trophy.fill").font(.system(size: 10)).foregroundColor(accent)
+                        Text(prize).font(.bebas(18)).foregroundColor(accent)
                     }
                     .padding(.horizontal, 12).padding(.bottom, 10)
                 }
-                .frame(height: 170)
             }
-        }
-        .frame(height: 170)
-        .clipped()
+            .clipped()
     }
 
-    private var placeholder: some View {
+    private var placeholderBg: some View {
         ZStack {
             LinearGradient(
                 colors: [Color(hex: "#1a1c24"), Color(hex: "#0f1018")],
@@ -197,8 +177,6 @@ struct TournamentCardView: View {
                 .font(.system(size: 44))
                 .foregroundColor(Color(hex: "#2F3136"))
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 170)
     }
 
     // MARK: - Content
