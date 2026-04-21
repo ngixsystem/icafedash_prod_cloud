@@ -30,47 +30,42 @@ struct TournamentDetailView: View {
                 let t = details.tournament
 
                 VStack(alignment: .leading, spacing: 0) {
-                    // Banner
-                    if let banner = t.banner_url, !banner.isEmpty,
-                       let url = URL(string: banner.hasPrefix("http") ? banner : APIService.shared.baseHost + banner) {
-                        ZStack(alignment: .bottomLeading) {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .success(let img):
-                                    img.resizable()
-                                        .scaledToFill()
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 240)
-                                        .clipped()
-                                default:
-                                    Rectangle()
-                                        .fill(Color(hex: "#1a1c24"))
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 240)
+                    // Banner — Color anchor prevents layout overflow
+                    let bannerURL: URL? = {
+                        guard let b = t.banner_url, !b.isEmpty else { return nil }
+                        return URL(string: b.hasPrefix("http") ? b : APIService.shared.baseHost + b)
+                    }()
+                    Color(hex: "#1a1c24")
+                        .frame(height: 240)
+                        .overlay {
+                            if let url = bannerURL {
+                                AsyncImage(url: url) { phase in
+                                    if case .success(let img) = phase {
+                                        img.resizable().scaledToFill()
+                                    } else {
+                                        Color(hex: "#1a1c24")
+                                    }
+                                }
+                            } else {
+                                ZStack {
+                                    LinearGradient(
+                                        colors: [Color(hex: "#1a1c24"), Color(hex: "#0f1018")],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
+                                    )
+                                    Image(systemName: "trophy.fill")
+                                        .font(.system(size: 60))
+                                        .foregroundColor(Color(hex: "#2F3136"))
                                 }
                             }
-                            // gradient fade bottom
+                        }
+                        .overlay(alignment: .bottom) {
                             LinearGradient(
                                 colors: [Color(hex: "#0B0D12"), .clear],
                                 startPoint: .bottom, endPoint: .top
                             )
-                            .frame(height: 100)
+                            .frame(height: 120)
                         }
-                        .frame(height: 240)
                         .clipped()
-                    } else {
-                        ZStack {
-                            LinearGradient(
-                                colors: [Color(hex: "#1a1c24"), Color(hex: "#0f1018")],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            )
-                            Image(systemName: "trophy.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(Color(hex: "#2F3136"))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 240)
-                    }
 
                     VStack(alignment: .leading, spacing: 16) {
                         // Header
