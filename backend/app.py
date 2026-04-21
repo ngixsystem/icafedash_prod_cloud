@@ -3276,23 +3276,34 @@ def public_zone_pcs(club_id):
     approved_pc_keys = get_approved_booking_pc_keys(club.id)
 
     zone_name_folded = zone_name.casefold()
-    zone_pcs = []
-    for pc in pcs:
-        pc_zone = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
-        if pc_zone.casefold() != zone_name_folded:
-            continue
-        status = detect_pc_status(pc)
-        if status == "free" and (pc_zone.casefold(), str(pc.get("pc_name") or "").strip().casefold()) in approved_pc_keys:
-            status = "busy"
 
-        zone_pcs.append({
+    def _build_pc_entry(pc, pc_zone):
+        status = detect_pc_status(pc)
+        p_name = str(pc.get("pc_name") or "").strip()
+        if status == "free" and (pc_zone.casefold(), p_name.casefold()) in approved_pc_keys:
+            status = "busy"
+        return {
             "id": pc.get("pc_icafe_id") or pc.get("pc_mac") or pc.get("pc_name"),
-            "name": pc.get("pc_name", "Unknown"),
+            "name": p_name or "Unknown",
             "status": status,
             "member": pc.get("member_account", ""),
             "time_left": pc.get("status_connect_time_left", ""),
             "zone": pc_zone or zone_name,
-        })
+        }
+
+    zone_pcs = []
+    unzoned_pcs = []
+    for pc in pcs:
+        pc_zone = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
+        if pc_zone.casefold() == zone_name_folded:
+            zone_pcs.append(_build_pc_entry(pc, pc_zone))
+        elif not pc_zone:
+            unzoned_pcs.append(_build_pc_entry(pc, zone_name))
+
+    # If very few PCs matched by name but there are unzoned PCs, include them.
+    # This handles clubs where iCafeCloud doesn't populate pc_area_name/pc_group_name.
+    if len(zone_pcs) < 2 and unzoned_pcs:
+        zone_pcs.extend(unzoned_pcs)
 
     zone_pcs.sort(key=lambda x: str(x.get("name") or ""))
     free_count = sum(1 for pc in zone_pcs if pc["status"] == "free")
