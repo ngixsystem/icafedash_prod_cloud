@@ -5,67 +5,64 @@ struct MainTabView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        ZStack {
-            // Global background image for all pages
+        TabView(selection: $selectedTab) {
+            NavigationStack {
+                HomeView()
+            }
+            .tabItem {
+                Image(systemName: "house")
+                Text("Клубы")
+            }
+            .tag(0)
+
+            NavigationStack {
+                MapScreenView()
+            }
+            .tabItem {
+                Image(systemName: "map")
+                Text("Карта")
+            }
+            .tag(1)
+
+            NavigationStack {
+                TournamentsView()
+            }
+            .tabItem {
+                Image(systemName: "trophy")
+                Text("Турниры")
+            }
+            .tag(2)
+
+            NavigationStack {
+                RatingsHubView()
+            }
+            .tabItem {
+                Image(systemName: "chart.bar.xaxis")
+                Text("Рейтинги")
+            }
+            .tag(3)
+
+            NavigationStack {
+                if auth.isLoggedIn {
+                    ProfileView()
+                } else {
+                    AuthView()
+                }
+            }
+            .tabItem {
+                Image(systemName: "person")
+                Text("Профиль")
+            }
+            .tag(4)
+        }
+        .tint(Color(hex: "#FF7800"))
+        .background {
             Image("auth-bg")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
-
             Color.black.opacity(0.78)
                 .ignoresSafeArea()
-
-            TabView(selection: $selectedTab) {
-                NavigationStack {
-                    HomeView()
-                }
-                .tabItem {
-                    Image(systemName: "house")
-                    Text("Клубы")
-                }
-                .tag(0)
-
-                NavigationStack {
-                    MapScreenView()
-                }
-                .tabItem {
-                    Image(systemName: "map")
-                    Text("Карта")
-                }
-                .tag(1)
-
-                NavigationStack {
-                    TournamentsView()
-                }
-                .tabItem {
-                    Image(systemName: "trophy")
-                    Text("Турниры")
-                }
-                .tag(2)
-
-                NavigationStack {
-                    RatingsHubView()
-                }
-                .tabItem {
-                    Image(systemName: "chart.bar.xaxis")
-                    Text("Рейтинги")
-                }
-                .tag(3)
-
-                NavigationStack {
-                    if auth.isLoggedIn {
-                        ProfileView()
-                    } else {
-                        AuthView()
-                    }
-                }
-                .tabItem {
-                    Image(systemName: "person")
-                    Text("Профиль")
-                }
-                .tag(4)
-            }
-            .tint(Color(hex: "#FF7800"))
         }
     }
 }
