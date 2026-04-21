@@ -3392,11 +3392,16 @@ def create_public_booking(club_id):
     pc_raw = icafe_get_for_club(club, "/pcList", timeout=8)
     all_pcs = parse_icafe_pcs(pc_raw)
     pc_map = {}
+    pc_map_nozone = {}  # PCs with no zone assignment in iCafeCloud
     for pc in all_pcs:
         z = str(pc.get("pc_area_name") or pc.get("pc_group_name") or "").strip()
         p = str(pc.get("pc_name") or "").strip()
-        if z and p:
+        if not p:
+            continue
+        if z:
             pc_map[(z.casefold(), p.casefold())] = pc
+        else:
+            pc_map_nozone[p.casefold()] = pc
 
     missing = []
     unavailable = []
@@ -3404,7 +3409,7 @@ def create_public_booking(club_id):
     for entry in unique_entries:
         z = entry["zone_name"]
         p = entry["pc_name"]
-        found = pc_map.get((z.casefold(), p.casefold()))
+        found = pc_map.get((z.casefold(), p.casefold())) or pc_map_nozone.get(p.casefold())
         if not found:
             missing.append(f"{z}/{p}")
             continue

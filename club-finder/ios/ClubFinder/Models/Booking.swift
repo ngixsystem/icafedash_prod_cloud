@@ -1,5 +1,10 @@
 import Foundation
 
+struct CreateBookingResponse: Decodable {
+    let message: String?
+    let icafe_booked: Bool?
+}
+
 struct MyBooking: Codable, Identifiable {
     let id: Int
     let club_name: String

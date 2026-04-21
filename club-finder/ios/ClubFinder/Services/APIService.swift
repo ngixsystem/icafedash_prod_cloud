@@ -163,7 +163,7 @@ class APIService {
     }
 
     func createBooking(clubId: Int, clientName: String, phone: String, zoneName: String,
-                       duration: String, pcNames: [String], startAt: String, token: String) async throws -> [String: String] {
+                       duration: String, pcNames: [String], startAt: String, token: String) async throws -> CreateBookingResponse {
         let params: [String: Any] = [
             "client_name": clientName,
             "phone": phone,
