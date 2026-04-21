@@ -3381,7 +3381,7 @@ def create_public_booking(club_id):
     ).order_by(BookingRequest.created_at.desc()).first()
     if active_booking:
         return jsonify({
-            "message": "You already have an active booking. Cancel it before creating a new one.",
+            "message": f"У вас уже есть активное бронирование (#{active_booking.id}, {normalize_booking_status(active_booking.status)}). Отмените его перед созданием нового.",
             "active_booking": {
                 "id": active_booking.id,
                 "status": normalize_booking_status(active_booking.status),

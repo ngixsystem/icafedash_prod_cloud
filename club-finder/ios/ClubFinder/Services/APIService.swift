@@ -47,7 +47,14 @@ class APIService {
         if let http = response as? HTTPURLResponse {
             if http.statusCode == 401 { throw APIError.unauthorized }
             if http.statusCode >= 400 {
-                let msg = (try? JSONDecoder().decode([String: String].self, from: data))?["message"] ?? "Ошибка сервера"
+                // Use JSONSerialization so complex error bodies (nested objects) still yield "message"
+                let msg: String
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let serverMsg = json["message"] as? String {
+                    msg = serverMsg
+                } else {
+                    msg = "Ошибка сервера (\(http.statusCode))"
+                }
                 throw APIError.serverError(msg)
             }
         }
