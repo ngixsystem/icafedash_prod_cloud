@@ -112,7 +112,7 @@ struct ClubCardView: View {
                     .font(.system(size: 12))
                     .foregroundColor(accent)
                 Text(club.address)
-                    .font(.system(size: 13))
+                    .font(.raj(14, weight: .medium))
                     .foregroundColor(Color(hex: "#a5adba"))
                     .lineLimit(1)
             }
@@ -140,7 +140,7 @@ struct ClubCardView: View {
                     }
                     VStack(alignment: .leading, spacing: 1) {
                         Text("СВОБОДНО")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(.raj(10, weight: .semibold))
                             .foregroundColor(Color(hex: "#5c6068"))
                             .tracking(0.5)
                         Text("\(club.pcsFree) / \(club.pcsTotal) ПК")
@@ -154,7 +154,7 @@ struct ClubCardView: View {
                 // Distance
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("РАССТОЯНИЕ")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(.raj(10, weight: .semibold))
                         .foregroundColor(Color(hex: "#5c6068"))
                         .tracking(0.5)
                     Text(distanceText)
@@ -175,7 +175,7 @@ struct ClubCardView: View {
                 .fill(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
                 .frame(width: 6, height: 6)
             Text(club.isOpen ? "ОТКРЫТО" : "ЗАКРЫТО")
-                .font(.system(size: 11, weight: .bold))
+                .font(.raj(12, weight: .bold))
                 .foregroundColor(club.isOpen ? Color(hex: "#57F287") : Color(hex: "#ED4245"))
         }
         .padding(.horizontal, 10)
@@ -190,7 +190,7 @@ struct ClubCardView: View {
                 .font(.system(size: 10))
                 .foregroundColor(Color(hex: "#FEE75C"))
             Text(String(format: "%.1f", club.rating))
-                .font(.system(size: 13, weight: .bold))
+                .font(.raj(14, weight: .bold))
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 10)

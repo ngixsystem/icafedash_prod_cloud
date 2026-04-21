@@ -129,7 +129,7 @@ struct HomeView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(Color(hex: "#5c6068"))
             TextField("Поиск по названию или адресу...", text: $searchText)
-                .font(.system(size: 14))
+                .font(.raj(15, weight: .medium))
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 14)

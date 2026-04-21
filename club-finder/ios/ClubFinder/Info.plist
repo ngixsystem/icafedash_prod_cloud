@@ -58,6 +58,10 @@
     <key>UIAppFonts</key>
     <array>
         <string>BebasNeue-Regular.ttf</string>
+        <string>Rajdhani-Regular.ttf</string>
+        <string>Rajdhani-Medium.ttf</string>
+        <string>Rajdhani-SemiBold.ttf</string>
+        <string>Rajdhani-Bold.ttf</string>
     </array>
 </dict>
 </plist>

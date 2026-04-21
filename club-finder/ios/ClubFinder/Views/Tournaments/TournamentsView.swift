@@ -199,11 +199,11 @@ struct TournamentCardView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tournament.title)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.raj(17, weight: .bold))
                         .foregroundColor(.white)
                         .lineLimit(1)
                     Text(dateLabel)
-                        .font(.system(size: 12))
+                        .font(.raj(13, weight: .medium))
                         .foregroundColor(Color(hex: "#a5adba"))
                 }
                 Spacer()
@@ -251,10 +251,10 @@ struct TournamentCardView: View {
     private func statCell(icon: String, value: String) -> some View {
         HStack(spacing: 5) {
             Image(systemName: icon)
-                .font(.system(size: 11))
+                .font(.raj(11, weight: .medium))
                 .foregroundColor(Color(hex: "#5c6068"))
             Text(value)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.raj(14, weight: .semibold))
                 .foregroundColor(Color(hex: "#a5adba"))
         }
     }
