@@ -77,7 +77,7 @@ struct CashbackView: View {
                     .padding(.top, 60)
             }
         }
-        .background(Color(hex: "#121315"))
+        .background(.clear)
         .navigationTitle("Кэшбэк")
         .navigationBarTitleDisplayMode(.inline)
         .task {

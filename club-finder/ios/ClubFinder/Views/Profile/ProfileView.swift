@@ -73,7 +73,7 @@ struct ProfileView: View {
             }
             .padding(.bottom, 40)
         }
-        .background(Color(hex: "#0B0D12"))
+        .background(.clear)
         .overlay(alignment: .bottom) {
             if showFaceitToast, let msg = faceitToast {
                 Text(msg)

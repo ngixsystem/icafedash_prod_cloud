@@ -47,7 +47,7 @@ struct CyberUnionView: View {
                 playersListView
             }
         }
-        .background(Color(hex: "#0B0D12"))
+        .background(.clear)
         .navigationTitle(displayTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task {

@@ -220,7 +220,7 @@ struct TournamentDetailView: View {
                 }
             }
         }
-        .background(Color(hex: "#121315"))
+        .background(.clear)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             do {

@@ -71,7 +71,7 @@ struct ProfileSettingsView: View {
             }
             .padding(.horizontal)
         }
-        .background(Color(hex: "#121315"))
+        .background(.clear)
         .navigationTitle("Настройки")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: selectedPhoto) { _, item in

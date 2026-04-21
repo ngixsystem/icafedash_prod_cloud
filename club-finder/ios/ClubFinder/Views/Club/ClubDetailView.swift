@@ -34,7 +34,7 @@ struct ClubDetailView: View {
                     }
                 }
             }
-            .background(Color(hex: "#0B0D12"))
+            .background(.clear)
 
             // Fixed bottom button
             if !isLoading, let club, auth.isLoggedIn,
@@ -656,7 +656,7 @@ struct ClubBookingSheet: View {
                 }
                 .padding(20)
             }
-            .background(Color(hex: "#0B0D12"))
+            .background(.clear)
             .navigationTitle("Бронирование")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

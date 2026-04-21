@@ -99,7 +99,7 @@ struct BookingView: View {
                 .padding(.horizontal)
             }
         }
-        .background(Color(hex: "#121315"))
+        .background(.clear)
         .navigationTitle("Бронирования")
         .navigationBarTitleDisplayMode(.inline)
         .alert("Отмена бронирования", isPresented: Binding(

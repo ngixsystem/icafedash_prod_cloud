@@ -73,7 +73,7 @@ struct TransferView: View {
                 }
             }
         }
-        .background(Color(hex: "#121315"))
+        .background(.clear)
         .navigationTitle("Трансфер")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {

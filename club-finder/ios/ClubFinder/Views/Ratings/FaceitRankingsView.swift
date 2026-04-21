@@ -45,7 +45,7 @@ struct FaceitRankingsView: View {
                 .padding(.top, 8)
             }
         }
-        .background(Color(hex: "#121315"))
+        .background(.clear)
         .navigationTitle("FACEIT UZ Рейтинг")
         .navigationBarTitleDisplayMode(.inline)
         .task {

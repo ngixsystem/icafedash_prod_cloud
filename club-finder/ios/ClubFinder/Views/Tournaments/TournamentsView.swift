@@ -36,7 +36,7 @@ struct TournamentsView: View {
                 .padding(.bottom, 20)
             }
         }
-        .background(Color(hex: "#0B0D12"))
+        .background(.clear)
         .navigationTitle("Турниры")
         .navigationBarTitleDisplayMode(.large)
         .task {

@@ -51,7 +51,7 @@ struct RatingsHubView: View {
             }
             .padding(.top, 8)
         }
-        .background(Color(hex: "#0B0D12"))
+        .background(.clear)
         .navigationTitle("Рейтинги")
         .navigationBarTitleDisplayMode(.large)
         .navigationDestination(for: String.self) { game in

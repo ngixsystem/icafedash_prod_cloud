@@ -81,7 +81,7 @@ struct HomeView: View {
                 Spacer().frame(height: 24)
             }
         }
-        .background(Color(hex: "#0B0D12"))
+        .background(.clear)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
         .task {
