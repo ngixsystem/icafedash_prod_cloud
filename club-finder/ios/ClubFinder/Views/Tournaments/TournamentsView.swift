@@ -115,42 +115,48 @@ struct TournamentCardView: View {
     // MARK: Banner
 
     private var bannerSection: some View {
-        ZStack(alignment: .bottom) {
-            if let banner = tournament.banner_url, !banner.isEmpty {
-                AsyncImage(url: URL(string: banner.hasPrefix("http") ? banner : APIService.shared.baseHost + banner)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    default:
-                        bannerPlaceholder
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                if let banner = tournament.banner_url, !banner.isEmpty {
+                    AsyncImage(url: URL(string: banner.hasPrefix("http") ? banner : APIService.shared.baseHost + banner)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: geo.size.width, height: 164)
+                                .clipped()
+                        default:
+                            bannerPlaceholder
+                                .frame(width: geo.size.width, height: 164)
+                        }
                     }
+                } else {
+                    bannerPlaceholder
+                        .frame(width: geo.size.width, height: 164)
                 }
-                .frame(maxWidth: .infinity)
-            } else {
-                bannerPlaceholder
-            }
 
-            // bottom fade into card
-            LinearGradient(
-                colors: [Color(hex: "#16171C"), Color(hex: "#16171C").opacity(0.5), .clear],
-                startPoint: .bottom,
-                endPoint: .top
-            )
-            .frame(height: 80)
+                // bottom fade into card
+                LinearGradient(
+                    colors: [Color(hex: "#16171C"), Color(hex: "#16171C").opacity(0.6), .clear],
+                    startPoint: .bottom,
+                    endPoint: .top
+                )
+                .frame(width: geo.size.width, height: 90)
 
-            // status badge top-right
-            VStack {
-                HStack {
+                // status badge top-right
+                VStack {
+                    HStack {
+                        Spacer()
+                        statusBadge
+                    }
                     Spacer()
-                    statusBadge
                 }
-                Spacer()
+                .frame(width: geo.size.width, height: 164)
+                .padding(12)
             }
-            .padding(12)
         }
         .frame(height: 164)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: 18))  // top corners
     }
 
     private var bannerPlaceholder: some View {
