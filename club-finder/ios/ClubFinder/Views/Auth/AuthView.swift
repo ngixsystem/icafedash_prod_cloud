@@ -40,6 +40,8 @@ struct AuthView: View {
                 // ── Content ──
                 ScrollView {
                     VStack(spacing: 0) {
+                        Spacer(minLength: 0)
+
                         heroHeader(geo: geo)
 
                         VStack(spacing: 16) {
@@ -53,8 +55,10 @@ struct AuthView: View {
                         .padding(.top, 32)
                         .offset(y: formOffset)
                         .opacity(formOpacity)
-                        .padding(.bottom, 60)
+
+                        Spacer(minLength: 0)
                     }
+                    .frame(minHeight: geo.size.height)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
