@@ -23,38 +23,43 @@ struct AuthView: View {
     private let accent = Color(hex: "#FF7800")
 
     var body: some View {
-        ZStack {
-            // Full-screen background image
-            Image("auth-bg")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+        GeometryReader { geo in
+            ZStack {
+                // ── Full-screen background image ──
+                Image("auth-bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+                    .ignoresSafeArea()
 
-            // Dark overlay for readability
-            Color.black.opacity(0.62)
-                .ignoresSafeArea()
+                // ── Dark overlay so text is readable ──
+                Color.black.opacity(0.65)
+                    .ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Hero header
-                    heroHeader
+                // ── Content ──
+                ScrollView {
+                    VStack(spacing: 0) {
+                        heroHeader(geo: geo)
 
-                    // Form
-                    VStack(spacing: 16) {
-                        if showVerification {
-                            verificationView
-                        } else {
-                            authFormView
+                        VStack(spacing: 16) {
+                            if showVerification {
+                                verificationView
+                            } else {
+                                authFormView
+                            }
                         }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 32)
+                        .offset(y: formOffset)
+                        .opacity(formOpacity)
+                        .padding(.bottom, 60)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 32)
-                    .offset(y: formOffset)
-                    .opacity(formOpacity)
-                    .padding(.bottom, 40)
                 }
             }
+            .frame(width: geo.size.width, height: geo.size.height)
         }
+        .ignoresSafeArea()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { runAnimations() }
@@ -62,17 +67,13 @@ struct AuthView: View {
 
     // MARK: - Hero Header
 
-    private var heroHeader: some View {
+    private func heroHeader(geo: GeometryProxy) -> some View {
         ZStack {
-            // Transparent — background image shows through
-            Color.clear
-            .frame(height: 320)
-
             // Outer glow ring
             Circle()
                 .stroke(
                     RadialGradient(
-                        colors: [accent.opacity(0.4), accent.opacity(0)],
+                        colors: [accent.opacity(0.45), accent.opacity(0)],
                         center: .center,
                         startRadius: 60,
                         endRadius: 160
@@ -83,21 +84,20 @@ struct AuthView: View {
                 .opacity(glowOpacity)
                 .blur(radius: 20)
 
-            // Inner accent ring
             Circle()
-                .stroke(accent.opacity(0.15), lineWidth: 1.5)
+                .stroke(accent.opacity(0.18), lineWidth: 1.5)
                 .frame(width: 200, height: 200)
                 .opacity(glowOpacity)
 
             Circle()
-                .stroke(accent.opacity(0.08), lineWidth: 1)
-                .frame(width: 260, height: 260)
+                .stroke(accent.opacity(0.09), lineWidth: 1)
+                .frame(width: 270, height: 270)
                 .opacity(glowOpacity)
 
             // Particles
             ForEach(0..<6, id: \.self) { i in
                 Circle()
-                    .fill(accent.opacity(0.3))
+                    .fill(accent.opacity(0.4))
                     .frame(width: 4, height: 4)
                     .offset(
                         x: CGFloat(cos(Double(i) * .pi / 3)) * 110,
@@ -111,63 +111,65 @@ struct AuthView: View {
                 Image("frag-logo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 140, height: 140)
+                    .frame(width: 150, height: 150)
                     .scaleEffect(logoScale)
                     .opacity(logoOpacity)
-                    .shadow(color: accent.opacity(0.5), radius: 24, x: 0, y: 8)
+                    .shadow(color: accent.opacity(0.6), radius: 30, x: 0, y: 8)
 
                 VStack(spacing: 4) {
                     Text("FRAG.GG")
-                        .font(.system(size: 28, weight: .black))
+                        .font(.system(size: 30, weight: .black))
                         .foregroundColor(.white)
                         .tracking(3)
                         .opacity(textOpacity)
 
                     Text("Киберспортивный Портал")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Color(hex: "#a5adba"))
+                        .foregroundColor(Color(hex: "#c5cdd8"))
                         .tracking(0.5)
                         .opacity(textOpacity)
                 }
             }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 320)
-        .clipped()
+        .frame(width: geo.size.width, height: 320)
     }
 
     // MARK: - Auth Form
 
     var authFormView: some View {
         VStack(spacing: 14) {
-            Picker("", selection: $isLogin) {
-                Text("Вход").tag(true)
-                Text("Регистрация").tag(false)
+            // Custom tab selector (visible on any background)
+            HStack(spacing: 0) {
+                tabButton(title: "Вход", isActive: isLogin) { isLogin = true }
+                tabButton(title: "Регистрация", isActive: !isLogin) { isLogin = false }
             }
-            .pickerStyle(.segmented)
+            .background(Color.white.opacity(0.1))
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.15), lineWidth: 1))
 
             TextField("Имя пользователя", text: $username)
-                .textFieldStyle(DarkFieldStyle())
+                .textFieldStyle(GlassFieldStyle())
                 .autocapitalization(.none)
                 .textContentType(.username)
 
             if !isLogin {
                 TextField("Email", text: $email)
-                    .textFieldStyle(DarkFieldStyle())
+                    .textFieldStyle(GlassFieldStyle())
                     .autocapitalization(.none)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
             }
 
             SecureField("Пароль", text: $password)
-                .textFieldStyle(DarkFieldStyle())
+                .textFieldStyle(GlassFieldStyle())
                 .textContentType(.password)
 
             if let error = errorMessage {
                 Text(error)
                     .font(.system(size: 13))
-                    .foregroundColor(.red)
+                    .foregroundColor(Color(hex: "#FF6B6B"))
                     .multilineTextAlignment(.center)
+                    .padding(.horizontal, 4)
             }
 
             Button {
@@ -189,11 +191,28 @@ struct AuthView: View {
                 )
                 .foregroundColor(.white)
                 .cornerRadius(14)
-                .shadow(color: accent.opacity(0.4), radius: 12, y: 4)
+                .shadow(color: accent.opacity(0.5), radius: 14, y: 5)
             }
             .disabled(isLoading || username.isEmpty || password.isEmpty || (!isLogin && email.isEmpty))
-            .opacity(isLoading || username.isEmpty || password.isEmpty ? 0.6 : 1)
+            .opacity((isLoading || username.isEmpty || password.isEmpty) ? 0.65 : 1)
         }
+    }
+
+    private func tabButton(title: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(isActive ? .white : Color(hex: "#a5adba"))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(
+                    isActive
+                        ? RoundedRectangle(cornerRadius: 10).fill(accent)
+                        : RoundedRectangle(cornerRadius: 10).fill(Color.clear)
+                )
+                .padding(2)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Verification
@@ -202,11 +221,11 @@ struct AuthView: View {
         VStack(spacing: 14) {
             Text("Код отправлен на \(email)")
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(Color(hex: "#c5cdd8"))
                 .multilineTextAlignment(.center)
 
             TextField("Код подтверждения", text: $verificationCode)
-                .textFieldStyle(DarkFieldStyle())
+                .textFieldStyle(GlassFieldStyle())
                 .keyboardType(.numberPad)
 
             if let error = errorMessage {
@@ -284,13 +303,27 @@ struct AuthView: View {
     }
 }
 
+// MARK: - Glass text field style (readable on image background)
+
+struct GlassFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(14)
+            .background(.ultraThinMaterial)
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.2), lineWidth: 1))
+            .foregroundColor(.white)
+    }
+}
+
+// Keep for backwards compat
 struct DarkFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding(14)
             .background(.ultraThinMaterial)
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.15), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.2), lineWidth: 1))
             .foregroundColor(.white)
     }
 }
