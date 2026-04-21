@@ -69,11 +69,21 @@ struct PlayerProfileView: View {
 
                     // Transfer listing
                     if let listing = player.transfer_listing {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(listing.listing_type == "lft" ? "Ищет команду" : "Ищет игрока")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(accent)
-                            if let desc = listing.description {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 6) {
+                                Text(listing.listing_type == "lft" ? "Ищет команду" : "Ищет игрока")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(listing.listing_type == "lft" ? .cyan : .purple)
+                                Text("• \(listing.game)")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.gray)
+                                if let roles = listing.roles, !roles.isEmpty {
+                                    Text("• \(roles)")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            if let desc = listing.description, !desc.isEmpty {
                                 Text(desc)
                                     .font(.system(size: 13))
                                     .foregroundColor(.gray)

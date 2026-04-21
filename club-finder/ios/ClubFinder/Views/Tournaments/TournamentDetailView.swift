@@ -3,7 +3,7 @@ import SwiftUI
 struct TournamentDetailView: View {
     let tournamentId: Int
     @State private var details: TournamentDetails?
-    @State private var bracket: [FaceitBracketMatch] = []
+    @State private var bracket: [TournamentBracketMatch] = []
     @State private var isLoading = true
     @State private var selectedTab = 0
 
@@ -179,28 +179,39 @@ struct TournamentDetailView: View {
                                     .font(.system(size: 14))
                                     .foregroundColor(.gray)
                             } else {
-                                ForEach(bracket) { match in
-                                    VStack(spacing: 6) {
-                                        Text("Раунд \(match.round) \u{2022} Матч \(match.match_number)")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.gray)
-                                        HStack {
-                                            Text(match.team1_name ?? "TBD")
-                                                .font(.system(size: 14, weight: match.winner == match.team1_name ? .bold : .regular))
-                                                .foregroundColor(match.winner == match.team1_name ? .green : .white)
-                                            Spacer()
-                                            Text("\(match.team1_score ?? 0) : \(match.team2_score ?? 0)")
-                                                .font(.system(size: 14, weight: .bold))
-                                                .foregroundColor(accent)
-                                            Spacer()
-                                            Text(match.team2_name ?? "TBD")
-                                                .font(.system(size: 14, weight: match.winner == match.team2_name ? .bold : .regular))
-                                                .foregroundColor(match.winner == match.team2_name ? .green : .white)
+                                let rounds = Dictionary(grouping: bracket, by: { $0.round_number })
+                                ForEach(rounds.keys.sorted(), id: \.self) { round in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("РАУНД \(round)")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(Color(hex: "#949BA4"))
+                                            .tracking(1)
+
+                                        ForEach(rounds[round]!.sorted(by: { $0.match_order < $1.match_order })) { match in
+                                            VStack(spacing: 0) {
+                                                bracketTeamRow(
+                                                    name: match.team1_name ?? "TBD",
+                                                    isWinner: match.winner_team_name == match.team1_name && match.winner_team_name != nil
+                                                )
+                                                Divider().background(Color(hex: "#2F3136"))
+                                                bracketTeamRow(
+                                                    name: match.team2_name ?? "TBD",
+                                                    isWinner: match.winner_team_name == match.team2_name && match.winner_team_name != nil
+                                                )
+                                                if let score = match.score, !score.isEmpty {
+                                                    Text("Счёт: \(score)")
+                                                        .font(.system(size: 11))
+                                                        .foregroundColor(accent)
+                                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                                        .padding(.horizontal, 12)
+                                                        .padding(.bottom, 8)
+                                                }
+                                            }
+                                            .background(Color(hex: "#1E1F22"))
+                                            .cornerRadius(10)
+                                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(hex: "#2F3136"), lineWidth: 1))
                                         }
                                     }
-                                    .padding(12)
-                                    .background(Color.white.opacity(0.05))
-                                    .cornerRadius(12)
                                 }
                             }
                         }
@@ -213,17 +224,34 @@ struct TournamentDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             do {
-                async let d = APIService.shared.getTournamentDetails(id: tournamentId)
-                async let b = APIService.shared.getFaceitBracket(tournamentId: tournamentId)
-                details = try await d
-                bracket = (try? await b.matches) ?? []
+                details = try await APIService.shared.getTournamentDetails(id: tournamentId)
             } catch {
-                print("Error: \(error)")
+                print("Tournament detail error: \(error)")
             }
+            bracket = (try? await APIService.shared.getTournamentBracket(tournamentId: tournamentId))?.matches ?? []
             isLoading = false
         }
     }
 
+    private func bracketTeamRow(name: String, isWinner: Bool) -> some View {
+        HStack(spacing: 10) {
+            if isWinner {
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "#FEE75C"))
+            } else {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "#a5adba"))
+            }
+            Text(name)
+                .font(.system(size: 14, weight: isWinner ? .bold : .regular))
+                .foregroundColor(isWinner ? Color(hex: "#FEE75C") : .white)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
     func formatDate(_ iso: String?) -> String {
         guard let iso else { return "-" }
         guard let date = Self.isoFormatter.date(from: iso) ?? Self.isoFormatterShort.date(from: iso) else { return iso }

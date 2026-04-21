@@ -91,3 +91,19 @@ struct FaceitBracketMatch: Codable, Identifiable {
     let status: String
     let faceit_match_id: String?
 }
+
+// Internal DB bracket
+struct TournamentBracketResponse: Codable {
+    let matches: [TournamentBracketMatch]
+}
+
+struct TournamentBracketMatch: Codable, Identifiable {
+    let id: Int
+    let round_number: Int
+    let match_order: Int
+    let team1_name: String?
+    let team2_name: String?
+    let winner_team_name: String?
+    let score: String?
+    let status: String
+}

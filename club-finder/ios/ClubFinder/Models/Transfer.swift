@@ -29,6 +29,16 @@ struct TransferListResponse: Codable {
     let total: Int
 }
 
+struct PlayerTransferListing: Codable {
+    let id: Int
+    let listing_type: String
+    let game: String
+    let roles: String?
+    let description: String?
+    let region: String?
+    let contact: String?
+}
+
 struct PlayerProfile: Codable, Identifiable {
     let id: Int
     let username: String
@@ -38,7 +48,12 @@ struct PlayerProfile: Codable, Identifiable {
     let faceit_level: Int?
     let team: PlayerTeam?
     let tournament_history: [PlayerTournamentHistory]?
-    let transfer_listing: TransferListing?
+    let transfer_listing: PlayerTransferListing?
+
+    enum CodingKeys: String, CodingKey {
+        case id, username, avatar_url, faceit_id, faceit_elo, faceit_level, team, transfer_listing
+        case tournament_history = "tournaments"
+    }
 }
 
 struct PlayerTeam: Codable {

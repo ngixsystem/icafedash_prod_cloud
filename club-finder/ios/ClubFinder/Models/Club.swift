@@ -60,6 +60,18 @@ struct ZonePCItem: Codable, Identifiable {
     let name: String
     let status: String
     let zone: String
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        if let intId = try? c.decode(Int.self, forKey: .id) {
+            id = "\(intId)"
+        } else {
+            id = (try? c.decode(String.self, forKey: .id)) ?? UUID().uuidString
+        }
+        name = try c.decode(String.self, forKey: .name)
+        status = try c.decode(String.self, forKey: .status)
+        zone = (try? c.decode(String.self, forKey: .zone)) ?? ""
+    }
 }
 
 struct ZonePCsResponse: Codable {

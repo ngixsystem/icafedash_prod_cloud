@@ -165,10 +165,17 @@ struct HomeView: View {
             ? URL(string: banner.image_url)
             : URL(string: APIService.shared.baseHost + banner.image_url)
         return ZStack(alignment: .bottomLeading) {
-            AsyncImage(url: imageURL) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Rectangle().fill(Color.white.opacity(0.05))
+            AsyncImage(url: imageURL) { phase in
+                switch phase {
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                default:
+                    LinearGradient(
+                        colors: [Color(hex: "#1a1b1f"), Color(hex: "#12131a")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
             }
             .frame(maxWidth: .infinity)
             .clipped()

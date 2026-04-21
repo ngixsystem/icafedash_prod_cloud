@@ -103,10 +103,6 @@ class APIService {
         return try await request("/public/clubs/\(clubId)/reviews", method: "POST", body: body, token: token)
     }
 
-    func getZonePCs(clubId: Int, zoneName: String) async throws -> [ZonePC] {
-        try await request("/public/clubs/\(clubId)/zone-pcs", queryItems: [.init(name: "zone_name", value: zoneName)])
-    }
-
     // MARK: - Banners
     func getBanners() async throws -> [Banner] {
         try await request("/public/banners")
@@ -196,6 +192,10 @@ class APIService {
 
     func getFaceitBracket(tournamentId: Int) async throws -> FaceitBracketResponse {
         try await request("/public/tournaments/\(tournamentId)/faceit-bracket")
+    }
+
+    func getTournamentBracket(tournamentId: Int) async throws -> TournamentBracketResponse {
+        try await request("/public/tournaments/\(tournamentId)/bracket")
     }
 
     func getTournamentGameRating(id: Int, game: String) async throws -> [GameRatingPlayer] {

@@ -48,22 +48,6 @@ struct RatingsHubView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
 
-                Divider().background(Color(hex: "#2F3136")).padding(.horizontal, 16)
-
-                // TRANSFER section
-                sectionHeader("ТРАНСФЕР")
-
-                NavigationLink(destination: TransferView()) {
-                    HubCard(
-                        systemIcon: "arrow.left.arrow.right",
-                        iconBg: Color(hex: "#7C3AED"),
-                        title: "Трансфер маркет",
-                        subtitle: "LFT / LFS объявления"
-                    )
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
             }
             .padding(.top, 8)
         }

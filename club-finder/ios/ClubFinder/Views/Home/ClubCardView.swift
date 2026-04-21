@@ -15,6 +15,19 @@ struct ClubCardView: View {
         return Color(hex: "#ED4245")
     }
 
+    private var photoPlaceholder: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(hex: "#1a1b1f"), Color(hex: "#12131a")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Image(systemName: "photo")
+                .font(.system(size: 36))
+                .foregroundColor(Color(hex: "#2F3136"))
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Photo
@@ -22,16 +35,18 @@ struct ClubCardView: View {
                 let rawPhoto = club.main_photo_url ?? club.photos?.first
                 let photo = rawPhoto.flatMap { $0.isEmpty ? nil : $0 }
                 if let photo {
-                    AsyncImage(url: photo.hasPrefix("http") ? URL(string: photo) : URL(string: APIService.shared.baseHost + photo)) { image in
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle().fill(Color(hex: "#1E1F22"))
+                    AsyncImage(url: photo.hasPrefix("http") ? URL(string: photo) : URL(string: APIService.shared.baseHost + photo)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().aspectRatio(contentMode: .fill)
+                        default:
+                            photoPlaceholder
+                        }
                     }
                     .frame(height: 200)
                     .clipped()
                 } else {
-                    Rectangle()
-                        .fill(Color(hex: "#1E1F22"))
+                    photoPlaceholder
                         .frame(height: 200)
                 }
                 // gradient overlay for readability
@@ -61,16 +76,6 @@ struct ClubCardView: View {
             VStack(alignment: .leading, spacing: 8) {
                 // Name row
                 HStack(spacing: 8) {
-                    if let logo = club.logo, !logo.isEmpty {
-                        AsyncImage(url: logo.hasPrefix("http") ? URL(string: logo) : URL(string: APIService.shared.baseHost + logo)) { image in
-                            image.resizable().aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            RoundedRectangle(cornerRadius: 8).fill(Color(hex: "#2F3136"))
-                        }
-                        .frame(width: 32, height: 32)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-
                     Text(club.name)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white)
