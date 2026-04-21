@@ -125,7 +125,14 @@ struct HomeView: View {
                 }
             } else {
                 ForEach(banners) { banner in
-                    apiBannerSlide(banner).tag(banner.id)
+                    apiBannerSlide(banner)
+                        .tag(banner.id)
+                        .onTapGesture {
+                            if let link = banner.link_url, !link.isEmpty,
+                               let url = URL(string: link) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
                 }
             }
         }

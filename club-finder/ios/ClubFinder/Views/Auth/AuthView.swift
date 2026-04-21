@@ -11,34 +11,133 @@ struct AuthView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
+    // Animation states
+    @State private var logoScale: CGFloat = 0.7
+    @State private var logoOpacity: Double = 0
+    @State private var glowOpacity: Double = 0
+    @State private var textOpacity: Double = 0
+    @State private var formOffset: CGFloat = 30
+    @State private var formOpacity: Double = 0
+    @State private var particleOpacity: Double = 0
+
     private let accent = Color(hex: "#FF7800")
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Logo
+            VStack(spacing: 0) {
+                // Hero header
+                heroHeader
+
+                // Form
+                VStack(spacing: 16) {
+                    if showVerification {
+                        verificationView
+                    } else {
+                        authFormView
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 32)
+                .offset(y: formOffset)
+                .opacity(formOpacity)
+                .padding(.bottom, 40)
+            }
+        }
+        .background(Color(hex: "#0B0D12"))
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { runAnimations() }
+    }
+
+    // MARK: - Hero Header
+
+    private var heroHeader: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    Color(hex: "#0f1018"),
+                    Color(hex: "#0B0D12"),
+                    Color(hex: "#13141A"),
+                    Color(hex: "#0B0D12")
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(height: 320)
+
+            // Outer glow ring
+            Circle()
+                .stroke(
+                    RadialGradient(
+                        colors: [accent.opacity(0.4), accent.opacity(0)],
+                        center: .center,
+                        startRadius: 60,
+                        endRadius: 160
+                    ),
+                    lineWidth: 60
+                )
+                .frame(width: 260, height: 260)
+                .opacity(glowOpacity)
+                .blur(radius: 20)
+
+            // Inner accent ring
+            Circle()
+                .stroke(accent.opacity(0.15), lineWidth: 1.5)
+                .frame(width: 200, height: 200)
+                .opacity(glowOpacity)
+
+            Circle()
+                .stroke(accent.opacity(0.08), lineWidth: 1)
+                .frame(width: 260, height: 260)
+                .opacity(glowOpacity)
+
+            // Particles
+            ForEach(0..<6, id: \.self) { i in
+                Circle()
+                    .fill(accent.opacity(0.3))
+                    .frame(width: 4, height: 4)
+                    .offset(
+                        x: CGFloat(cos(Double(i) * .pi / 3)) * 110,
+                        y: CGFloat(sin(Double(i) * .pi / 3)) * 110
+                    )
+                    .opacity(particleOpacity)
+            }
+
+            // Logo + text
+            VStack(spacing: 14) {
                 Image("frag-logo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .padding(.top, 40)
+                    .frame(width: 140, height: 140)
+                    .scaleEffect(logoScale)
+                    .opacity(logoOpacity)
+                    .shadow(color: accent.opacity(0.5), radius: 24, x: 0, y: 8)
 
-                if showVerification {
-                    verificationView
-                } else {
-                    authFormView
+                VStack(spacing: 4) {
+                    Text("FRAG.GG")
+                        .font(.system(size: 28, weight: .black))
+                        .foregroundColor(.white)
+                        .tracking(3)
+                        .opacity(textOpacity)
+
+                    Text("Киберспортивный Портал")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(hex: "#a5adba"))
+                        .tracking(0.5)
+                        .opacity(textOpacity)
                 }
             }
-            .padding(.horizontal, 24)
         }
-        .background(Color(hex: "#121315"))
-        .navigationTitle(isLogin ? "Вход" : "Регистрация")
-        .navigationBarTitleDisplayMode(.inline)
+        .frame(maxWidth: .infinity)
+        .frame(height: 320)
+        .clipped()
     }
+
+    // MARK: - Auth Form
 
     var authFormView: some View {
         VStack(spacing: 14) {
-            // Tab picker
             Picker("", selection: $isLogin) {
                 Text("Вход").tag(true)
                 Text("Регистрация").tag(false)
@@ -66,54 +165,61 @@ struct AuthView: View {
                 Text(error)
                     .font(.system(size: 13))
                     .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
             }
 
             Button {
                 Task { await submitAuth() }
             } label: {
-                HStack {
-                    if isLoading {
-                        ProgressView().tint(.white)
-                    }
+                HStack(spacing: 8) {
+                    if isLoading { ProgressView().tint(.white) }
                     Text(isLogin ? "Войти" : "Зарегистрироваться")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 16, weight: .bold))
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(accent)
+                .padding(.vertical, 15)
+                .background(
+                    LinearGradient(
+                        colors: [Color(hex: "#FF9000"), accent, Color(hex: "#E06000")],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .foregroundColor(.white)
                 .cornerRadius(14)
+                .shadow(color: accent.opacity(0.4), radius: 12, y: 4)
             }
             .disabled(isLoading || username.isEmpty || password.isEmpty || (!isLogin && email.isEmpty))
+            .opacity(isLoading || username.isEmpty || password.isEmpty ? 0.6 : 1)
         }
     }
+
+    // MARK: - Verification
 
     var verificationView: some View {
         VStack(spacing: 14) {
             Text("Код отправлен на \(email)")
                 .font(.system(size: 14))
                 .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
 
             TextField("Код подтверждения", text: $verificationCode)
                 .textFieldStyle(DarkFieldStyle())
                 .keyboardType(.numberPad)
 
             if let error = errorMessage {
-                Text(error)
-                    .font(.system(size: 13))
-                    .foregroundColor(.red)
+                Text(error).font(.system(size: 13)).foregroundColor(.red)
             }
 
             Button {
                 Task { await verifyEmail() }
             } label: {
-                HStack {
+                HStack(spacing: 8) {
                     if isLoading { ProgressView().tint(.white) }
-                    Text("Подтвердить")
-                        .font(.system(size: 16, weight: .semibold))
+                    Text("Подтвердить").font(.system(size: 16, weight: .bold))
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .padding(.vertical, 15)
                 .background(accent)
                 .foregroundColor(.white)
                 .cornerRadius(14)
@@ -121,6 +227,30 @@ struct AuthView: View {
             .disabled(isLoading || verificationCode.isEmpty)
         }
     }
+
+    // MARK: - Animations
+
+    private func runAnimations() {
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.65).delay(0.1)) {
+            logoScale = 1.0
+            logoOpacity = 1.0
+        }
+        withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
+            glowOpacity = 1.0
+        }
+        withAnimation(.easeOut(duration: 0.5).delay(0.4)) {
+            textOpacity = 1.0
+        }
+        withAnimation(.easeOut(duration: 0.6).delay(0.5)) {
+            particleOpacity = 1.0
+        }
+        withAnimation(.easeOut(duration: 0.5).delay(0.55)) {
+            formOffset = 0
+            formOpacity = 1.0
+        }
+    }
+
+    // MARK: - Logic
 
     func submitAuth() async {
         isLoading = true
@@ -158,10 +288,7 @@ struct DarkFieldStyle: TextFieldStyle {
             .padding(14)
             .background(Color.white.opacity(0.06))
             .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
             .foregroundColor(.white)
     }
 }
