@@ -80,7 +80,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     refetchOnWindowFocus: true,
   });
 
-  const clubName = cfg?.club_name || "Cloud Finder";
+  const clubName = cfg?.club_name || "FRAG.GG Dashboard";
   const pendingBookingCount = bookingData?.summary?.pending_count ?? 0;
 
   useEffect(() => {
@@ -178,10 +178,10 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         <div className="h-20 flex items-center px-6 relative overflow-hidden border-b border-slate-200/70">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-9 w-9 rounded-xl border border-blue-400/25 bg-blue-600 p-1.5 shadow-[0_12px_28px_rgba(47,114,246,0.22)] shrink-0">
-              <img src={brandLogo} alt="Cloud Finder Logo" className="h-full w-full object-contain" />
+              <img src={brandLogo} alt="FRAG.GG Dashboard Logo" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-base text-slate-950 leading-none truncate">Cloud Finder</h1>
+              <h1 className="font-display text-base text-slate-950 leading-none truncate">FRAG.GG Dashboard</h1>
               <p className="text-[9px] text-blue-400 uppercase tracking-[0.22em] mt-1 font-semibold truncate">{clubName}</p>
             </div>
           </div>

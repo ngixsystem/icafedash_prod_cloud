@@ -25,9 +25,9 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
       <div className="pl-12 lg:pl-0">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-2xl border border-white/70 bg-white/70 p-1.5 hidden sm:block shadow-[0_12px_24px_rgba(80,111,150,0.13)] backdrop-blur-xl">
-            <img src={brandLogo} alt="Cloud Finder" className="h-full w-full object-contain" />
+            <img src={brandLogo} alt="FRAG.GG Dashboard" className="h-full w-full object-contain" />
           </div>
-          <h2 className="font-display text-2xl lg:text-3xl text-slate-950 tracking-tight">Cloud Finder Command</h2>
+          <h2 className="font-display text-2xl lg:text-3xl text-slate-950 tracking-tight">FRAG.GG Dashboard</h2>
         </div>
         <div className="hidden sm:flex items-center gap-2 mt-1.5">
           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#58d68d]" />
