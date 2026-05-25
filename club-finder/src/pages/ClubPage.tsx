@@ -1,5 +1,5 @@
 ﻿import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, Monitor, Clock, MapPin, Wifi, ChevronDown, ChevronUp, Navigation } from "lucide-react";
+import { ArrowLeft, Star, Monitor, MapPin, Wifi, ChevronDown, ChevronUp, Navigation } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { TouchEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -320,20 +320,17 @@ export default function ClubPage() {
             club.tariffs.map((t: any, i: number) => (
               <div
                 key={i}
-                className="group relative overflow-hidden rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(255,120,0,0.16),transparent_36%),linear-gradient(160deg,rgba(27,28,32,0.96),rgba(13,14,18,0.98))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_14px_28px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-[#FF9A2F]/45 hover:shadow-[0_16px_34px_rgba(255,120,0,0.12)]"
+                className="group relative overflow-hidden rounded-[18px] border border-white/10 bg-[radial-gradient(circle_at_22%_0%,rgba(255,120,0,0.11),transparent_34%),linear-gradient(160deg,rgba(24,25,29,0.96),rgba(13,14,18,0.98))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_10px_22px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#FF9A2F]/35 hover:shadow-[0_14px_28px_rgba(255,120,0,0.1)]"
               >
                 <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-[#FFB15E]">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-white/40">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-[#FFB15E]">{t.duration}</div>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white/35">
                     Tariff
                   </span>
                 </div>
-                <div className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">{t.duration}</div>
-                <p className="mt-1 font-display text-[30px] leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">
-                  {t.price || 0} <span className="text-[18px] text-[#FF9A2F]">СУМ</span>
+                <p className="font-display text-[25px] leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.3)]">
+                  {t.price || 0} <span className="text-[15px] text-[#FF9A2F]">СУМ</span>
                 </p>
               </div>
             ))
@@ -402,34 +399,34 @@ export default function ClubPage() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-sm text-white/50">Пока нет отзывов</div>
           ) : (
             reviewsData?.reviews.map((review) => (
-              <div key={review.id} className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(160deg,rgba(27,28,32,0.96),rgba(12,13,16,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
-                <div className="pointer-events-none absolute -right-14 -top-16 h-32 w-32 rounded-full bg-[#FF7800]/8 blur-2xl" />
+              <div key={review.id} className="relative overflow-hidden rounded-[18px] border border-white/10 bg-[linear-gradient(160deg,rgba(23,24,28,0.96),rgba(12,13,16,0.98))] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_10px_24px_rgba(0,0,0,0.16)]">
+                <div className="pointer-events-none absolute -right-14 -top-16 h-28 w-28 rounded-full bg-[#FF7800]/6 blur-2xl" />
                 <div className="relative flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#FF9A2F]/25 bg-[#FF7800]/12 font-display text-lg text-[#FFB15E]">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] font-display text-base text-[#FFB15E]">
                       {String(review.username || "?").slice(0, 1).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate font-display text-lg leading-none text-white">{review.username}</div>
-                      <div className="mt-1 text-[11px] text-white/38">{formatDate(review.created_at)}</div>
+                      <div className="truncate text-sm font-black leading-none text-white">{review.username}</div>
+                      <div className="mt-1 text-[10px] text-white/36">{formatDate(review.created_at)}</div>
                     </div>
                   </div>
-                  <div className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2.5 py-1 text-xs font-black text-amber-100">
+                  <div className="rounded-full border border-amber-300/20 bg-amber-300/8 px-2 py-0.5 text-[10px] font-black text-amber-100">
                     {review.rating}/5
                   </div>
                 </div>
 
-                <div className="relative mt-3 flex items-center gap-1 text-amber-400">
+                <div className="relative mt-2.5 flex items-center gap-0.5 text-amber-400">
                   {Array.from({ length: 5 }).map((_, idx) => (
-                    <Star key={`${review.id}-star-${idx}`} className={`h-4 w-4 ${idx < review.rating ? "fill-current" : "text-white/20"}`} />
+                    <Star key={`${review.id}-star-${idx}`} className={`h-3.5 w-3.5 ${idx < review.rating ? "fill-current" : "text-white/18"}`} />
                   ))}
                 </div>
 
-                <p className="relative mt-3 text-sm leading-relaxed text-white/82 whitespace-pre-wrap">
+                <p className="relative mt-2.5 text-[13px] leading-relaxed text-white/78 whitespace-pre-wrap">
                   {expandedReviews[review.id] ? review.text : review.text.length > 90 ? `${review.text.slice(0, 90)}...` : review.text}
                 </p>
 
-                <div className="relative mt-3 flex justify-end">
+                <div className="relative mt-2.5 flex justify-end">
                   <button
                     type="button"
                     onClick={() =>
@@ -438,7 +435,7 @@ export default function ClubPage() {
                         [review.id]: !prev[review.id],
                       }))
                     }
-                    className="inline-flex items-center gap-1 rounded-full bg-[#FF7800]/10 px-2.5 py-1 text-xs font-bold text-[#FF9A2F] transition-colors hover:bg-[#FF7800]/18 hover:text-[#FFB15E]"
+                    className="inline-flex items-center gap-1 rounded-full bg-white/[0.045] px-2.5 py-1 text-[11px] font-bold text-[#FF9A2F] transition-colors hover:bg-[#FF7800]/14 hover:text-[#FFB15E]"
                   >
                     {expandedReviews[review.id] ? "Свернуть" : "Развернуть"}
                     {expandedReviews[review.id] ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
