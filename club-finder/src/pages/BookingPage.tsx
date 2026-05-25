@@ -607,51 +607,6 @@ export default function BookingPage() {
           ) : null}
 
           <div className="px-4 mb-5">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-display font-bold text-muted-foreground uppercase tracking-wider">Зона</h2>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-white/50">
-                {club.zones?.length || 0} зон
-              </span>
-            </div>
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#090b10]/70 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#090b10] to-transparent" />
-              <div className="flex gap-2 overflow-x-auto pb-1 pr-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {(club.zones || []).map((zone) => {
-                  const isSelected = selectedZone === zone.name;
-                  return (
-                    <button
-                      key={zone.name}
-                      type="button"
-                      onClick={() => setSelectedZone(zone.name)}
-                      className={`group relative min-w-[112px] flex-shrink-0 overflow-hidden rounded-xl border px-3.5 py-3 text-left transition duration-200 ${
-                        isSelected
-                          ? "border-amber-300/70 bg-amber-400/15 text-amber-100 shadow-[0_0_24px_rgba(251,191,36,0.18)]"
-                          : "border-white/10 bg-white/[0.055] text-white/75 hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/[0.08]"
-                      }`}
-                    >
-                      <div className={`absolute inset-x-0 top-0 h-12 bg-gradient-to-b ${isSelected ? "from-amber-300/30 via-amber-400/10 to-transparent" : "from-white/10 via-white/[0.03] to-transparent"}`} />
-                      <div className="relative flex items-start justify-between gap-2">
-                        <span className={`h-2 w-2 rounded-full ${isSelected ? "bg-amber-200 shadow-[0_0_12px_rgba(253,230,138,0.85)]" : "bg-white/30 group-hover:bg-white/55"}`} />
-                        {isSelected ? (
-                          <span className="rounded-full border border-amber-200/40 bg-amber-300/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-amber-100">
-                            Active
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="relative mt-3 truncate font-display text-[13px] font-black leading-tight text-white">
-                        {zone.name}
-                      </div>
-                      <div className={`relative mt-1 inline-flex max-w-full rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelected ? "bg-amber-200/15 text-amber-100" : "bg-black/20 text-white/45"}`}>
-                        <span className="truncate">{zone.price || "Цена не указана"}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="px-4 mb-5">
             <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0b0d12] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.22)]">
               <div className="absolute -right-10 top-8 h-36 w-36 rounded-full bg-cyan-400/10 blur-3xl" />
               <div className="absolute -left-10 bottom-0 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
