@@ -31,7 +31,7 @@ const Index = () => {
   const [bookingSearch, setBookingSearch] = useState("");
 
   return (
-    <div className="esports-shell min-h-screen text-gray-300 relative overflow-hidden">
+    <div className="ios26-admin esports-shell min-h-screen text-gray-700 relative overflow-hidden">
       {!isAdmin && (
         <>
           <div className="ambient-layer">

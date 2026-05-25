@@ -48,14 +48,14 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-2xl tracking-tight text-white">Админ-панель</h2>
+        <h2 className="font-display text-2xl tracking-tight text-slate-950">Админ-панель</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Building className="h-5 w-5 text-cyan-300" />
+              <Building className="h-5 w-5 text-blue-500" />
               Добавить клуб
             </CardTitle>
             <CardDescription>Зарегистрируйте новый клуб в системе</CardDescription>
@@ -101,7 +101,7 @@ const AdminDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="h-5 w-5 text-cyan-300" />
+              <Users className="h-5 w-5 text-blue-500" />
               Привязать менеджера
             </CardTitle>
             <CardDescription>Создайте аккаунт и свяжите его с клубом</CardDescription>
@@ -128,7 +128,7 @@ const AdminDashboard = () => {
             <div className="space-y-2">
               <Label>Клуб</Label>
               <select
-                className="w-full h-11 rounded-xl border border-input bg-secondary/35 px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full h-11 rounded-xl border border-input bg-white/60 px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={newUser.club_id}
                 onChange={(e) => setNewUser({ ...newUser, club_id: e.target.value })}
               >
@@ -165,9 +165,9 @@ const AdminDashboard = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="relative overflow-x-auto rounded-xl border border-white/10 bg-[#0f1528]/40">
+          <div className="relative overflow-x-auto rounded-2xl border border-white/70 bg-white/45 backdrop-blur-xl">
             <table className="w-full text-sm text-left">
-              <thead className="bg-[#141d35] text-xs uppercase tracking-wide text-slate-400">
+              <thead className="bg-white/55 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3 w-[60px]">ID</th>
                   <th className="px-4 py-3">Название</th>
@@ -177,9 +177,9 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {clubs?.map((c: any) => (
-                  <tr key={c.id} className="hover:bg-white/5 transition-colors odd:bg-white/[0.015]">
+                  <tr key={c.id} className="hover:bg-white/60 transition-colors odd:bg-white/20">
                     <td className="px-4 py-3 font-mono text-xs text-slate-400">{c.id}</td>
-                    <td className="px-4 py-3 font-medium flex items-center gap-3 text-white">
+                    <td className="px-4 py-3 font-medium flex items-center gap-3 text-slate-900">
                       {c.logo_url && <img src={c.logo_url} alt="logo" className="w-6 h-6 rounded-full object-cover" />}
                       {c.name}
                     </td>

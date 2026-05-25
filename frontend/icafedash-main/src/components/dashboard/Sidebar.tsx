@@ -162,7 +162,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       {!mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-[60] lg:hidden rounded-xl bg-[#0e1427]/90 border border-white/10 p-2 text-slate-200"
+          className="fixed top-3 left-3 z-[60] lg:hidden rounded-2xl border border-white/60 bg-white/70 p-2 text-slate-700 shadow-lg backdrop-blur-xl"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -175,17 +175,17 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="h-24 flex items-center px-6 relative overflow-hidden border-b border-white/10">
+        <div className="h-24 flex items-center px-6 relative overflow-hidden border-b border-slate-200/70">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-12 w-12 rounded-2xl border border-white/10 bg-black/30 p-2 shadow-[0_0_26px_rgba(108,92,231,0.32)] shrink-0">
+            <div className="h-12 w-12 rounded-2xl border border-white/70 bg-white/70 p-2 shadow-[0_14px_28px_rgba(80,111,150,0.16)] shrink-0 backdrop-blur-xl">
               <img src={brandLogo} alt="Cloud Finder Logo" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-xl text-white leading-none truncate">Cloud Finder</h1>
-              <p className="text-[11px] text-[#00E5FF] uppercase tracking-[0.24em] mt-1 font-semibold truncate">{clubName}</p>
+              <h1 className="font-display text-xl text-slate-950 leading-none truncate">Cloud Finder</h1>
+              <p className="text-[11px] text-sky-600 uppercase tracking-[0.24em] mt-1 font-semibold truncate">{clubName}</p>
             </div>
           </div>
-          <button onClick={() => setMobileOpen(false)} className="absolute right-4 top-1/2 -translate-y-1/2 lg:hidden text-slate-400">
+          <button onClick={() => setMobileOpen(false)} className="absolute right-4 top-1/2 -translate-y-1/2 lg:hidden text-slate-500">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -204,20 +204,20 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           {otherItems.length > 0 && <div className="pt-6 mt-auto">{otherItems.map(renderNavItem)}</div>}
         </nav>
 
-        <div className="p-4 border-t border-white/10 bg-black/15 backdrop-blur-md">
-          <button className="w-full glass-card !bg-white/5 hover:!bg-white/10 rounded-xl p-3 flex items-center gap-3 transition-colors group">
+        <div className="p-4 border-t border-slate-200/70 bg-white/35 backdrop-blur-md">
+          <button className="w-full glass-card rounded-2xl p-3 flex items-center gap-3 transition-colors group">
             <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#00E5FF] to-[#6C5CE7] p-[2px]">
-                <div className="w-full h-full rounded-full bg-[#0A0F1B] flex items-center justify-center text-xs font-bold uppercase text-white">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-blue-500 p-[2px]">
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold uppercase text-slate-900">
                   {user?.username?.slice(0, 2) ?? "CF"}
                 </div>
               </div>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#58d68d] border-2 border-[#0A0F1B] rounded-full">
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full">
                 <div className="status-ping bg-[#58d68d]" />
               </div>
             </div>
             <div className="text-left overflow-hidden">
-              <p className="text-sm font-bold text-white truncate group-hover:text-[#00E5FF] transition-colors">{user?.username ?? "Cloud Manager"}</p>
+              <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{user?.username ?? "Cloud Manager"}</p>
               <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wide">{user?.role ?? "manager"}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-600 ml-auto group-hover:translate-x-1 transition-transform" />

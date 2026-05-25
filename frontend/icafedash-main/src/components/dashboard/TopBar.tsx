@@ -24,10 +24,10 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
     <header className="h-20 lg:h-24 px-4 lg:px-8 flex items-center justify-between shrink-0 z-20 relative">
       <div className="pl-12 lg:pl-0">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 p-1.5 hidden sm:block">
+          <div className="h-10 w-10 rounded-2xl border border-white/70 bg-white/70 p-1.5 hidden sm:block shadow-[0_12px_24px_rgba(80,111,150,0.13)] backdrop-blur-xl">
             <img src={brandLogo} alt="Cloud Finder" className="h-full w-full object-contain" />
           </div>
-          <h2 className="font-display text-2xl lg:text-3xl text-white tracking-tight">Cloud Finder Command</h2>
+          <h2 className="font-display text-2xl lg:text-3xl text-slate-950 tracking-tight">Cloud Finder Command</h2>
         </div>
         <div className="hidden sm:flex items-center gap-2 mt-1.5">
           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#58d68d]" />
@@ -38,12 +38,12 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
       <div className="flex items-center gap-3 lg:gap-6">
         {!isAdmin && (
           <div className="relative group hidden xl:block">
-            <div className="relative flex items-center bg-[#0f1628]/85 border border-white/10 rounded-full px-5 py-3 w-72 focus-within:w-80 transition-all duration-300 backdrop-blur-md">
+            <div className="relative flex items-center bg-white/65 border border-white/70 rounded-full px-5 py-3 w-72 focus-within:w-80 transition-all duration-300 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_12px_28px_rgba(80,111,150,0.12)]">
               <Search className="w-4 h-4 text-slate-500 mr-3" />
               <input
                 type="text"
                 placeholder="Поиск заявок..."
-                className="bg-transparent border-none outline-none text-sm text-white placeholder-slate-600 w-full font-medium disabled:opacity-40"
+                className="bg-transparent border-none outline-none text-sm text-slate-800 placeholder-slate-400 w-full font-medium disabled:opacity-40"
                 value={searchQuery}
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 disabled={!searchEnabled}
@@ -55,10 +55,10 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
           </div>
         )}
 
-        <div className="flex items-center gap-3 lg:gap-4 pl-3 lg:pl-6 border-l border-white/10">
-          <button className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-full glass-card !bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:!bg-white/10 hover:border-white/20 transition-all group">
+        <div className="flex items-center gap-3 lg:gap-4 pl-3 lg:pl-6 border-l border-slate-200/70">
+          <button className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-full glass-card flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all group">
             <Bell className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#FF3D71] rounded-full border border-[#0A0F1B] animate-pulse shadow-[0_0_8px_#FF3D71]" />
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border border-white animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.55)]" />
           </button>
 
           <div className="hidden md:flex flex-col items-end">
@@ -73,7 +73,7 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none">
                 <div className="h-9 w-9 rounded-full bg-gradient-to-r from-[#00E5FF] to-[#6C5CE7] p-[2px]">
-                  <div className="h-full w-full rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-white uppercase">
+                <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-xs font-bold text-slate-900 uppercase">
                     {user?.username?.slice(0, 2) ?? "CF"}
                   </div>
                 </div>

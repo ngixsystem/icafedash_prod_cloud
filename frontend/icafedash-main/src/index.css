@@ -256,6 +256,157 @@
     animation: orbDrift 14s ease-in-out infinite alternate;
     pointer-events: none;
   }
+
+  .ios26-admin {
+    color: #162033;
+    min-height: 100vh;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(244, 249, 255, 0.72)),
+      linear-gradient(180deg, #f8fbff 0%, #eef5ff 48%, #f7fbff 100%);
+  }
+
+  .ios26-admin::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(40, 85, 140, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(40, 85, 140, 0.04) 1px, transparent 1px);
+    background-size: 54px 54px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 90%);
+  }
+
+  .ios26-admin .font-display {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  .ios26-admin .glass-panel {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 252, 255, 0.52));
+    border-right: 1px solid rgba(123, 154, 190, 0.26);
+    box-shadow: 18px 0 55px rgba(80, 111, 150, 0.16);
+    backdrop-filter: blur(34px) saturate(1.55);
+    -webkit-backdrop-filter: blur(34px) saturate(1.55);
+  }
+
+  .ios26-admin .glass-card,
+  .ios26-admin [data-radix-popper-content-wrapper] [role="menu"],
+  .ios26-admin .rounded-2xl.border,
+  .ios26-admin .rounded-xl.border {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.68), rgba(248, 252, 255, 0.42));
+    border-color: rgba(120, 150, 186, 0.26);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      0 18px 44px rgba(86, 116, 153, 0.15);
+    backdrop-filter: blur(28px) saturate(1.45);
+    -webkit-backdrop-filter: blur(28px) saturate(1.45);
+  }
+
+  .ios26-admin .glass-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(68, 137, 255, 0.32);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(242, 249, 255, 0.56));
+    box-shadow: 0 22px 54px rgba(74, 116, 176, 0.18);
+  }
+
+  .ios26-admin .text-white,
+  .ios26-admin .text-gray-300,
+  .ios26-admin .text-slate-300,
+  .ios26-admin .text-slate-200 {
+    color: #172033 !important;
+  }
+
+  .ios26-admin .text-slate-400,
+  .ios26-admin .text-slate-500,
+  .ios26-admin .text-muted-foreground {
+    color: #66758a !important;
+  }
+
+  .ios26-admin .border-white\/10,
+  .ios26-admin .border-white\/5 {
+    border-color: rgba(117, 146, 181, 0.24) !important;
+  }
+
+  .ios26-admin .bg-white\/5,
+  .ios26-admin .bg-white\/\[0\.02\],
+  .ios26-admin .bg-white\/\[0\.015\],
+  .ios26-admin .bg-black\/20,
+  .ios26-admin .bg-black\/15,
+  .ios26-admin .bg-\[\#0f1528\]\/40,
+  .ios26-admin .bg-\[\#141d35\],
+  .ios26-admin .bg-\[\#0e1427\],
+  .ios26-admin .bg-\[\#0b0d12\],
+  .ios26-admin .bg-\[\#151725\],
+  .ios26-admin .bg-\[\#1F2235\] {
+    background: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .ios26-admin input,
+  .ios26-admin select,
+  .ios26-admin textarea {
+    color: #172033 !important;
+    background: rgba(255, 255, 255, 0.62) !important;
+    border-color: rgba(117, 146, 181, 0.28) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .ios26-admin input::placeholder,
+  .ios26-admin textarea::placeholder {
+    color: #8a98aa !important;
+  }
+
+  .ios26-admin .neon-button {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, rgba(15, 107, 255, 0.92), rgba(70, 184, 255, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    box-shadow: 0 14px 32px rgba(36, 133, 255, 0.26);
+  }
+
+  .ios26-admin .nav-item {
+    color: #546174;
+    border-radius: 18px;
+  }
+
+  .ios26-admin .nav-item::after {
+    width: 0;
+    box-shadow: none;
+  }
+
+  .ios26-admin .nav-item.active {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.66);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 12px 28px rgba(62, 120, 190, 0.16);
+  }
+
+  .ios26-admin table {
+    color: #172033;
+  }
+
+  .ios26-admin thead {
+    background: rgba(236, 244, 255, 0.76) !important;
+    color: #66758a !important;
+  }
+
+  .ios26-admin tbody {
+    border-color: rgba(117, 146, 181, 0.2) !important;
+  }
+
+  .ios26-admin tr:hover {
+    background: rgba(255, 255, 255, 0.48) !important;
+  }
+
+  .ios26-admin ::-webkit-scrollbar-track {
+    background: rgba(226, 236, 248, 0.6);
+  }
+
+  .ios26-admin ::-webkit-scrollbar-thumb {
+    background: rgba(126, 152, 184, 0.55);
+  }
 }
 
 @keyframes blob {
