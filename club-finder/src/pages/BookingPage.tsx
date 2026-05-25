@@ -633,21 +633,6 @@ export default function BookingPage() {
               <div className="text-sm text-muted-foreground">Загрузка ПК...</div>
             ) : (
               <div className="rounded-2xl border border-white/10 bg-[#090b10]/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                <div className="mb-3 grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wide text-white/55">
-                  <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2 py-1">
-                    <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]" />
-                    Свободен
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1">
-                    <span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,0.75)]" />
-                    Занят
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-full border border-zinc-400/25 bg-zinc-500/10 px-2 py-1">
-                    <span className="h-2 w-2 rounded-full bg-zinc-300 shadow-[0_0_10px_rgba(212,212,216,0.42)]" />
-                    Выкл.
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-4 gap-2">
                 {zonePcs.map((pc) => {
                   const selected = selectedPcsInZone.includes(pc.name);
