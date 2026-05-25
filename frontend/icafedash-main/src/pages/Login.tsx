@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, User } from "lucide-react";
 import fragLogo from "@/assets/frag.png";
+import loginBg from "@/assets/fon_JPG.jpg";
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -72,7 +73,8 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070604] p-4 relative overflow-hidden text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,149,0,0.16),transparent_34%),radial-gradient(circle_at_8%_100%,rgba(255,106,0,0.08),transparent_30%)] pointer-events-none" />
+      <img src={loginBg} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,149,0,0.16),transparent_34%),linear-gradient(180deg,rgba(0,0,0,0.58),rgba(0,0,0,0.88))] pointer-events-none" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff9500]/35 to-transparent" />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,149,0,0.018)_1px,transparent_1px)] bg-[length:92px_100%] opacity-40 pointer-events-none" />
 
@@ -94,7 +96,7 @@ const Login = () => {
           </div>
         </div>
 
-        <Card className="relative overflow-hidden rounded-[16px] border border-[#3a2a18] bg-[#11100e]/95 shadow-[0_24px_80px_rgba(0,0,0,0.46),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl">
+        <Card className="relative overflow-hidden rounded-[16px] border border-[#3a2a18] bg-black/88 shadow-[0_24px_80px_rgba(0,0,0,0.58),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl">
           <div className="absolute top-0 left-10 right-10 h-px bg-gradient-to-r from-transparent via-[#ff9500]/65 to-transparent" />
           <CardHeader className="space-y-2 pt-9 pb-4">
             <CardTitle className="text-[26px] font-black text-white text-center tracking-[-0.03em]">АВТОРИЗАЦИЯ</CardTitle>
