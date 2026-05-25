@@ -71,31 +71,31 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#07080b] p-4 relative overflow-hidden text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(124,92,255,0.14),transparent_34%),radial-gradient(circle_at_8%_100%,rgba(0,229,255,0.06),transparent_30%)] pointer-events-none" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#7c5cff]/35 to-transparent" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[length:92px_100%] opacity-40 pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-[#070604] p-4 relative overflow-hidden text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,149,0,0.16),transparent_34%),radial-gradient(circle_at_8%_100%,rgba(255,106,0,0.08),transparent_30%)] pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff9500]/35 to-transparent" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,149,0,0.018)_1px,transparent_1px)] bg-[length:92px_100%] opacity-40 pointer-events-none" />
 
       <div className="w-full max-w-[448px] space-y-8 relative z-10">
         <div className="text-center space-y-5 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="relative inline-flex">
-            <div className="absolute inset-0 rounded-[28px] bg-[#7c5cff]/35 blur-2xl" />
-            <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-[24px] border border-[#7c5cff]/55 bg-black/55 p-3 shadow-[0_0_34px_rgba(124,92,255,0.28),inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <img src={fragLogo} alt="iCafeDash" className="h-full w-full object-contain drop-shadow-[0_0_16px_rgba(0,229,255,0.25)]" />
-            </div>
+            <div className="absolute inset-0 rounded-full bg-[#ff9500]/35 blur-3xl" />
+            <img src={fragLogo} alt="FRAG Dashboard" className="relative h-28 w-28 object-contain drop-shadow-[0_0_28px_rgba(255,149,0,0.42)]" />
           </div>
           <div>
-            <h1 className="text-[38px] font-black tracking-[-0.05em] uppercase italic leading-none">
-              <span className="bg-gradient-to-b from-white to-[#b8beca] bg-clip-text text-transparent">iCafe</span>
-              <span className="text-[#7c5cff] drop-shadow-[0_0_20px_rgba(124,92,255,0.3)]">Dash</span>
+            <h1
+              className="text-[48px] uppercase leading-none text-white drop-shadow-[0_0_22px_rgba(255,149,0,0.22)]"
+              style={{ fontFamily: '"Bebas Neue", sans-serif', letterSpacing: "0.03em" }}
+            >
+              <span>FRAG Dashboard</span>
             </h1>
-            <div className="h-1 w-12 bg-gradient-to-r from-[#00E5FF] to-[#7c5cff] mx-auto mt-2 rounded-full shadow-[0_0_14px_rgba(0,229,255,0.65)]" />
-            <p className="text-[#7f8799] text-sm font-semibold mt-5 tracking-[0.22em] uppercase">Система управления кибер-ареной</p>
+            <div className="h-1 w-14 bg-gradient-to-r from-[#ff6a00] to-[#ffb347] mx-auto mt-2 rounded-full shadow-[0_0_16px_rgba(255,149,0,0.75)]" />
+            <p className="text-[#9b8a76] text-sm font-semibold mt-5 tracking-[0.22em] uppercase">Система управления кибер-ареной</p>
           </div>
         </div>
 
-        <Card className="relative overflow-hidden rounded-[16px] border border-[#27304a] bg-[#101523]/95 shadow-[0_24px_80px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl">
-          <div className="absolute top-0 left-10 right-10 h-px bg-gradient-to-r from-transparent via-[#7c5cff]/65 to-transparent" />
+        <Card className="relative overflow-hidden rounded-[16px] border border-[#3a2a18] bg-[#11100e]/95 shadow-[0_24px_80px_rgba(0,0,0,0.46),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl">
+          <div className="absolute top-0 left-10 right-10 h-px bg-gradient-to-r from-transparent via-[#ff9500]/65 to-transparent" />
           <CardHeader className="space-y-2 pt-9 pb-4">
             <CardTitle className="text-[26px] font-black text-white text-center tracking-[-0.03em]">АВТОРИЗАЦИЯ</CardTitle>
             <CardDescription className="text-center text-[#8b93a4]">Введите данные для входа в панель</CardDescription>
@@ -103,17 +103,17 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="relative z-10">
             <CardContent className="space-y-6 px-6 pt-1 sm:px-8">
               <div className="space-y-2 group/field">
-                <Label htmlFor="username" className="text-[#8d7cff] text-xs font-black uppercase tracking-[0.12em] group-focus-within/field:text-[#00E5FF] transition-colors">
+                <Label htmlFor="username" className="text-[#ff9500] text-xs font-black uppercase tracking-[0.12em] group-focus-within/field:text-[#ffb347] transition-colors">
                   Логин оператора
                 </Label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8b93a4] group-focus-within/field:text-[#00E5FF] transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8f8273] group-focus-within/field:text-[#ff9500] transition-colors">
                     <User className="h-4 w-4" />
                   </div>
                   <Input
                     id="username"
                     placeholder="Username"
-                    className="pl-11 h-[52px] rounded-[13px] border-[#2b3347] bg-[#1a2030] text-white placeholder:text-[#6d7484] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition-all hover:border-[#3d4660] focus:border-[#00E5FF] focus:ring-2 focus:ring-[#00E5FF]/20"
+                    className="pl-11 h-[52px] rounded-[13px] border-[#322719] bg-[#1a1713] text-white placeholder:text-[#756b60] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition-all hover:border-[#4b3822] focus:border-[#ff9500] focus:ring-2 focus:ring-[#ff9500]/20"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -121,18 +121,18 @@ const Login = () => {
                 </div>
               </div>
               <div className="space-y-2 group/field">
-                <Label htmlFor="password" className="text-[#a0a6b5] text-xs font-black uppercase tracking-[0.12em] group-focus-within/field:text-[#00E5FF] transition-colors">
+                <Label htmlFor="password" className="text-[#a89784] text-xs font-black uppercase tracking-[0.12em] group-focus-within/field:text-[#ffb347] transition-colors">
                   Код доступа
                 </Label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8b93a4] group-focus-within/field:text-[#00E5FF] transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8f8273] group-focus-within/field:text-[#ff9500] transition-colors">
                     <Lock className="h-4 w-4" />
                   </div>
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    className="pl-11 h-[52px] rounded-[13px] border-[#2b3347] bg-[#1a2030] text-white placeholder:text-[#6d7484] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition-all hover:border-[#3d4660] focus:border-[#00E5FF] focus:ring-2 focus:ring-[#00E5FF]/20"
+                    className="pl-11 h-[52px] rounded-[13px] border-[#322719] bg-[#1a1713] text-white placeholder:text-[#756b60] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition-all hover:border-[#4b3822] focus:border-[#ff9500] focus:ring-2 focus:ring-[#ff9500]/20"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -142,7 +142,7 @@ const Login = () => {
             </CardContent>
             <CardFooter className="px-6 pb-8 pt-0 sm:px-8">
               <Button
-                className="w-full h-[50px] rounded-[12px] border-0 bg-gradient-to-r from-[#7667f0] to-[#00d9f5] text-black font-black uppercase tracking-[0.18em] shadow-[0_16px_34px_rgba(0,217,245,0.18)] transition-all hover:brightness-110 hover:shadow-[0_18px_42px_rgba(0,217,245,0.28)] disabled:opacity-50"
+                className="w-full h-[50px] rounded-[12px] border-0 bg-gradient-to-r from-[#ff6a00] to-[#ffb347] text-black font-black uppercase tracking-[0.18em] shadow-[0_16px_34px_rgba(255,149,0,0.22)] transition-all hover:brightness-110 hover:shadow-[0_18px_42px_rgba(255,149,0,0.34)] disabled:opacity-50"
                 type="submit"
                 disabled={isLoading}
               >
@@ -159,13 +159,13 @@ const Login = () => {
           </form>
         </Card>
 
-        <div className="flex items-center justify-between text-[#47536b] text-[10px] font-black uppercase tracking-[0.22em]">
+        <div className="flex items-center justify-between text-[#6f6253] text-[10px] font-black uppercase tracking-[0.22em]">
           <span>ver 2.0.0</span>
           <span className="flex items-center gap-1 italic">
-            <div className="h-1.5 w-1.5 rounded-full bg-[#00E5FF] animate-pulse shadow-[0_0_8px_#00E5FF]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-[#ff9500] animate-pulse shadow-[0_0_8px_#ff9500]" />
             System Online
           </span>
-          <span>&copy; iCafeDash 2026</span>
+          <span>&copy; FRAG 2026</span>
         </div>
       </div>
     </div>
