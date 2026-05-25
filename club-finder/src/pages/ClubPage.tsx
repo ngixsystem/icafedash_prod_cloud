@@ -320,24 +320,31 @@ export default function ClubPage() {
             club.tariffs.map((t: any, i: number) => (
               <div
                 key={i}
-                className="rounded-2xl bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] border border-[#2F3136] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                className="group relative overflow-hidden rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(255,120,0,0.16),transparent_36%),linear-gradient(160deg,rgba(27,28,32,0.96),rgba(13,14,18,0.98))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_14px_28px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-[#FF9A2F]/45 hover:shadow-[0_16px_34px_rgba(255,120,0,0.12)]"
               >
-                <div className="flex items-center justify-center gap-1.5 text-[#9aa1ab] text-[10px] uppercase tracking-wider font-semibold mb-2">
-                  <Clock className="w-3 h-3" /> {t.duration}
+                <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-[#FFB15E]">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-white/40">
+                    Tariff
+                  </span>
                 </div>
-                <p className="text-center text-[#FF7800] font-display text-[26px] leading-none drop-shadow-[0_0_10px_rgba(255,120,0,0.28)]">
-                  {t.price || 0} <span className="text-[18px]">СУМ</span>
+                <div className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">{t.duration}</div>
+                <p className="mt-1 font-display text-[30px] leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">
+                  {t.price || 0} <span className="text-[18px] text-[#FF9A2F]">СУМ</span>
                 </p>
               </div>
             ))
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-[34px] font-display font-bold tracking-wide leading-none">Отзывы</h2>
           <Dialog open={openReviewDialog} onOpenChange={setOpenReviewDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 text-xs">
+              <Button variant="outline" size="sm" className="h-9 rounded-full border-white/10 bg-white/[0.06] px-3 text-xs font-bold text-white hover:bg-[#FF7800]/15 hover:text-[#FFB15E]">
                 Оставить отзыв
               </Button>
             </DialogTrigger>
@@ -392,24 +399,37 @@ export default function ClubPage() {
 
         <div className="space-y-3 mb-8">
           {(reviewsData?.reviews || []).length === 0 ? (
-            <div className="rounded-xl border border-[#2f2f2f] bg-[#121212] p-4 text-sm text-white/50">Пока нет отзывов</div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-sm text-white/50">Пока нет отзывов</div>
           ) : (
             reviewsData?.reviews.map((review) => (
-              <div key={review.id} className="rounded-xl border border-[#2f2f2f] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="font-semibold text-white">{review.username}</div>
-                  <div className="text-xs text-[#8f8f8f]">{formatDate(review.created_at)}</div>
+              <div key={review.id} className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(160deg,rgba(27,28,32,0.96),rgba(12,13,16,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
+                <div className="pointer-events-none absolute -right-14 -top-16 h-32 w-32 rounded-full bg-[#FF7800]/8 blur-2xl" />
+                <div className="relative flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#FF9A2F]/25 bg-[#FF7800]/12 font-display text-lg text-[#FFB15E]">
+                      {String(review.username || "?").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate font-display text-lg leading-none text-white">{review.username}</div>
+                      <div className="mt-1 text-[11px] text-white/38">{formatDate(review.created_at)}</div>
+                    </div>
+                  </div>
+                  <div className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2.5 py-1 text-xs font-black text-amber-100">
+                    {review.rating}/5
+                  </div>
                 </div>
-                <div className="mt-2 flex items-center gap-1 text-amber-400">
+
+                <div className="relative mt-3 flex items-center gap-1 text-amber-400">
                   {Array.from({ length: 5 }).map((_, idx) => (
                     <Star key={`${review.id}-star-${idx}`} className={`h-4 w-4 ${idx < review.rating ? "fill-current" : "text-white/20"}`} />
                   ))}
-                  <span className="ml-1 text-xs text-white/70">{review.rating}/5</span>
                 </div>
-                <p className="mt-3 text-sm text-white/90 whitespace-pre-wrap">
+
+                <p className="relative mt-3 text-sm leading-relaxed text-white/82 whitespace-pre-wrap">
                   {expandedReviews[review.id] ? review.text : review.text.length > 90 ? `${review.text.slice(0, 90)}...` : review.text}
                 </p>
-                <div className="mt-2 flex justify-end">
+
+                <div className="relative mt-3 flex justify-end">
                   <button
                     type="button"
                     onClick={() =>
@@ -418,7 +438,7 @@ export default function ClubPage() {
                         [review.id]: !prev[review.id],
                       }))
                     }
-                    className="inline-flex items-center gap-1 text-xs text-[#FF7800] hover:text-[#ffa145] transition-colors"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#FF7800]/10 px-2.5 py-1 text-xs font-bold text-[#FF9A2F] transition-colors hover:bg-[#FF7800]/18 hover:text-[#FFB15E]"
                   >
                     {expandedReviews[review.id] ? "Свернуть" : "Развернуть"}
                     {expandedReviews[review.id] ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
