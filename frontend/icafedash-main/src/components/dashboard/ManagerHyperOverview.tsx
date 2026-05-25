@@ -127,13 +127,13 @@ const ManagerHyperOverview = () => {
 
   return (
     <div className="max-w-[1920px] mx-auto space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 2xl:grid-cols-4">
         {/* Виджет сеанса оператора */}
-        <div className="glass-card relative overflow-hidden rounded-3xl p-6 group sm:col-span-2 xl:col-span-1 2xl:row-span-2">
+        <div className="glass-card relative overflow-hidden rounded-[26px] p-4 group sm:col-span-2 sm:rounded-3xl sm:p-6 xl:col-span-1 2xl:row-span-2">
           <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#FF9500]/10 blur-3xl" />
-          <div className="relative flex justify-between items-start mb-7">
-            <div className="w-12 h-12 rounded-2xl bg-[#151515] border border-white/10 flex items-center justify-center text-[#FF9500] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <Clock className="w-6 h-6" />
+          <div className="relative mb-6 flex items-start justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-[#151515] text-[#FF9500] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:h-12 sm:w-12">
+              <Clock className="h-6 w-6" />
             </div>
             <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black border ${
               shiftData?.shift
@@ -144,27 +144,27 @@ const ManagerHyperOverview = () => {
               {shiftData?.shift ? "Открыт" : "Нет данных"}
             </span>
           </div>
-          <h3 className="relative text-slate-400 text-[11px] font-black uppercase tracking-[0.18em] mb-5 font-mono">Сеанс оператора</h3>
+          <h3 className="relative mb-4 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:mb-5 sm:text-[11px] font-mono">Сеанс оператора</h3>
 
           {shiftData?.shift ? (
-            <div className="relative space-y-3.5">
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
-                <span className="text-sm text-slate-400">Оператор</span>
-                <span className="text-sm font-black text-white truncate">{shiftData.shift.operator || "—"}</span>
+            <div className="relative space-y-3">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <span className="text-[13px] text-slate-400 sm:text-sm">Оператор</span>
+                <span className="min-w-0 truncate text-right text-sm font-black text-white">{shiftData.shift.operator || "—"}</span>
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
-                <span className="text-sm text-slate-400">Начало сеанса</span>
-                <span className="text-sm font-bold text-white text-right">{shiftData.shift.start_time || "—"}</span>
+              <div className="flex flex-col items-start gap-1.5 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <span className="text-[13px] text-slate-400 sm:text-sm">Начало сеанса</span>
+                <span className="text-[13px] font-bold leading-snug text-white sm:text-right sm:text-sm">{shiftData.shift.start_time || "—"}</span>
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
-                <span className="text-sm text-slate-400">Конец сеанса</span>
-                <span className="text-sm font-bold text-white text-right">{shiftData.shift.end_time || "—"}</span>
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <span className="text-[13px] text-slate-400 sm:text-sm">Конец сеанса</span>
+                <span className="text-right text-sm font-bold text-white">{shiftData.shift.end_time || "—"}</span>
               </div>
-              <div className="rounded-2xl border border-[#FF9500]/15 bg-[#FF9500]/[0.045] p-4">
+              <div className="rounded-[22px] border border-[#FF9500]/15 bg-[#FF9500]/[0.045] p-4">
                 <div className="flex items-end justify-between gap-3">
-                  <span className="text-sm text-slate-400">Касса в сеансе</span>
+                  <span className="text-[13px] text-slate-400 sm:text-sm">Касса в сеансе</span>
                   <div className="text-right">
-                    <div className="text-2xl font-black tracking-tight text-[#FF9500]">{formatMoney(shiftData.shift.cash)}</div>
+                    <div className="text-[28px] font-black leading-none tracking-tight text-[#FF9500] sm:text-2xl">{formatMoney(shiftData.shift.cash)}</div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">сум</div>
                   </div>
                 </div>
@@ -177,19 +177,19 @@ const ManagerHyperOverview = () => {
           )}
 
           <div className="relative mt-5 border-t border-white/10 pt-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 mb-3 font-mono">История сеансов</p>
+            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500 font-mono">История сеансов</p>
             {shiftData?.history && shiftData.history.length > 0 ? (
-              <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
+              <div className="max-h-[48svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[360px]">
                 {shiftData.history.map((h, i) => (
-                  <div key={i} className="rounded-2xl border border-white/10 bg-black/15 px-3.5 py-3 transition-colors hover:bg-white/[0.045]">
-                    <div className="flex items-start justify-between gap-3">
+                  <div key={i} className="rounded-[20px] border border-white/10 bg-black/15 px-3.5 py-3 transition-colors hover:bg-white/[0.045]">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                       <div className="min-w-0">
                         <div className="truncate text-sm font-black text-white">{h.operator || "—"}</div>
-                        <div className="mt-1 text-[11px] leading-snug text-slate-500">
+                        <div className="mt-1 break-words text-[11px] leading-snug text-slate-500">
                           {h.start_time || "—"} <span className="text-slate-600">→</span> {h.end_time || "—"}
                         </div>
                       </div>
-                      <div className="shrink-0 text-right text-sm font-black text-[#FF9500]">
+                      <div className="shrink-0 text-left text-sm font-black text-[#FF9500] sm:text-right">
                         {formatMoney(h.cash)}
                         <span className="ml-1 text-[10px] text-[#FF9500]/70">сум</span>
                       </div>
