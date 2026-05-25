@@ -251,38 +251,62 @@ export default function ClubPage() {
             club.zones.map((zone: any, i: number) => {
               const zTotal = parseInt(zone.capacity) || 0;
               const zFree = parseInt(zone.pcsFree) || 0;
-              const busyPercent = zTotal > 0 ? ((zTotal - zFree) / zTotal) * 100 : 0;
+              const freePercent = zTotal > 0 ? Math.max(0, Math.min(100, (zFree / zTotal) * 100)) : 0;
+              const isAvailable = zFree > 0;
 
               return (
-                <div
+                <button
                   key={i}
+                  type="button"
                   onClick={() => navigate(`/booking?club=${club.id}&zone=${encodeURIComponent(zone.name)}`)}
-                  className="rounded-2xl bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] border border-[#2f2f2f] p-4 cursor-pointer transition-all hover:border-[#FF7800]/45 hover:shadow-[0_10px_30px_rgba(255,120,0,0.1)]"
+                  className="group relative w-full overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(255,120,0,0.14),transparent_32%),linear-gradient(160deg,rgba(28,29,33,0.96),rgba(12,13,16,0.98))] p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_38px_rgba(0,0,0,0.22)] transition-all hover:-translate-y-0.5 hover:border-[#FF9A2F]/45 hover:shadow-[0_18px_42px_rgba(255,120,0,0.14)]"
                 >
-                  <div className="flex flex-col gap-2.5 mb-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <h3 className="font-display uppercase tracking-wide text-[16px] sm:text-[18px] text-[#FF9A2F] leading-none mb-1.5 break-words">
+                  <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                  <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#FF7800]/10 blur-2xl transition group-hover:bg-[#FF7800]/18" />
+
+                  <div className="relative mb-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-display uppercase tracking-wide text-[18px] text-[#FF9A2F] drop-shadow-[0_0_12px_rgba(255,154,47,0.18)] leading-none break-words">
                         {zone.name}
                       </h3>
-                      <div className="text-white font-display text-[19px] sm:text-[22px] leading-none">{zone.price || 0} СУМ/ЧАС</div>
+                      <div className="mt-1.5 font-display text-[26px] leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.28)]">
+                        {zone.price || 0} <span className="text-[18px] text-white/85">СУМ/ЧАС</span>
+                      </div>
                     </div>
-                    <span className="text-[14px] sm:text-[15px] text-white/55 leading-tight sm:pt-1">
-                      <span className={zFree > 0 ? "text-[#57F287] font-semibold" : "text-white/60 font-semibold"}>{zFree} свободно</span> из {zTotal} ПК
+                    <div className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${
+                      isAvailable
+                        ? "border-emerald-300/35 bg-emerald-400/10 text-emerald-200"
+                        : "border-rose-300/30 bg-rose-400/10 text-rose-200"
+                    }`}>
+                      {isAvailable ? "Есть места" : "Занято"}
+                    </div>
+                  </div>
+
+                  <p className="relative mb-4 text-[13px] text-white/62 leading-snug break-words">{zone.specs || "Характеристики не указаны"}</p>
+
+                  <div className="relative mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
+                    <div className="flex items-center gap-2 text-[12px] font-bold text-white/70">
+                      <Monitor className="h-4 w-4 text-[#00E5FF]" />
+                      <span>
+                        <span className={isAvailable ? "text-emerald-300" : "text-white/55"}>{zFree} свободно</span>
+                        <span className="text-white/40"> из {zTotal} ПК</span>
+                      </span>
+                    </div>
+                    <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white/55 transition group-hover:bg-[#FF7800]/15 group-hover:text-[#FFB15E]">
+                      Выбрать
                     </span>
                   </div>
 
-                  <p className="text-[13px] sm:text-[14px] text-white/60 mb-4 leading-snug break-words">{zone.specs || "Характеристики не указаны"}</p>
-
-                  <div className="w-full h-1.5 rounded-full bg-[#272727] overflow-hidden">
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/[0.08]">
                     <div
                       className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{
-                        width: `${busyPercent}%`,
-                        background: "linear-gradient(90deg, #22c55e 0%, #f0b429 52%, #ef4444 100%)",
+                        width: `${freePercent}%`,
+                        background: "linear-gradient(90deg, #22c55e 0%, #00e5ff 52%, #ff9a2f 100%)",
                       }}
                     />
                   </div>
-                </div>
+                </button>
               );
             })
           )}
