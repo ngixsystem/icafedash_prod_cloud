@@ -45,7 +45,7 @@ const Index = () => {
 
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="relative lg:ml-[290px] min-h-screen overflow-hidden">
+      <div className="relative lg:ml-[216px] min-h-screen overflow-hidden">
         <TopBar
           onOpenSettings={() => setActiveTab("Настройки")}
           searchQuery={bookingSearch}

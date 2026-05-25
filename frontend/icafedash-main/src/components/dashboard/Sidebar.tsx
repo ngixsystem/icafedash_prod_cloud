@@ -136,24 +136,24 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         onTabChange(item.label);
         setMobileOpen(false);
       }}
-      className={`nav-item flex w-full items-center gap-4 px-4 py-3 rounded-xl border border-transparent transition-all group ${
+      className={`nav-item flex w-full items-center gap-3 px-3 py-3 rounded-xl border border-transparent transition-all group ${
         activeTab === item.label
-          ? "active text-[#00E5FF] border-[#00E5FF]/20 bg-[#00E5FF]/5 shadow-[0_0_20px_rgba(0,229,255,0.1)]"
+          ? "active text-blue-400 border-blue-500/70 bg-blue-500/10"
           : "text-slate-300 hover:bg-white/5 hover:border-white/10"
       }`}
     >
       <item.icon
-        className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${
-          activeTab === item.label ? "text-[#00E5FF]" : item.color
+        className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${
+          activeTab === item.label ? "text-blue-400" : item.color
         }`}
       />
-      <span className="font-medium group-hover:text-white transition-colors">{item.label}</span>
+      <span className="text-sm font-semibold group-hover:text-white transition-colors">{item.label}</span>
       {!isAdmin && item.label === "Бронирование" && pendingBookingCount > 0 ? (
         <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">
           {pendingBookingCount > 99 ? "99+" : pendingBookingCount}
         </span>
       ) : null}
-      {activeTab === item.label ? <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_10px_#00E5FF]" /> : null}
+      {activeTab === item.label ? <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.7)]" /> : null}
     </button>
   );
 
@@ -171,18 +171,18 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       {mobileOpen && <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-[85vw] max-w-[290px] lg:w-[290px] glass-panel flex flex-col transition-transform duration-300 ${
+        className={`fixed top-0 left-0 z-50 h-full w-[85vw] max-w-[216px] lg:w-[216px] glass-panel flex flex-col transition-transform duration-300 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="h-24 flex items-center px-6 relative overflow-hidden border-b border-slate-200/70">
+        <div className="h-20 flex items-center px-6 relative overflow-hidden border-b border-slate-200/70">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-12 w-12 rounded-2xl border border-white/70 bg-white/70 p-2 shadow-[0_14px_28px_rgba(80,111,150,0.16)] shrink-0 backdrop-blur-xl">
+            <div className="h-9 w-9 rounded-xl border border-blue-400/25 bg-blue-600 p-1.5 shadow-[0_12px_28px_rgba(47,114,246,0.22)] shrink-0">
               <img src={brandLogo} alt="Cloud Finder Logo" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-xl text-slate-950 leading-none truncate">Cloud Finder</h1>
-              <p className="text-[11px] text-sky-600 uppercase tracking-[0.24em] mt-1 font-semibold truncate">{clubName}</p>
+              <h1 className="font-display text-base text-slate-950 leading-none truncate">Cloud Finder</h1>
+              <p className="text-[9px] text-blue-400 uppercase tracking-[0.22em] mt-1 font-semibold truncate">{clubName}</p>
             </div>
           </div>
           <button onClick={() => setMobileOpen(false)} className="absolute right-4 top-1/2 -translate-y-1/2 lg:hidden text-slate-500">
@@ -190,13 +190,13 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-7 px-3 space-y-1.5">
-          <div className="px-4 mb-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Main</div>
+        <nav className="flex-1 overflow-y-auto py-7 px-3 space-y-2">
+          <div className="px-3 mb-4 text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] font-mono">Main</div>
           {mainItems.map(renderNavItem)}
 
           {opsItems.length > 0 && (
             <>
-              <div className="px-4 mt-8 mb-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Operations</div>
+              <div className="px-3 mt-8 mb-4 text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] font-mono">Operations</div>
               {opsItems.map(renderNavItem)}
             </>
           )}

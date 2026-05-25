@@ -258,12 +258,9 @@
   }
 
   .ios26-admin {
-    color: #eef6ff;
+    color: #f5f7fb;
     min-height: 100vh;
-    background:
-      radial-gradient(900px circle at 12% -8%, rgba(82, 142, 255, 0.3), transparent 42%),
-      radial-gradient(800px circle at 95% 8%, rgba(47, 220, 255, 0.18), transparent 38%),
-      linear-gradient(145deg, #07101e 0%, #0a1221 48%, #111827 100%);
+    background: linear-gradient(180deg, #08090b 0%, #0b0c0f 100%);
   }
 
   .ios26-admin::before {
@@ -272,11 +269,11 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-    background-size: 54px 54px;
-    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), transparent 88%);
+    background:
+      radial-gradient(760px circle at 78% -16%, rgba(47, 113, 246, 0.08), transparent 42%),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+    background-size: auto, 216px 100%;
+    opacity: 0.9;
   }
 
   .ios26-admin .font-display {
@@ -285,31 +282,29 @@
   }
 
   .ios26-admin .glass-panel {
-    background: linear-gradient(180deg, rgba(20, 28, 44, 0.68), rgba(8, 14, 25, 0.5));
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 18px 0 60px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(36px) saturate(1.65);
-    -webkit-backdrop-filter: blur(36px) saturate(1.65);
+    background: #111316;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
   }
 
   .ios26-admin .glass-card,
   .ios26-admin [data-radix-popper-content-wrapper] [role="menu"],
   .ios26-admin .rounded-2xl.border,
   .ios26-admin .rounded-xl.border {
-    background: linear-gradient(145deg, rgba(25, 35, 55, 0.7), rgba(10, 17, 31, 0.46));
-    border-color: rgba(255, 255, 255, 0.13);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.16),
-      0 20px 56px rgba(0, 0, 0, 0.28);
-    backdrop-filter: blur(30px) saturate(1.55);
-    -webkit-backdrop-filter: blur(30px) saturate(1.55);
+    background: linear-gradient(180deg, rgba(24, 25, 28, 0.98), rgba(18, 19, 21, 0.98));
+    border-color: rgba(255, 255, 255, 0.11);
+    box-shadow: none;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
   }
 
   .ios26-admin .glass-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(105, 178, 255, 0.34);
-    background: linear-gradient(145deg, rgba(34, 48, 74, 0.76), rgba(15, 24, 42, 0.58));
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+    transform: translateY(-1px);
+    border-color: rgba(59, 130, 246, 0.38);
+    background: linear-gradient(180deg, rgba(28, 29, 32, 0.99), rgba(20, 21, 23, 0.99));
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
   }
 
   .ios26-admin .text-white,
@@ -325,7 +320,7 @@
   .ios26-admin .text-slate-400,
   .ios26-admin .text-slate-500,
   .ios26-admin .text-muted-foreground {
-    color: #97a6bb !important;
+    color: #8f949f !important;
   }
 
   .ios26-admin .border-white\/10,
@@ -335,6 +330,7 @@
     border-color: rgba(255, 255, 255, 0.13) !important;
   }
 
+  .ios26-admin .bg-white\/20,
   .ios26-admin .bg-white\/5,
   .ios26-admin .bg-white\/\[0\.02\],
   .ios26-admin .bg-white\/\[0\.015\],
@@ -352,16 +348,16 @@
   .ios26-admin .bg-white\/55,
   .ios26-admin .bg-white\/45,
   .ios26-admin .bg-white\/35 {
-    background: rgba(17, 26, 43, 0.58) !important;
+    background: rgba(26, 27, 30, 0.92) !important;
   }
 
   .ios26-admin input,
   .ios26-admin select,
   .ios26-admin textarea {
-    color: #f4f8ff !important;
-    background: rgba(11, 18, 31, 0.56) !important;
+    color: #f5f7fb !important;
+    background: rgba(45, 46, 49, 0.95) !important;
     border-color: rgba(255, 255, 255, 0.14) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   .ios26-admin input::placeholder,
@@ -371,14 +367,14 @@
 
   .ios26-admin .neon-button {
     color: #ffffff !important;
-    background: linear-gradient(135deg, rgba(15, 107, 255, 0.92), rgba(70, 184, 255, 0.9));
-    border: 1px solid rgba(255, 255, 255, 0.58);
-    box-shadow: 0 14px 32px rgba(36, 133, 255, 0.26);
+    background: #2f72f6;
+    border: 1px solid rgba(105, 163, 255, 0.35);
+    box-shadow: 0 12px 28px rgba(47, 114, 246, 0.22);
   }
 
   .ios26-admin .nav-item {
-    color: #98a7bb;
-    border-radius: 18px;
+    color: #9a9fa8;
+    border-radius: 13px;
   }
 
   .ios26-admin .nav-item::after {
@@ -387,21 +383,24 @@
   }
 
   .ios26-admin .nav-item.active {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      0 14px 34px rgba(0, 0, 0, 0.2);
+    color: #62a6ff;
+    background: rgba(47, 114, 246, 0.16);
+    border-color: rgba(59, 130, 246, 0.9);
+    box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.28);
+  }
+
+  .ios26-admin .nav-item.active span,
+  .ios26-admin .nav-item.active svg {
+    color: #62a6ff !important;
   }
 
   .ios26-admin table {
-    color: #edf5ff;
+    color: #f3f5f8;
   }
 
   .ios26-admin thead {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #9fb0c6 !important;
+    background: rgba(20, 21, 24, 0.96) !important;
+    color: #777d88 !important;
   }
 
   .ios26-admin tbody {
@@ -409,15 +408,15 @@
   }
 
   .ios26-admin tr:hover {
-    background: rgba(255, 255, 255, 0.07) !important;
+    background: rgba(255, 255, 255, 0.035) !important;
   }
 
   .ios26-admin ::-webkit-scrollbar-track {
-    background: rgba(8, 14, 25, 0.8);
+    background: rgba(10, 11, 13, 0.9);
   }
 
   .ios26-admin ::-webkit-scrollbar-thumb {
-    background: rgba(132, 158, 190, 0.45);
+    background: rgba(90, 96, 106, 0.65);
   }
 }
 

@@ -55,7 +55,9 @@ const AdminDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Building className="h-5 w-5 text-blue-500" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400">
+                <Building className="h-4 w-4" />
+              </span>
               Добавить клуб
             </CardTitle>
             <CardDescription>Зарегистрируйте новый клуб в системе</CardDescription>
@@ -101,7 +103,9 @@ const AdminDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="h-5 w-5 text-blue-500" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400">
+                <Users className="h-4 w-4" />
+              </span>
               Привязать менеджера
             </CardTitle>
             <CardDescription>Создайте аккаунт и свяжите его с клубом</CardDescription>
@@ -165,9 +169,9 @@ const AdminDashboard = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="relative overflow-x-auto rounded-2xl border border-white/70 bg-white/45 backdrop-blur-xl">
+          <div className="relative overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
             <table className="w-full text-sm text-left">
-              <thead className="bg-white/55 text-xs uppercase tracking-wide text-slate-500">
+              <thead className="bg-white/[0.015] text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3 w-[60px]">ID</th>
                   <th className="px-4 py-3">Название</th>
@@ -177,7 +181,7 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {clubs?.map((c: any) => (
-                  <tr key={c.id} className="hover:bg-white/60 transition-colors odd:bg-white/20">
+                  <tr key={c.id} className="hover:bg-white/[0.035] transition-colors">
                     <td className="px-4 py-3 font-mono text-xs text-slate-400">{c.id}</td>
                     <td className="px-4 py-3 font-medium flex items-center gap-3 text-slate-900">
                       {c.logo_url && <img src={c.logo_url} alt="logo" className="w-6 h-6 rounded-full object-cover" />}
