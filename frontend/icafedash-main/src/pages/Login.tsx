@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, User } from "lucide-react";
+import fragLogo from "../../../../club-finder/src/assets/frag.png";
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -70,48 +71,49 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] p-4 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-[#07080b] p-4 relative overflow-hidden text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(124,92,255,0.14),transparent_34%),radial-gradient(circle_at_8%_100%,rgba(0,229,255,0.06),transparent_30%)] pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#7c5cff]/35 to-transparent" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[length:92px_100%] opacity-40 pointer-events-none" />
 
-      <div className="w-full max-w-md space-y-8 relative z-10">
-        <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="relative inline-block">
-            <div className="absolute inset-0 bg-primary/40 blur-2xl rounded-full" />
-            <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-black border-2 border-primary/50 shadow-[0_0_30px_rgba(var(--primary),0.3)] mb-2">
-              <Lock className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.8)]" />
+      <div className="w-full max-w-[448px] space-y-8 relative z-10">
+        <div className="text-center space-y-5 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="relative inline-flex">
+            <div className="absolute inset-0 rounded-[28px] bg-[#7c5cff]/35 blur-2xl" />
+            <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-[24px] border border-[#7c5cff]/55 bg-black/55 p-3 shadow-[0_0_34px_rgba(124,92,255,0.28),inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <img src={fragLogo} alt="iCafeDash" className="h-full w-full object-contain drop-shadow-[0_0_16px_rgba(0,229,255,0.25)]" />
             </div>
           </div>
           <div>
-            <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent uppercase italic">
-              iCafe<span className="text-primary">Dash</span>
+            <h1 className="text-[38px] font-black tracking-[-0.05em] uppercase italic leading-none">
+              <span className="bg-gradient-to-b from-white to-[#b8beca] bg-clip-text text-transparent">iCafe</span>
+              <span className="text-[#7c5cff] drop-shadow-[0_0_20px_rgba(124,92,255,0.3)]">Dash</span>
             </h1>
-            <div className="h-1 w-12 bg-primary mx-auto mt-1 rounded-full shadow-[0_0_10px_#00ffa3]" />
-            <p className="text-gray-500 text-sm font-medium mt-4 tracking-widest uppercase">Система управления кибер-ареной</p>
+            <div className="h-1 w-12 bg-gradient-to-r from-[#00E5FF] to-[#7c5cff] mx-auto mt-2 rounded-full shadow-[0_0_14px_rgba(0,229,255,0.65)]" />
+            <p className="text-[#7f8799] text-sm font-semibold mt-5 tracking-[0.22em] uppercase">Система управления кибер-ареной</p>
           </div>
         </div>
 
-        <Card className="border-white/5 bg-black/40 backdrop-blur-xl shadow-2xl overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-          <CardHeader className="space-y-1 pt-8">
-            <CardTitle className="text-2xl font-bold text-white text-center">АВТОРИЗАЦИЯ</CardTitle>
-            <CardDescription className="text-center text-gray-500">Введите данные для входа в панель</CardDescription>
+        <Card className="relative overflow-hidden rounded-[16px] border border-[#27304a] bg-[#101523]/95 shadow-[0_24px_80px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.045)] backdrop-blur-xl">
+          <div className="absolute top-0 left-10 right-10 h-px bg-gradient-to-r from-transparent via-[#7c5cff]/65 to-transparent" />
+          <CardHeader className="space-y-2 pt-9 pb-4">
+            <CardTitle className="text-[26px] font-black text-white text-center tracking-[-0.03em]">АВТОРИЗАЦИЯ</CardTitle>
+            <CardDescription className="text-center text-[#8b93a4]">Введите данные для входа в панель</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit} className="relative z-10">
-            <CardContent className="space-y-6 pt-2">
+            <CardContent className="space-y-6 px-6 pt-1 sm:px-8">
               <div className="space-y-2 group/field">
-                <Label htmlFor="username" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">
+                <Label htmlFor="username" className="text-[#8d7cff] text-xs font-black uppercase tracking-[0.12em] group-focus-within/field:text-[#00E5FF] transition-colors">
                   Логин оператора
                 </Label>
                 <div className="relative">
-                  <div className="absolute left-3 top-3.5 h-4 w-4 text-gray-500 group-focus-within/field:text-primary transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8b93a4] group-focus-within/field:text-[#00E5FF] transition-colors">
                     <User className="h-4 w-4" />
                   </div>
                   <Input
                     id="username"
                     placeholder="Username"
-                    className="pl-10 h-12 bg-white/5 border-white/10 hover:border-white/20 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-gray-600 rounded-xl transition-all"
+                    className="pl-11 h-[52px] rounded-[13px] border-[#2b3347] bg-[#1a2030] text-white placeholder:text-[#6d7484] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition-all hover:border-[#3d4660] focus:border-[#00E5FF] focus:ring-2 focus:ring-[#00E5FF]/20"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -119,18 +121,18 @@ const Login = () => {
                 </div>
               </div>
               <div className="space-y-2 group/field">
-                <Label htmlFor="password" className="text-gray-400 text-xs font-bold uppercase tracking-wider group-focus-within/field:text-primary transition-colors">
+                <Label htmlFor="password" className="text-[#a0a6b5] text-xs font-black uppercase tracking-[0.12em] group-focus-within/field:text-[#00E5FF] transition-colors">
                   Код доступа
                 </Label>
                 <div className="relative">
-                  <div className="absolute left-3 top-3.5 h-4 w-4 text-gray-500 group-focus-within/field:text-primary transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8b93a4] group-focus-within/field:text-[#00E5FF] transition-colors">
                     <Lock className="h-4 w-4" />
                   </div>
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    className="pl-10 h-12 bg-white/5 border-white/10 hover:border-white/20 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-gray-600 rounded-xl transition-all"
+                    className="pl-11 h-[52px] rounded-[13px] border-[#2b3347] bg-[#1a2030] text-white placeholder:text-[#6d7484] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition-all hover:border-[#3d4660] focus:border-[#00E5FF] focus:ring-2 focus:ring-[#00E5FF]/20"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -138,9 +140,9 @@ const Login = () => {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="pb-8">
+            <CardFooter className="px-6 pb-8 pt-0 sm:px-8">
               <Button
-                className="w-full h-12 bg-primary hover:bg-primary/80 text-black font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(var(--primary),0.2)] hover:shadow-[0_0_30px_rgba(var(--primary),0.4)] transition-all rounded-xl disabled:opacity-50"
+                className="w-full h-[50px] rounded-[12px] border-0 bg-gradient-to-r from-[#7667f0] to-[#00d9f5] text-black font-black uppercase tracking-[0.18em] shadow-[0_16px_34px_rgba(0,217,245,0.18)] transition-all hover:brightness-110 hover:shadow-[0_18px_42px_rgba(0,217,245,0.28)] disabled:opacity-50"
                 type="submit"
                 disabled={isLoading}
               >
@@ -157,10 +159,10 @@ const Login = () => {
           </form>
         </Card>
 
-        <div className="flex items-center justify-between text-gray-600 text-[10px] font-bold uppercase tracking-[0.2em]">
+        <div className="flex items-center justify-between text-[#47536b] text-[10px] font-black uppercase tracking-[0.22em]">
           <span>ver 2.0.0</span>
           <span className="flex items-center gap-1 italic">
-            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_5px_#00ffa3]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-[#00E5FF] animate-pulse shadow-[0_0_8px_#00E5FF]" />
             System Online
           </span>
           <span>&copy; iCafeDash 2026</span>
