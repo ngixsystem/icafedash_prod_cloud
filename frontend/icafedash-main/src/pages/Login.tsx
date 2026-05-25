@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, User } from "lucide-react";
-import fragLogo from "../../../../club-finder/src/assets/frag.png";
+import fragLogo from "@/assets/frag.png";
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));

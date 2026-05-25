@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { RefreshCcw, UserRound } from "lucide-react";
-import computerIcon from "../../../../../club-finder/src/assets/computer.png";
+import computerIcon from "@/assets/computer.png";
 
 function getPcTone(status: string | undefined) {
     if (status === "busy") {
