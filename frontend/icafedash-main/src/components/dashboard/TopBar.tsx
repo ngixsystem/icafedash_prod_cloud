@@ -72,8 +72,8 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-r from-[#00E5FF] to-[#6C5CE7] p-[2px]">
-                <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-xs font-bold text-slate-900 uppercase">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-cyan-300 via-blue-500 to-indigo-500 p-[2px] shadow-[0_0_26px_rgba(56,189,248,0.28)]">
+                  <div className="h-full w-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center text-xs font-black text-white uppercase backdrop-blur-xl">
                     {user?.username?.slice(0, 2) ?? "CF"}
                   </div>
                 </div>

@@ -207,8 +207,8 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         <div className="p-4 border-t border-slate-200/70 bg-white/35 backdrop-blur-md">
           <button className="w-full glass-card rounded-2xl p-3 flex items-center gap-3 transition-colors group">
             <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-blue-500 p-[2px]">
-                <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold uppercase text-slate-900">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-300 via-blue-500 to-indigo-500 p-[2px] shadow-[0_0_24px_rgba(56,189,248,0.22)]">
+                <div className="w-full h-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center text-xs font-black uppercase text-white backdrop-blur-xl">
                   {user?.username?.slice(0, 2) ?? "CF"}
                 </div>
               </div>
