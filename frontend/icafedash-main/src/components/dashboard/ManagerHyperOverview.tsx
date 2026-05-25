@@ -127,9 +127,9 @@ const ManagerHyperOverview = () => {
 
   return (
     <div className="max-w-[1920px] mx-auto space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 2xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-12 xl:items-start">
         {/* Виджет сеанса оператора */}
-        <div className="glass-card relative overflow-hidden rounded-[26px] p-4 group sm:col-span-2 sm:rounded-3xl sm:p-6 xl:col-span-1 2xl:row-span-2">
+        <div className="glass-card relative overflow-hidden rounded-[26px] p-4 group sm:col-span-2 sm:rounded-3xl sm:p-6 xl:col-span-4">
           <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#FF9500]/10 blur-3xl" />
           <div className="relative mb-6 flex items-start justify-between">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-[#151515] text-[#FF9500] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:h-12 sm:w-12">
@@ -205,7 +205,9 @@ const ManagerHyperOverview = () => {
             </div>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 group">
+        <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 sm:gap-6 xl:col-span-8">
+        <div className="glass-card relative min-h-[220px] overflow-hidden rounded-3xl p-6 group">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#00F0FF]/10 blur-3xl" />
           <div className="flex justify-between items-start mb-6">
             <div className="w-12 h-12 rounded-2xl bg-[#00F0FF]/10 border border-[#00F0FF]/20 flex items-center justify-center text-[#00F0FF]">
               <Wallet className="w-6 h-6" />
@@ -231,9 +233,20 @@ const ManagerHyperOverview = () => {
               style={{ width: `${Math.min(100, pcLoad + 54)}%` }}
             />
           </div>
+          <div className="mt-8 grid grid-cols-8 gap-2">
+            {dailyBars.slice(-8).map((day, index) => (
+              <div key={`today-spark-${day.day}-${index}`} className="h-12 rounded-xl bg-white/[0.035] p-1 flex items-end">
+                <div
+                  className="w-full rounded-lg bg-gradient-to-t from-[#00F0FF]/45 to-[#6aa4ff]"
+                  style={{ height: `${Math.max(18, Math.round((day.value / maxDaily) * 100))}%` }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 group">
+        <div className="glass-card relative min-h-[220px] overflow-hidden rounded-3xl p-6 group">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#BD00FF]/10 blur-3xl" />
           <div className="flex justify-between items-start mb-6">
             <div className="w-12 h-12 rounded-2xl bg-[#BD00FF]/10 border border-[#BD00FF]/20 flex items-center justify-center text-[#BD00FF]">
               <Users className="w-6 h-6" />
@@ -248,9 +261,17 @@ const ManagerHyperOverview = () => {
             <span className="w-1.5 h-1.5 rounded-full bg-[#BD00FF] animate-pulse" />
             +{newMembersWeek} новых за неделю
           </div>
+          <div className="mt-8 flex items-end gap-2">
+            {[42, 58, 36, 72, 54, 88, 46].map((height, index) => (
+              <div key={`members-pulse-${index}`} className="h-14 flex-1 rounded-full bg-white/[0.035] p-1">
+                <div className="w-full rounded-full bg-gradient-to-t from-[#BD00FF]/45 to-[#f08cff]" style={{ height: `${height}%`, marginTop: `${100 - height}%` }} />
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 group">
+        <div className="glass-card relative min-h-[220px] overflow-hidden rounded-3xl p-6 group">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#2B59F9]/10 blur-3xl" />
           <div className="flex justify-between items-start mb-6">
             <div className="w-12 h-12 rounded-2xl bg-[#2B59F9]/10 border border-[#2B59F9]/20 flex items-center justify-center text-[#2B59F9]">
               <BarChart3 className="w-6 h-6" />
@@ -264,7 +285,7 @@ const ManagerHyperOverview = () => {
             <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{(weekRevenue / 1_000_000).toFixed(1)}M</span>
             <span className="text-sm text-slate-500 font-bold">сум</span>
           </div>
-          <div className="h-10 flex items-end justify-between gap-2">
+          <div className="h-16 flex items-end justify-between gap-2">
             {dailyBars.map((day) => {
               const weekKey = `week-${day.day}-${day.date}`;
               const miniHeight = Math.max(6, Math.round((day.value / maxWeeklyMini) * 26));
@@ -293,7 +314,8 @@ const ManagerHyperOverview = () => {
           </div>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 group">
+        <div className="glass-card relative min-h-[220px] overflow-hidden rounded-3xl p-6 group">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#00FF94]/10 blur-3xl" />
           <div className="flex justify-between items-start mb-6">
             <div className="w-12 h-12 rounded-2xl bg-[#00FF94]/10 border border-[#00FF94]/20 flex items-center justify-center text-[#00FF94]">
               <MonitorPlay className="w-6 h-6" />
@@ -317,6 +339,18 @@ const ManagerHyperOverview = () => {
               style={{ width: `${pcLoad}%` }}
             />
           </div>
+          <div className="mt-8 grid grid-cols-5 gap-2">
+            {Array.from({ length: 10 }).map((_, index) => {
+              const active = index < Math.round((pcLoad / 100) * 10);
+              return (
+                <div
+                  key={`pc-dot-${index}`}
+                  className={`h-3 rounded-full ${active ? "bg-[#00FF94] shadow-[0_0_10px_rgba(0,255,148,0.45)]" : "bg-white/[0.055]"}`}
+                />
+              );
+            })}
+          </div>
+        </div>
         </div>
 
       </div>
