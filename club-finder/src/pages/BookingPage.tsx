@@ -148,6 +148,7 @@ export default function BookingPage() {
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [booked, setBooked] = useState<null | { id: number; zone_name: string; pc_names: string[]; status: string }>(null);
+  const [activeSpecIndex, setActiveSpecIndex] = useState(0);
 
   const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
   const [loadingMyBookings, setLoadingMyBookings] = useState(false);
@@ -257,6 +258,10 @@ export default function BookingPage() {
       setBooked((prev) => (prev ? { ...prev, status: refreshed.status } : prev));
     }
   }, [myBookings, booked]);
+
+  useEffect(() => {
+    setActiveSpecIndex(0);
+  }, [selectedZone]);
 
   useEffect(() => {
     if (!clubId) {
@@ -627,26 +632,40 @@ export default function BookingPage() {
 
               <div className="relative mb-4 grid grid-cols-4 rounded-full border border-white/10 bg-white/[0.055] p-1">
                 {zoneSpecItems.map((item, index) => (
-                  <div
+                  <button
                     key={item.label}
+                    type="button"
+                    onClick={() => setActiveSpecIndex(index)}
+                    aria-label={item.label}
                     className={`flex h-10 items-center justify-center rounded-full transition ${
-                      index === 0 ? "bg-white/16 text-white shadow-[0_8px_22px_rgba(255,255,255,0.08)]" : "text-white/55"
+                      activeSpecIndex === index
+                        ? "bg-white/16 text-white shadow-[0_8px_22px_rgba(255,255,255,0.08)]"
+                        : "text-white/55 hover:bg-white/[0.08] hover:text-white/85"
                     }`}
                   >
                     <item.icon className="h-4.5 w-4.5" />
-                  </div>
+                  </button>
                 ))}
               </div>
 
               <div className="relative grid grid-cols-2 gap-2.5">
-                {zoneSpecItems.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-3 backdrop-blur">
+                {zoneSpecItems.map((item, index) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => setActiveSpecIndex(index)}
+                    className={`rounded-2xl border px-3 py-3 text-left backdrop-blur transition ${
+                      activeSpecIndex === index
+                        ? "border-cyan-200/40 bg-cyan-300/10 shadow-[0_0_22px_rgba(103,232,249,0.12)]"
+                        : "border-white/10 bg-white/[0.06] hover:border-white/20 hover:bg-white/[0.085]"
+                    }`}
+                  >
                     <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-white/38">
                       <item.icon className="h-3.5 w-3.5" />
                       {item.label}
                     </div>
                     <div className="break-words text-[13px] font-black leading-snug text-white">{item.value}</div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
