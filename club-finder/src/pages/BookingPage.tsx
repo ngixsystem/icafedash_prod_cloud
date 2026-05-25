@@ -619,11 +619,14 @@ export default function BookingPage() {
               <div className="relative mb-3">
                 <div className="min-w-0">
                   <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-200/60">Характеристики</div>
-                  <div className="mt-1 flex flex-wrap items-end gap-x-2 gap-y-1">
-                    <h3 className="truncate font-display text-2xl font-black leading-none text-white">
+                  <div className="mt-1 flex items-end justify-between gap-3">
+                    <h3 className="min-w-0 truncate font-display text-2xl font-black leading-none text-white">
                       {selectedZoneInfo?.name || selectedZone}
                     </h3>
-                    <span className="pb-0.5 text-sm font-bold text-amber-100/85">
+                    <span
+                      className="shrink-0 pb-0.5 text-right text-[18px] font-bold leading-none text-white"
+                      style={{ fontFamily: "'Bebas Neue', Oswald, sans-serif" }}
+                    >
                       {selectedZoneInfo?.price ? `${selectedZoneInfo.price} сум/час` : "Цена не указана"}
                     </span>
                   </div>
