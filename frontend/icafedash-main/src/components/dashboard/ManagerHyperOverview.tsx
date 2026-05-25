@@ -129,63 +129,80 @@ const ManagerHyperOverview = () => {
     <div className="max-w-[1920px] mx-auto space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
         {/* Виджет сеанса оператора */}
-        <div className="glass-card rounded-3xl p-6 group sm:col-span-2 2xl:col-span-4">
-          <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#FF9500]/10 border border-[#FF9500]/20 flex items-center justify-center text-[#FF9500]">
+        <div className="glass-card relative overflow-hidden rounded-3xl p-6 group sm:col-span-2 xl:col-span-1 2xl:row-span-2">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#FF9500]/10 blur-3xl" />
+          <div className="relative flex justify-between items-start mb-7">
+            <div className="w-12 h-12 rounded-2xl bg-[#151515] border border-white/10 flex items-center justify-center text-[#FF9500] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               <Clock className="w-6 h-6" />
             </div>
-            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black border ${
               shiftData?.shift
-                ? "bg-[#00FF94]/10 border-[#00FF94]/20 text-[#00FF94]"
-                : "bg-white/5 border-white/10 text-slate-500"
+                ? "bg-emerald-400/10 border-emerald-300/20 text-emerald-300"
+                : "bg-white/[0.04] border-white/10 text-slate-500"
             }`}>
-              {shiftData?.shift ? "● Открыт" : "Нет данных"}
+              <span className={`h-1.5 w-1.5 rounded-full ${shiftData?.shift ? "bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.8)]" : "bg-slate-500"}`} />
+              {shiftData?.shift ? "Открыт" : "Нет данных"}
             </span>
           </div>
-          <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4 font-mono">Сеанс оператора</h3>
+          <h3 className="relative text-slate-400 text-[11px] font-black uppercase tracking-[0.18em] mb-5 font-mono">Сеанс оператора</h3>
 
           {shiftData?.shift ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Оператор</span>
-                <span className="text-sm font-bold text-white">{shiftData.shift.operator || "—"}</span>
+            <div className="relative space-y-3.5">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <span className="text-sm text-slate-400">Оператор</span>
+                <span className="text-sm font-black text-white truncate">{shiftData.shift.operator || "—"}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Начало сеанса</span>
-                <span className="text-sm font-semibold text-white">{shiftData.shift.start_time || "—"}</span>
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <span className="text-sm text-slate-400">Начало сеанса</span>
+                <span className="text-sm font-bold text-white text-right">{shiftData.shift.start_time || "—"}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Конец сеанса</span>
-                <span className="text-sm font-semibold text-white">{shiftData.shift.end_time || "—"}</span>
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <span className="text-sm text-slate-400">Конец сеанса</span>
+                <span className="text-sm font-bold text-white text-right">{shiftData.shift.end_time || "—"}</span>
               </div>
-              <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
-                <span className="text-xs text-slate-500">Касса в сеансе</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-[#FF9500]">{formatMoney(shiftData.shift.cash)}</span>
-                  <span className="text-xs text-slate-500">сум</span>
+              <div className="rounded-2xl border border-[#FF9500]/15 bg-[#FF9500]/[0.045] p-4">
+                <div className="flex items-end justify-between gap-3">
+                  <span className="text-sm text-slate-400">Касса в сеансе</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-black tracking-tight text-[#FF9500]">{formatMoney(shiftData.shift.cash)}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">сум</div>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Сеанс не найден или API недоступно</p>
+            <div className="relative rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-sm text-slate-500">
+              Сеанс не найден или API недоступно
+            </div>
           )}
 
-          {shiftData?.history && shiftData.history.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-white/5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3 font-mono">История сеансов</p>
-              <div className="space-y-2">
+          <div className="relative mt-5 border-t border-white/10 pt-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 mb-3 font-mono">История сеансов</p>
+            {shiftData?.history && shiftData.history.length > 0 ? (
+              <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
                 {shiftData.history.map((h, i) => (
-                  <div key={i} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-semibold text-white">{h.operator || "—"}</span>
-                      <span className="text-[10px] text-slate-500">{h.start_time || "—"} → {h.end_time || "—"}</span>
+                  <div key={i} className="rounded-2xl border border-white/10 bg-black/15 px-3.5 py-3 transition-colors hover:bg-white/[0.045]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-black text-white">{h.operator || "—"}</div>
+                        <div className="mt-1 text-[11px] leading-snug text-slate-500">
+                          {h.start_time || "—"} <span className="text-slate-600">→</span> {h.end_time || "—"}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right text-sm font-black text-[#FF9500]">
+                        {formatMoney(h.cash)}
+                        <span className="ml-1 text-[10px] text-[#FF9500]/70">сум</span>
+                      </div>
                     </div>
-                    <span className="text-xs font-bold text-[#FF9500] ml-4 shrink-0">{formatMoney(h.cash)} сум</span>
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-black/15 px-3.5 py-4 text-sm text-slate-500">
+                История пока пустая
+              </div>
+            )}
             </div>
-          )}
         </div>
 
         <div className="glass-card rounded-3xl p-6 group">
