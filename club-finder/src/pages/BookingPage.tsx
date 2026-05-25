@@ -4,6 +4,7 @@ import { ArrowLeft, Monitor, Clock, Check, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import computerIcon from "@/assets/computer.png";
 
 interface ClubZone {
   name: string;
@@ -21,6 +22,30 @@ interface ZonePc {
   name: string;
   status: "free" | "busy" | "offline";
 }
+
+const pcStatusUi = {
+  free: {
+    label: "Свободен",
+    icon: "bg-emerald-300",
+    dot: "bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.85)]",
+    card: "border-emerald-400/35 bg-emerald-500/10 text-emerald-100 shadow-[0_10px_26px_rgba(16,185,129,0.12)]",
+    ring: "from-emerald-300/35 via-emerald-400/10 to-transparent",
+  },
+  busy: {
+    label: "Занят",
+    icon: "bg-amber-300",
+    dot: "bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.8)]",
+    card: "border-amber-400/35 bg-amber-500/10 text-amber-100",
+    ring: "from-amber-300/30 via-amber-400/10 to-transparent",
+  },
+  offline: {
+    label: "Выключен",
+    icon: "bg-black",
+    dot: "bg-black ring-1 ring-white/20",
+    card: "border-white/10 bg-black/55 text-white/45",
+    ring: "from-white/10 via-black/20 to-transparent",
+  },
+} satisfies Record<ZonePc["status"], { label: string; icon: string; dot: string; card: string; ring: string }>;
 
 interface MyBooking {
   id: number;
@@ -582,32 +607,70 @@ export default function BookingPage() {
             {loadingPcs ? (
               <div className="text-sm text-muted-foreground">Загрузка ПК...</div>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="rounded-2xl border border-white/10 bg-[#090b10]/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <div className="mb-3 grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wide text-white/55">
+                  <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2 py-1">
+                    <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]" />
+                    Свободен
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1">
+                    <span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,0.75)]" />
+                    Занят
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/40 px-2 py-1">
+                    <span className="h-2 w-2 rounded-full bg-black ring-1 ring-white/25" />
+                    Выкл.
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5">
                 {zonePcs.map((pc) => {
                   const selected = selectedPcsInZone.includes(pc.name);
                   const clickable = pc.status === "free";
-                  const statusClass =
-                    pc.status === "free"
-                      ? "border-emerald-500/50 text-emerald-300 bg-emerald-500/10"
-                      : pc.status === "busy"
-                      ? "border-orange-500/50 text-orange-300 bg-orange-500/10"
-                      : "border-slate-500/40 text-slate-400 bg-slate-500/10";
+                  const status = pcStatusUi[pc.status] ?? pcStatusUi.offline;
                   return (
                     <button
                       key={String(pc.id)}
                       type="button"
                       disabled={!clickable}
                       onClick={() => togglePc(pc)}
-                      className={`rounded-md px-2 py-2 text-xs font-bold flex items-center justify-center transition border ${
+                      aria-label={`${pc.name}: ${status.label}`}
+                      className={`group relative min-h-[104px] overflow-hidden rounded-2xl border p-2.5 text-left transition duration-200 ${
                         selected
-                          ? "border-primary bg-primary/10 text-primary neon-border"
-                          : `${statusClass} ${clickable ? "hover:brightness-110" : "cursor-not-allowed opacity-90"}`
+                          ? "border-cyan-300 bg-cyan-400/15 text-cyan-100 shadow-[0_0_28px_rgba(34,211,238,0.24)]"
+                          : `${status.card} ${clickable ? "hover:-translate-y-0.5 hover:border-emerald-200/70 hover:bg-emerald-400/15" : "cursor-not-allowed opacity-90"}`
                       }`}
                     >
-                      {pc.name}
+                      <div className={`absolute inset-x-0 top-0 h-16 bg-gradient-to-b ${selected ? "from-cyan-300/35 via-cyan-400/10 to-transparent" : status.ring}`} />
+                      <div className="relative flex items-start justify-between gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${selected ? "bg-cyan-200 shadow-[0_0_12px_rgba(165,243,252,0.9)]" : status.dot}`} />
+                        {selected ? (
+                          <span className="rounded-full border border-cyan-200/45 bg-cyan-300/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-cyan-100">
+                            Выбран
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="relative mt-2 flex justify-center">
+                        <div
+                          className={`h-11 w-11 transition duration-200 ${selected ? "bg-cyan-200 drop-shadow-[0_0_14px_rgba(165,243,252,0.7)]" : status.icon} ${clickable ? "group-hover:scale-105" : ""}`}
+                          style={{
+                            WebkitMask: `url(${computerIcon}) center / contain no-repeat`,
+                            mask: `url(${computerIcon}) center / contain no-repeat`,
+                          }}
+                        />
+                      </div>
+
+                      <div className="relative mt-2 text-center">
+                        <div className="truncate text-[13px] font-black leading-tight text-white">{pc.name}</div>
+                        <div className={`mt-0.5 text-[10px] font-semibold ${selected ? "text-cyan-100/80" : pc.status === "offline" ? "text-white/35" : "text-white/60"}`}>
+                          {status.label}
+                        </div>
+                      </div>
                     </button>
                   );
                 })}
+                </div>
               </div>
             )}
           </div>
