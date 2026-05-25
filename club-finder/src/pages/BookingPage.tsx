@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Monitor, Clock, Check, MessageCircle } from "lucide-react";
+import { ArrowLeft, Monitor, Clock, Check, MessageCircle, Cpu, MemoryStick, HardDrive, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +9,9 @@ import computerIcon from "@/assets/computer.png";
 interface ClubZone {
   name: string;
   price?: string;
+  specs?: string;
+  capacity?: string;
+  pcsFree?: number;
 }
 
 interface ClubPayload {
@@ -85,6 +88,24 @@ function formatDate(value: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function getZoneSpecItems(zone: ClubZone | undefined, liveTotal: number, liveFree: number) {
+  const parts = (zone?.specs || "")
+    .split("/")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return [
+    { label: "Видеокарта", value: parts[0] || "GPU не указан", icon: Gauge },
+    { label: "Процессор", value: parts[1] || "CPU не указан", icon: Cpu },
+    { label: "Память", value: parts[2] || "RAM не указана", icon: MemoryStick },
+    {
+      label: "ПК в зоне",
+      value: liveTotal > 0 ? `${liveFree} из ${liveTotal} свободно` : zone?.capacity ? `${zone.capacity} мест` : "Нет данных",
+      icon: HardDrive,
+    },
+  ];
 }
 
 function bookingStatusUi(status: string) {
@@ -312,6 +333,14 @@ export default function BookingPage() {
   }, [clubId, selectedZone, toast]);
 
   const freeCount = useMemo(() => zonePcs.filter((pc) => pc.status === "free").length, [zonePcs]);
+  const selectedZoneInfo = useMemo(
+    () => club?.zones?.find((zone) => zone.name === selectedZone),
+    [club?.zones, selectedZone]
+  );
+  const zoneSpecItems = useMemo(
+    () => getZoneSpecItems(selectedZoneInfo, zonePcs.length, freeCount),
+    [selectedZoneInfo, zonePcs.length, freeCount]
+  );
   const selectedPcsInZone = selectedByZone[selectedZone] || [];
   const totalSelectedCount = useMemo(
     () => Object.values(selectedByZone).reduce((acc, items) => acc + items.length, 0),
@@ -619,6 +648,57 @@ export default function BookingPage() {
                   );
                 })}
               </div>
+            </div>
+          </div>
+
+          <div className="px-4 mb-5">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0b0d12] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_40px_rgba(0,0,0,0.22)]">
+              <div className="absolute -right-10 top-8 h-36 w-36 rounded-full bg-cyan-400/10 blur-3xl" />
+              <div className="absolute -left-10 bottom-0 h-28 w-28 rounded-full bg-amber-300/10 blur-3xl" />
+
+              <div className="relative mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-200/60">Характеристики</div>
+                  <h3 className="mt-1 truncate font-display text-2xl font-black leading-none text-white">
+                    {selectedZoneInfo?.name || selectedZone}
+                  </h3>
+                </div>
+                <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-right">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-100/55">Цена</div>
+                  <div className="text-sm font-black text-amber-100">{selectedZoneInfo?.price || "Не указана"}</div>
+                </div>
+              </div>
+
+              <div className="relative mb-4 grid grid-cols-4 rounded-full border border-white/10 bg-white/[0.055] p-1">
+                {zoneSpecItems.map((item, index) => (
+                  <div
+                    key={item.label}
+                    className={`flex h-10 items-center justify-center rounded-full transition ${
+                      index === 0 ? "bg-white/16 text-white shadow-[0_8px_22px_rgba(255,255,255,0.08)]" : "text-white/55"
+                    }`}
+                  >
+                    <item.icon className="h-4.5 w-4.5" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="relative grid grid-cols-2 gap-2.5">
+                {zoneSpecItems.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-3 backdrop-blur">
+                    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-white/38">
+                      <item.icon className="h-3.5 w-3.5" />
+                      {item.label}
+                    </div>
+                    <div className="break-words text-[13px] font-black leading-snug text-white">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="relative mt-3 text-[12px] leading-relaxed text-white/55">
+                {selectedZoneInfo?.specs
+                  ? `Конфигурация зоны: ${selectedZoneInfo.specs}`
+                  : "Для этой зоны пока не указаны подробные характеристики. Можно выбрать свободный ПК и продолжить бронирование."}
+              </p>
             </div>
           </div>
 
