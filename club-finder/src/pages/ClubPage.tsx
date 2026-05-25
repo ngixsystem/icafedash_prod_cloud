@@ -323,11 +323,8 @@ export default function ClubPage() {
                 className="group relative overflow-hidden rounded-[18px] border border-white/10 bg-[radial-gradient(circle_at_22%_0%,rgba(255,120,0,0.11),transparent_34%),linear-gradient(160deg,rgba(24,25,29,0.96),rgba(13,14,18,0.98))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_10px_22px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#FF9A2F]/35 hover:shadow-[0_14px_28px_rgba(255,120,0,0.1)]"
               >
                 <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="mb-2">
                   <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-[#FFB15E]">{t.duration}</div>
-                  <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white/35">
-                    Tariff
-                  </span>
                 </div>
                 <p className="font-display text-[25px] leading-none text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.3)]">
                   {t.price || 0} <span className="text-[15px] text-[#FF9A2F]">СУМ</span>
