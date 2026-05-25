@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Monitor, Clock, Check, MessageCircle, Cpu, MemoryStick, HardDrive, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import computerIcon from "@/assets/computer.png";
 
@@ -65,8 +66,6 @@ interface MyBooking {
   created_at: string | null;
 }
 
-const durationOptions = ["30 мин", "1 час", "2 часа", "3 часа", "5 часов"];
-
 function toLocalDateTimeParts(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   const y = d.getFullYear();
@@ -88,6 +87,21 @@ function formatDate(value: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function minutesBetween(date: string, startTime: string, endTime: string): number {
+  const start = new Date(`${date}T${startTime}:00`);
+  const end = new Date(`${date}T${endTime}:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  return Math.round((end.getTime() - start.getTime()) / 60000);
+}
+
+function formatDurationFromMinutes(minutes: number): string {
+  if (minutes > 0 && minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} ${hours === 1 ? "час" : hours < 5 ? "часа" : "часов"}`;
+  }
+  return `${minutes} мин`;
 }
 
 function getZoneSpecItems(zone: ClubZone | undefined, liveTotal: number, liveFree: number) {
@@ -140,13 +154,15 @@ export default function BookingPage() {
   const [loadingPcs, setLoadingPcs] = useState(false);
   const [selectedByZone, setSelectedByZone] = useState<Record<string, string[]>>({});
 
-  const [duration, setDuration] = useState(durationOptions[1]);
   const nowPlus = new Date(Date.now() + 30 * 60 * 1000);
+  const endPlus = new Date(nowPlus.getTime() + 60 * 60 * 1000);
   const [bookingDate, setBookingDate] = useState(toLocalDateTimeParts(nowPlus).date);
   const [bookingTime, setBookingTime] = useState(toLocalDateTimeParts(nowPlus).time);
+  const [bookingEndTime, setBookingEndTime] = useState(toLocalDateTimeParts(endPlus).time);
   const [clientName, setClientName] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [booked, setBooked] = useState<null | { id: number; zone_name: string; pc_names: string[]; status: string }>(null);
   const [activeSpecIndex, setActiveSpecIndex] = useState(0);
 
@@ -387,7 +403,7 @@ export default function BookingPage() {
     });
   };
 
-  const submitBooking = async () => {
+  const openBookingDialog = () => {
     if (!clubId || !selectedZone) return;
     if (!token) {
       navigate("/auth", { state: { from: { pathname: "/booking", search: `?club=${clubId}&zone=${encodeURIComponent(selectedZone)}` } } });
@@ -401,6 +417,15 @@ export default function BookingPage() {
       });
       return;
     }
+    if (selectedPcEntries.length < 1) {
+      toast({ title: "Ошибка", description: "Выберите хотя бы один ПК", variant: "destructive" });
+      return;
+    }
+    setBookingDialogOpen(true);
+  };
+
+  const submitBooking = async () => {
+    if (!clubId || !selectedZone) return;
     if (!clientName.trim()) {
       toast({ title: "Ошибка", description: "Введите имя", variant: "destructive" });
       return;
@@ -409,14 +434,16 @@ export default function BookingPage() {
       toast({ title: "Ошибка", description: "Введите номер телефона", variant: "destructive" });
       return;
     }
-    if (!bookingDate || !bookingTime) {
-      toast({ title: "Ошибка", description: "Укажите дату и время брони", variant: "destructive" });
+    if (!bookingDate || !bookingTime || !bookingEndTime) {
+      toast({ title: "Ошибка", description: "Укажите дату, время начала и время окончания", variant: "destructive" });
       return;
     }
-    if (selectedPcEntries.length < 1) {
-      toast({ title: "Ошибка", description: "Выберите хотя бы один ПК", variant: "destructive" });
+    const durationMinutes = minutesBetween(bookingDate, bookingTime, bookingEndTime);
+    if (durationMinutes <= 0) {
+      toast({ title: "Ошибка", description: "Время окончания должно быть позже времени начала", variant: "destructive" });
       return;
     }
+    const bookingDuration = formatDurationFromMinutes(durationMinutes);
 
     setSubmitting(true);
     try {
@@ -429,7 +456,7 @@ export default function BookingPage() {
         body: JSON.stringify({
           client_name: clientName.trim(),
           phone: phone.trim(),
-          duration,
+          duration: bookingDuration,
           booking_start_at: `${bookingDate}T${bookingTime}:00`,
           selected_pcs: selectedPcEntries,
         }),
@@ -458,6 +485,7 @@ export default function BookingPage() {
         status: payload.booking?.status || "pending",
       });
       setSelectedByZone({});
+      setBookingDialogOpen(false);
       await loadMyBookings();
       toast({ title: "Готово", description: "Бронь отправлена менеджеру (статус: ожидание)" });
     } catch (err: any) {
@@ -743,43 +771,55 @@ export default function BookingPage() {
             )}
           </div>
 
-          <div className="px-4 mb-5">
-            <h2 className="text-sm font-display font-bold mb-2 text-muted-foreground uppercase tracking-wider">
-              <Clock className="w-3.5 h-3.5 inline mr-1" /> Время
-            </h2>
-            <div className="flex gap-2 flex-wrap">
-              {durationOptions.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => setDuration(option)}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition border ${
-                    duration === option
-                      ? "border-primary bg-primary/10 text-primary neon-border"
-                      : "border-border bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="px-4 mb-6 space-y-3">
-            <Input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} min={toLocalDateTimeParts(new Date()).date} />
-            <Input type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} />
-            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Имя клиента *" />
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Номер телефона *" />
-          </div>
-
           <div className="px-4">
             <Button
-              onClick={submitBooking}
-              disabled={!!activeBooking || submitting || totalSelectedCount < 1 || !clientName.trim() || !phone.trim() || !bookingDate || !bookingTime}
+              onClick={openBookingDialog}
+              disabled={!!activeBooking || submitting || totalSelectedCount < 1}
               className="w-full h-12 rounded-lg gradient-primary text-primary-foreground font-display font-bold text-base neon-glow disabled:opacity-40 disabled:shadow-none"
             >
-              {submitting ? "Отправка..." : "Забронировать"}
+              Забронировать
             </Button>
           </div>
+
+          <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
+            <DialogContent className="max-w-[380px] rounded-3xl border-white/10 bg-[#0b0d12] p-5">
+              <DialogHeader className="text-left">
+                <DialogTitle className="font-display text-2xl font-black text-white">Данные брони</DialogTitle>
+                <DialogDescription>
+                  {selectedZoneInfo?.name || selectedZone} · {totalSelectedCount} ПК
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-white/45">Дата</span>
+                  <Input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} min={toLocalDateTimeParts(new Date()).date} />
+                </label>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-white/45">С</span>
+                    <Input type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-white/45">До</span>
+                    <Input type="time" value={bookingEndTime} onChange={(e) => setBookingEndTime(e.target.value)} />
+                  </label>
+                </div>
+
+                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Имя клиента *" />
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Номер телефона *" />
+
+                <Button
+                  onClick={submitBooking}
+                  disabled={submitting || !clientName.trim() || !phone.trim() || !bookingDate || !bookingTime || !bookingEndTime}
+                  className="h-12 w-full rounded-xl gradient-primary font-display text-base font-bold text-primary-foreground neon-glow disabled:opacity-40 disabled:shadow-none"
+                >
+                  {submitting ? "Отправка..." : "Отправить бронь"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
