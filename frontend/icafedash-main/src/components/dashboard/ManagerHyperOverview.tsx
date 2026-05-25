@@ -351,6 +351,53 @@ const ManagerHyperOverview = () => {
             })}
           </div>
         </div>
+
+        <div className="glass-card relative overflow-hidden rounded-3xl p-6 group sm:col-span-2">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-44 w-44 rounded-full bg-[#FF9500]/10 blur-3xl" />
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#FF9500]/20 bg-[#FF9500]/10 text-[#FF9500]">
+                  <Activity className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">Активность клуба</h3>
+                  <p className="text-xs font-medium text-slate-500">Сводка загрузки и дохода в реальном времени</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">ПК</p>
+                  <p className="mt-1 text-xl font-black text-white">{activePcs}/{totalPcs}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Загрузка</p>
+                  <p className="mt-1 text-xl font-black text-[#00FF94]">{pcLoad}%</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Сегодня</p>
+                  <p className="mt-1 text-xl font-black text-[#FF9500]">{(todayRevenue / 1_000_000).toFixed(1)}M</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Участники</p>
+                  <p className="mt-1 text-xl font-black text-white">{formatMoney(members)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative h-28 min-w-0 flex-1 overflow-hidden rounded-3xl border border-white/10 bg-black/20 px-4 py-3">
+              <div className="absolute inset-x-4 top-1/2 h-px bg-white/[0.06]" />
+              <div className="relative flex h-full items-end gap-2">
+                {dailyBars.slice(-12).map((day, index) => {
+                  const height = Math.max(14, Math.round((day.value / maxDaily) * 100));
+                  return (
+                    <div key={`activity-wave-${day.day}-${index}`} className="flex-1 rounded-t-xl bg-gradient-to-t from-[#FF9500]/35 via-[#00F0FF]/40 to-[#00FF94]/60" style={{ height: `${height}%` }} />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
 
       </div>
