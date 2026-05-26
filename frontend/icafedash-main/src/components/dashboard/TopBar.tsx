@@ -24,6 +24,7 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
 
   useEffect(() => {
     localStorage.setItem("icafe_theme_preview", whiteThemeQueued ? "white" : "dark");
+    document.documentElement.classList.toggle("icafe-light-theme", whiteThemeQueued);
   }, [whiteThemeQueued]);
 
   return (

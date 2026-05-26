@@ -419,6 +419,235 @@
     background: rgba(90, 96, 106, 0.65);
   }
 
+  .icafe-light-theme body {
+    background-color: #f4f4f6;
+    background-image: none;
+  }
+
+  .icafe-light-theme .ios26-admin {
+    color: #111318;
+    background: #f4f4f6;
+  }
+
+  .icafe-light-theme .ios26-admin::before {
+    background: linear-gradient(90deg, rgba(17, 19, 24, 0.035) 1px, transparent 1px);
+    background-size: 256px 100%;
+    opacity: 0.45;
+  }
+
+  .icafe-light-theme .ios26-admin.esports-shell::before,
+  .icafe-light-theme .ios26-admin .ambient-layer,
+  .icafe-light-theme .ios26-admin .grid-bg,
+  .icafe-light-theme .ios26-admin .blob {
+    display: none;
+  }
+
+  .icafe-light-theme .ios26-admin header {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-bottom: 1px solid #dfe1e6 !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  @media (min-width: 1024px) {
+    .icafe-light-theme .ios26-admin header {
+      border-bottom: 1px solid #dfe1e6 !important;
+    }
+  }
+
+  .icafe-light-theme .ios26-admin .glass-panel {
+    background: #ffffff;
+    border-right: 1px solid #dfe1e6;
+    box-shadow: none;
+  }
+
+  .icafe-light-theme .ios26-admin .glass-card,
+  .icafe-light-theme .ios26-admin [data-radix-popper-content-wrapper] [role="menu"],
+  .icafe-light-theme .ios26-admin .rounded-2xl.border,
+  .icafe-light-theme .ios26-admin .rounded-xl.border {
+    color: #111318;
+    background: #ffffff;
+    border-color: #d9dce3;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .icafe-light-theme .ios26-admin .glass-card::before {
+    display: none;
+  }
+
+  .icafe-light-theme .ios26-admin .glass-card:hover {
+    transform: translateY(-1px);
+    background: #ffffff;
+    border-color: #c9ccd4;
+    box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
+  }
+
+  .icafe-light-theme .ios26-admin .text-white,
+  .icafe-light-theme .ios26-admin .text-gray-300,
+  .icafe-light-theme .ios26-admin .text-slate-300,
+  .icafe-light-theme .ios26-admin .text-slate-200,
+  .icafe-light-theme .ios26-admin .text-slate-950,
+  .icafe-light-theme .ios26-admin .text-slate-900,
+  .icafe-light-theme .ios26-admin .text-slate-800 {
+    color: #111318 !important;
+  }
+
+  .icafe-light-theme .ios26-admin .text-slate-400,
+  .icafe-light-theme .ios26-admin .text-slate-500,
+  .icafe-light-theme .ios26-admin .text-muted-foreground {
+    color: #5f636d !important;
+  }
+
+  .icafe-light-theme .ios26-admin .border-white\/10,
+  .icafe-light-theme .ios26-admin .border-white\/5,
+  .icafe-light-theme .ios26-admin .border-white\/70,
+  .icafe-light-theme .ios26-admin .border-slate-200\/70 {
+    border-color: #dfe1e6 !important;
+  }
+
+  .icafe-light-theme .ios26-admin .bg-white\/20,
+  .icafe-light-theme .ios26-admin .bg-white\/5,
+  .icafe-light-theme .ios26-admin .bg-white\/\[0\.02\],
+  .icafe-light-theme .ios26-admin .bg-white\/\[0\.015\],
+  .icafe-light-theme .ios26-admin .bg-black\/20,
+  .icafe-light-theme .ios26-admin .bg-black\/15,
+  .icafe-light-theme .ios26-admin .bg-\[\#0f1528\]\/40,
+  .icafe-light-theme .ios26-admin .bg-\[\#141d35\],
+  .icafe-light-theme .ios26-admin .bg-\[\#0e1427\],
+  .icafe-light-theme .ios26-admin .bg-\[\#0b0d12\],
+  .icafe-light-theme .ios26-admin .bg-\[\#151725\],
+  .icafe-light-theme .ios26-admin .bg-\[\#1F2235\],
+  .icafe-light-theme .ios26-admin .bg-white\/70,
+  .icafe-light-theme .ios26-admin .bg-white\/65,
+  .icafe-light-theme .ios26-admin .bg-white\/60,
+  .icafe-light-theme .ios26-admin .bg-white\/55,
+  .icafe-light-theme .ios26-admin .bg-white\/45,
+  .icafe-light-theme .ios26-admin .bg-white\/35 {
+    background: #f4f4f6 !important;
+  }
+
+  .icafe-light-theme .ios26-admin .nav-item {
+    color: #111318;
+    border-radius: 8px;
+  }
+
+  .icafe-light-theme .ios26-admin .nav-item:hover {
+    color: #111318;
+    background: #f0f1f3 !important;
+    border-color: transparent !important;
+  }
+
+  .icafe-light-theme .ios26-admin .nav-item span,
+  .icafe-light-theme .ios26-admin .nav-item svg {
+    color: #5f636d !important;
+  }
+
+  .icafe-light-theme .ios26-admin .nav-item.active {
+    color: #111318;
+    background: #e5e5e7 !important;
+    border-color: transparent !important;
+    box-shadow: none;
+  }
+
+  .icafe-light-theme .ios26-admin .nav-item.active span,
+  .icafe-light-theme .ios26-admin .nav-item.active svg {
+    color: #111318 !important;
+  }
+
+  .icafe-light-theme .ios26-admin .nav-item .ml-auto.w-1\.5 {
+    display: none;
+  }
+
+  .icafe-light-theme .ios26-admin input,
+  .icafe-light-theme .ios26-admin select,
+  .icafe-light-theme .ios26-admin textarea {
+    color: #111318 !important;
+    background: #ffffff !important;
+    border-color: #d9dce3 !important;
+    box-shadow: none;
+  }
+
+  .icafe-light-theme .ios26-admin input::placeholder,
+  .icafe-light-theme .ios26-admin textarea::placeholder {
+    color: #8a8f99 !important;
+  }
+
+  .icafe-light-theme .ios26-admin .neon-button {
+    color: #ffffff !important;
+    background: #673de6;
+    border: 1px solid #673de6;
+    box-shadow: none;
+  }
+
+  .icafe-light-theme .ios26-admin .neon-button:hover {
+    background: #5429d6;
+    box-shadow: none;
+  }
+
+  .icafe-light-theme .ios26-admin button:not(.nav-item):not(.cosmic-theme-toggle button),
+  .icafe-light-theme .ios26-admin [role="button"] {
+    box-shadow: none;
+  }
+
+  .icafe-light-theme .ios26-admin table {
+    color: #111318;
+  }
+
+  .icafe-light-theme .ios26-admin thead {
+    background: #f7f7f8 !important;
+    color: #6d7280 !important;
+  }
+
+  .icafe-light-theme .ios26-admin tbody {
+    border-color: #e5e7eb !important;
+  }
+
+  .icafe-light-theme .ios26-admin tr:hover {
+    background: #f7f7f8 !important;
+  }
+
+  .icafe-light-theme .ios26-admin [data-radix-popper-content-wrapper] [role="menu"] {
+    background: #ffffff !important;
+    border-color: #d9dce3 !important;
+    color: #111318 !important;
+  }
+
+  .icafe-light-theme .ios26-admin .cosmic-theme-slider {
+    background: linear-gradient(45deg, #f7f3ff, #ffffff);
+    border-color: #673de6;
+    box-shadow: 0 0 0 1px rgba(103, 61, 230, 0.1);
+  }
+
+  .icafe-light-theme .ios26-admin .cosmic-theme-stars {
+    opacity: 0.32;
+    background:
+      radial-gradient(1px 1px at 14% 24%, #673de6 100%, transparent),
+      radial-gradient(1px 1px at 25% 70%, #673de6 100%, transparent),
+      radial-gradient(1.5px 1.5px at 45% 35%, #673de6 100%, transparent),
+      radial-gradient(1px 1px at 62% 22%, #673de6 100%, transparent),
+      radial-gradient(1px 1px at 82% 66%, #673de6 100%, transparent),
+      radial-gradient(1.5px 1.5px at 90% 30%, #673de6 100%, transparent);
+  }
+
+  .icafe-light-theme .ios26-admin .cosmic-theme-orb {
+    background: linear-gradient(145deg, #673de6, #8c6cff);
+  }
+
+  .icafe-light-theme .ios26-admin .cosmic-theme-orb-inner {
+    background: linear-gradient(145deg, #ffffff, #f0ebff);
+  }
+
+  .icafe-light-theme .ios26-admin ::-webkit-scrollbar-track {
+    background: #f4f4f6;
+  }
+
+  .icafe-light-theme .ios26-admin ::-webkit-scrollbar-thumb {
+    background: #c7c9d1;
+  }
+
   .cosmic-theme-toggle {
     position: relative;
     display: inline-flex;
