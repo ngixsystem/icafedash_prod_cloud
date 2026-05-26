@@ -4681,6 +4681,20 @@ def get_shift():
     return jsonify({"shift": shift, "history": history, "debug": debug})
 
 
+def _report_series_name(series_item):
+    return str(series_item.get("name", "")).strip().lower()
+
+
+def _is_total_report_series(series_item):
+    return _report_series_name(series_item) == "total"
+
+
+def _revenue_report_series(series):
+    total_series = [s for s in series if _is_total_report_series(s)]
+    method_series = [s for s in series if not _is_total_report_series(s)]
+    return total_series if total_series else method_series
+
+
 @app.get("/api/overview")
 @jwt_required()
 def overview():
@@ -4710,12 +4724,8 @@ def overview():
         series = data.get("series", [])
         categories = data.get("categories", [])
 
-        # Separate "Total" series from payment-method series
-        total_series = [s for s in series if str(s.get("name", "")).strip().lower() == "total"]
-        method_series = [s for s in series if str(s.get("name", "")).strip().lower() != "total"]
-
-        # Use Total series for revenue figures; fall back to summing methods if absent
-        revenue_series = total_series if total_series else method_series
+        method_series = [s for s in series if not _is_total_report_series(s)]
+        revenue_series = _revenue_report_series(series)
 
         if categories:
             today_idx = len(categories) - 1
@@ -4832,9 +4842,9 @@ def daily_chart():
         categories = data.get("categories", [])
         series = data.get("series", [])
         
-        # Aggregate totals across all payment series (Cash, Credit card, etc.)
+        # Use Total when the API provides it; otherwise sum payment-method series.
         daily_totals = [0.0] * len(categories)
-        for s in series:
+        for s in _revenue_report_series(series):
             s_data = s.get("data", [])
             for i in range(min(len(daily_totals), len(s_data))):
                 daily_totals[i] += float(s_data[i] or 0)
@@ -4926,6 +4936,8 @@ def payment_methods_chart():
         grand_total = 0
         
         for s in series:
+            if _is_total_report_series(s):
+                continue
             s_name = s.get("name", "Unknown")
             # Translate common names to RU for better UI
             label = s_name
@@ -4980,8 +4992,8 @@ def income_monthly_chart():
         categories = data.get("categories", [])
         series = data.get("series", [])
         
-        # Aggregate daily data into monthly buckets
-        for s in series:
+        # Use Total when the API provides it; otherwise sum payment-method series.
+        for s in _revenue_report_series(series):
             s_data = s.get("data", [])
             for i, val in enumerate(s_data):
                 if i >= len(categories): break
