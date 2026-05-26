@@ -138,12 +138,14 @@ const Monitoring = () => {
                         className="relative h-[clamp(360px,calc(100svh-240px),620px)] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_50%_45%,rgba(255,149,0,0.055),transparent_46%),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[length:auto,72px_72px,72px_72px]"
                     >
                         <div
-                            className="absolute left-1/2 top-1/2"
+                            className="absolute"
                             style={{
                                 width: mapMetrics.width,
                                 height: mapMetrics.height,
-                                transform: `translate(-50%, -50%) scale(${mapScale})`,
-                                transformOrigin: "center",
+                                left: Math.max(0, (mapFrameSize.width - mapMetrics.width * mapScale) / 2),
+                                top: Math.max(0, (mapFrameSize.height - mapMetrics.height * mapScale) / 2),
+                                transform: `scale(${mapScale})`,
+                                transformOrigin: "top left",
                             }}
                         >
                         {pcs.map((pc) => {
