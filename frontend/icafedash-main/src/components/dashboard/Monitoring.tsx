@@ -64,8 +64,8 @@ const Monitoring = () => {
     const pcs = data?.pcs ?? [];
     const sortedPcs = [...pcs].sort((a, b) => String(a.name).localeCompare(String(b.name)));
     const mapMetrics = useMemo(() => {
-        const tileSize = 70;
-        const mapPadding = 120;
+        const tileSize = 58;
+        const mapPadding = 96;
         const minLeft = Math.min(0, ...pcs.map((pc) => Number(pc.left ?? 0)));
         const minTop = Math.min(0, ...pcs.map((pc) => Number(pc.top ?? 0)));
         const maxLeft = Math.max(900, ...pcs.map((pc) => Number(pc.left ?? 0) + tileSize));
@@ -152,7 +152,7 @@ const Monitoring = () => {
                             return (
                             <div
                                 key={pc.id}
-                                className={`absolute flex h-[70px] w-[70px] cursor-pointer flex-col items-center justify-center rounded-[18px] border p-1.5 transition-all duration-200 hover:-translate-y-1 hover:scale-105 ${tone.card}`}
+                                className={`absolute flex h-[58px] w-[58px] cursor-pointer flex-col items-center justify-center rounded-[15px] border p-1 transition-all duration-200 hover:-translate-y-1 hover:scale-105 ${tone.card}`}
                                 onMouseEnter={() => {
                                     if (pc.status !== "busy") return;
                                     setHoveredBusyPc({
@@ -172,18 +172,18 @@ const Monitoring = () => {
                                 <span className="absolute left-2 top-2 h-2 w-2 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
                                 {pc.status === "busy" && (
                                     <span
-                                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
+                                        className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
                                         title="Клиент за ПК"
                                     >
-                                        <UserRound className="h-3 w-3" />
+                                        <UserRound className="h-2.5 w-2.5" />
                                     </span>
                                 )}
-                                <ComputerGlyph className={`mb-1 h-7 w-9 ${tone.icon}`} />
-                                <span className="w-full truncate text-center text-[10px] font-black leading-none">
+                                <ComputerGlyph className={`mb-0.5 h-6 w-8 ${tone.icon}`} />
+                                <span className="w-full truncate text-center text-[9px] font-black leading-none">
                                     {pc.name}
                                 </span>
                                 {pc.time_left && (
-                                    <span className="mt-0.5 text-[8px] font-bold opacity-80">{pc.time_left}</span>
+                                    <span className="mt-0.5 text-[7px] font-bold opacity-80">{pc.time_left}</span>
                                 )}
                             </div>
                             );
