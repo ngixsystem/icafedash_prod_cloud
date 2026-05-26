@@ -557,81 +557,29 @@
 
   .icafe-light-theme .ios26-admin .nav-item {
     color: #111318;
-    background: #ffffff !important;
-    border: 1px solid transparent !important;
     border-radius: 8px;
-    box-shadow: 5px 5px 10px rgba(17, 19, 24, 0.06);
-    cursor: pointer;
-    overflow: hidden;
-    position: relative;
-    transition: transform 0.22s ease, background-color 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
   }
 
-  .icafe-light-theme .ios26-admin .nav-item::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -105%;
-    width: 130%;
-    height: 130%;
-    border-radius: 999px;
-    background: #111318;
-    transition: transform 0.32s ease, border-radius 0.32s ease;
-    z-index: 0;
+  .icafe-light-theme .ios26-admin .nav-item:hover {
+    color: #111318;
+    background: #f0f1f3 !important;
+    border-color: transparent !important;
   }
 
   .icafe-light-theme .ios26-admin .nav-item span,
   .icafe-light-theme .ios26-admin .nav-item svg {
-    position: relative;
-    z-index: 1;
     color: #5f636d !important;
-    transition: color 0.22s ease, transform 0.22s ease;
-  }
-
-  .icafe-light-theme .ios26-admin .nav-item:hover {
-    color: #ffffff;
-    border-color: #111318 !important;
-    box-shadow: 5px 8px 16px rgba(17, 19, 24, 0.1);
-  }
-
-  .icafe-light-theme .ios26-admin .nav-item:hover::before {
-    transform: translate(82%, -18%);
-    border-radius: 0;
-  }
-
-  .icafe-light-theme .ios26-admin .nav-item:hover span,
-  .icafe-light-theme .ios26-admin .nav-item:hover svg {
-    color: #ffffff !important;
-  }
-
-  .icafe-light-theme .ios26-admin .nav-item:active {
-    transform: translate(3px, 3px);
-    box-shadow: 2px 2px 6px rgba(17, 19, 24, 0.08);
   }
 
   .icafe-light-theme .ios26-admin .nav-item.active {
-    color: #ffffff;
-    background: #111318 !important;
-    border-color: #111318 !important;
-    box-shadow: 5px 5px 10px rgba(17, 19, 24, 0.12);
+    color: #111318;
+    background: #e5e5e7 !important;
+    border-color: transparent !important;
+    box-shadow: none;
   }
 
   .icafe-light-theme .ios26-admin .nav-item.active span,
   .icafe-light-theme .ios26-admin .nav-item.active svg {
-    color: #ffffff !important;
-  }
-
-  .icafe-light-theme .ios26-admin .nav-item.active::before {
-    background: #ffffff;
-    opacity: 0;
-  }
-
-  .icafe-light-theme .ios26-admin .nav-item.active:hover::before {
-    opacity: 1;
-  }
-
-  .icafe-light-theme .ios26-admin .nav-item.active:hover span,
-  .icafe-light-theme .ios26-admin .nav-item.active:hover svg {
     color: #111318 !important;
   }
 
