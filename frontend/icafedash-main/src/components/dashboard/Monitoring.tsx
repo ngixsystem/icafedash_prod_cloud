@@ -1,10 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { api } from "@/lib/api";
-import { RefreshCcw, UserRound } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Maximize2, RefreshCcw, UserRound, X } from "lucide-react";
 import LottieIcon from "@/components/LottieIcon";
+import { api } from "@/lib/api";
 import computerIcon from "@/assets/computer.png";
 import loadingAnimation from "@/assets/loading.json";
+
+type MonitoringPc = {
+    id: string | number;
+    name: string;
+    status?: string;
+    member?: string;
+    time_left?: string;
+    top?: number | string | null;
+    left?: number | string | null;
+};
+
+type BusyPcInfo = {
+    id: string | number;
+    name: string;
+    member: string;
+    time_left?: string;
+};
 
 function getPcTone(status: string | undefined) {
     if (status === "busy") {
@@ -45,15 +62,93 @@ function ComputerGlyph({ className = "" }: { className?: string }) {
     );
 }
 
+function PcMap({
+    pcs,
+    fullscreen = false,
+    onBusyHover,
+}: {
+    pcs: MonitoringPc[];
+    fullscreen?: boolean;
+    onBusyHover: (pc: BusyPcInfo | null) => void;
+}) {
+    const bounds = useMemo(() => {
+        const xs = pcs.map((pc) => Number(pc.left ?? 0));
+        const ys = pcs.map((pc) => Number(pc.top ?? 0));
+        const minX = Math.min(...xs, 0);
+        const maxX = Math.max(...xs, 1);
+        const minY = Math.min(...ys, 0);
+        const maxY = Math.max(...ys, 1);
+
+        return {
+            minX,
+            minY,
+            rangeX: Math.max(maxX - minX, 1),
+            rangeY: Math.max(maxY - minY, 1),
+        };
+    }, [pcs]);
+
+    return (
+        <div
+            className={`relative h-full w-full overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_50%_45%,rgba(255,149,0,0.06),transparent_46%),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:auto,7.5%_14%,7.5%_14%] ${
+                fullscreen ? "rounded-none" : ""
+            }`}
+        >
+            {pcs.map((pc) => {
+                const tone = getPcTone(pc.status);
+                const x = 5 + ((Number(pc.left ?? 0) - bounds.minX) / bounds.rangeX) * 90;
+                const y = 7 + ((Number(pc.top ?? 0) - bounds.minY) / bounds.rangeY) * 86;
+
+                return (
+                    <div
+                        key={pc.id}
+                        className={`absolute flex cursor-pointer flex-col items-center justify-center border transition-all duration-200 hover:-translate-y-1 hover:scale-105 ${
+                            fullscreen
+                                ? "h-[clamp(38px,8.4svh,56px)] w-[clamp(38px,8.4svh,56px)] rounded-[13px] p-1"
+                                : "h-[clamp(42px,3.55vw,58px)] w-[clamp(42px,3.55vw,58px)] rounded-[15px] p-1"
+                        } ${tone.card}`}
+                        onMouseEnter={() => {
+                            if (pc.status !== "busy") return;
+                            onBusyHover({
+                                id: pc.id,
+                                name: pc.name,
+                                member: pc.member || "Не указано",
+                                time_left: pc.time_left || "",
+                            });
+                        }}
+                        onMouseLeave={() => onBusyHover(null)}
+                        style={{
+                            left: `${x}%`,
+                            top: `${y}%`,
+                            transform: "translate(-50%, -50%)",
+                        }}
+                        title={`${pc.name} - ${tone.label}${pc.member ? ` (${pc.member})` : ""}`}
+                    >
+                        <span className="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
+                        {pc.status === "busy" && (
+                            <span
+                                className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
+                                title="Клиент за ПК"
+                            >
+                                <UserRound className="h-2.5 w-2.5" />
+                            </span>
+                        )}
+                        <ComputerGlyph className={`mb-0.5 ${fullscreen ? "h-5 w-7" : "h-6 w-8"} ${tone.icon}`} />
+                        <span className={`w-full truncate text-center font-black leading-none ${fullscreen ? "text-[8px]" : "text-[9px]"}`}>
+                            {pc.name}
+                        </span>
+                        {pc.time_left && (
+                            <span className="mt-0.5 text-[7px] font-bold opacity-80">{pc.time_left}</span>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 const Monitoring = () => {
-    const mapFrameRef = useRef<HTMLDivElement | null>(null);
-    const [mapFrameSize, setMapFrameSize] = useState({ width: 0, height: 0 });
-    const [hoveredBusyPc, setHoveredBusyPc] = useState<{
-        id: string | number;
-        name: string;
-        member: string;
-        time_left?: string;
-    } | null>(null);
+    const [isMapOpen, setIsMapOpen] = useState(false);
+    const [hoveredBusyPc, setHoveredBusyPc] = useState<BusyPcInfo | null>(null);
 
     const { data, isLoading, refetch, isFetching } = useQuery({
         queryKey: ["pcs"],
@@ -63,47 +158,6 @@ const Monitoring = () => {
 
     const pcs = data?.pcs ?? [];
     const sortedPcs = [...pcs].sort((a, b) => String(a.name).localeCompare(String(b.name)));
-    const mapMetrics = useMemo(() => {
-        const tileSize = 58;
-        const mapPadding = 96;
-        const minLeft = Math.min(0, ...pcs.map((pc) => Number(pc.left ?? 0)));
-        const minTop = Math.min(0, ...pcs.map((pc) => Number(pc.top ?? 0)));
-        const maxLeft = Math.max(900, ...pcs.map((pc) => Number(pc.left ?? 0) + tileSize));
-        const maxTop = Math.max(420, ...pcs.map((pc) => Number(pc.top ?? 0) + tileSize));
-        const offsetX = mapPadding - minLeft;
-        const offsetY = mapPadding - minTop;
-        const width = maxLeft - minLeft + mapPadding * 2;
-        const height = maxTop - minTop + mapPadding * 2;
-
-        return { width, height, offsetX, offsetY };
-    }, [pcs]);
-    const mapScale = useMemo(() => {
-        if (!mapFrameSize.width || !mapFrameSize.height) return 1;
-
-        return Math.min(
-            0.92,
-            mapFrameSize.width / mapMetrics.width,
-            mapFrameSize.height / mapMetrics.height,
-        );
-    }, [mapFrameSize.height, mapFrameSize.width, mapMetrics.height, mapMetrics.width]);
-
-    useLayoutEffect(() => {
-        const node = mapFrameRef.current;
-        if (!node) return;
-
-        const updateSize = () => {
-            setMapFrameSize({
-                width: node.clientWidth,
-                height: node.clientHeight,
-            });
-        };
-
-        updateSize();
-        const observer = new ResizeObserver(updateSize);
-        observer.observe(node);
-
-        return () => observer.disconnect();
-    }, []);
 
     return (
         <div className="space-y-4">
@@ -115,7 +169,7 @@ const Monitoring = () => {
                 <button
                     onClick={() => refetch()}
                     disabled={isFetching}
-                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50 sm:w-auto"
                 >
                     <RefreshCcw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                     Обновить
@@ -133,78 +187,54 @@ const Monitoring = () => {
                         <p className="text-sm text-muted-foreground">Загрузка карты...</p>
                     </div>
                 ) : (
-                    <div
-                        ref={mapFrameRef}
-                        className="relative h-[clamp(360px,calc(100svh-240px),620px)] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_50%_45%,rgba(255,149,0,0.055),transparent_46%),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[length:auto,72px_72px,72px_72px]"
-                    >
-                        <div
-                            className="absolute"
-                            style={{
-                                width: mapMetrics.width,
-                                height: mapMetrics.height,
-                                left: Math.max(0, (mapFrameSize.width - mapMetrics.width * mapScale) / 2),
-                                top: Math.max(0, (mapFrameSize.height - mapMetrics.height * mapScale) / 2),
-                                transform: `scale(${mapScale})`,
-                                transformOrigin: "top left",
-                            }}
-                        >
-                        {pcs.map((pc) => {
-                            const tone = getPcTone(pc.status);
-
-                            return (
-                            <div
-                                key={pc.id}
-                                className={`absolute flex h-[58px] w-[58px] cursor-pointer flex-col items-center justify-center rounded-[15px] border p-1 transition-all duration-200 hover:-translate-y-1 hover:scale-105 ${tone.card}`}
-                                onMouseEnter={() => {
-                                    if (pc.status !== "busy") return;
-                                    setHoveredBusyPc({
-                                        id: pc.id,
-                                        name: pc.name,
-                                        member: pc.member || "Не указано",
-                                        time_left: pc.time_left || "",
-                                    });
-                                }}
-                                onMouseLeave={() => setHoveredBusyPc(null)}
-                                        style={{
-                                            top: Number(pc.top ?? 0) + mapMetrics.offsetY,
-                                            left: Number(pc.left ?? 0) + mapMetrics.offsetX,
-                                        }}
-                                title={`${pc.name} - ${tone.label}${pc.member ? ` (${pc.member})` : ""}`}
-                            >
-                                <span className="absolute left-2 top-2 h-2 w-2 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
-                                {pc.status === "busy" && (
-                                    <span
-                                        className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
-                                        title="Клиент за ПК"
-                                    >
-                                        <UserRound className="h-2.5 w-2.5" />
-                                    </span>
-                                )}
-                                <ComputerGlyph className={`mb-0.5 h-6 w-8 ${tone.icon}`} />
-                                <span className="w-full truncate text-center text-[9px] font-black leading-none">
-                                    {pc.name}
-                                </span>
-                                {pc.time_left && (
-                                    <span className="mt-0.5 text-[7px] font-bold opacity-80">{pc.time_left}</span>
-                                )}
-                            </div>
-                            );
-                        })}
+                    <div>
+                        <div className="hidden h-[clamp(430px,calc(100svh-230px),720px)] md:block">
+                            <PcMap pcs={pcs} onBusyHover={setHoveredBusyPc} />
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsMapOpen(true)}
+                            className="flex h-[220px] w-full flex-col items-center justify-center gap-3 rounded-[22px] border border-orange-400/30 bg-[radial-gradient(circle_at_50%_0%,rgba(255,149,0,0.18),rgba(18,18,18,0.96)_58%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:hidden"
+                        >
+                            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-300/35 bg-orange-400/10 text-orange-300">
+                                <Maximize2 className="h-6 w-6" />
+                            </span>
+                            <span className="text-lg font-black">Открыть карту</span>
+                            <span className="max-w-[240px] text-center text-xs text-muted-foreground">
+                                Карта откроется на весь экран в альбомном виде
+                            </span>
+                        </button>
                     </div>
                 )}
             </div>
+
+            {isMapOpen && (
+                <div className="fixed inset-0 z-[100] bg-black md:hidden">
+                    <div className="absolute left-1/2 top-1/2 h-[100svh] w-[100svw] -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-black portrait:h-[100svw] portrait:w-[100svh] portrait:rotate-90">
+                        <PcMap pcs={pcs} fullscreen onBusyHover={setHoveredBusyPc} />
+                        <button
+                            type="button"
+                            onClick={() => setIsMapOpen(false)}
+                            className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white backdrop-blur"
+                            aria-label="Закрыть карту"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {hoveredBusyPc && (
                 <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4">
                     <div className="text-sm font-semibold text-orange-400">
                         {hoveredBusyPc.name} занят
                     </div>
-                    <div className="text-sm text-foreground mt-1">
+                    <div className="mt-1 text-sm text-foreground">
                         Клиент: <span className="font-medium">{hoveredBusyPc.member}</span>
                     </div>
                     {hoveredBusyPc.time_left && (
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="mt-1 text-xs text-muted-foreground">
                             Осталось времени: {hoveredBusyPc.time_left}
                         </div>
                     )}
@@ -212,7 +242,7 @@ const Monitoring = () => {
             )}
 
             <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(24,25,28,0.96),rgba(15,16,18,0.96))] shadow-[inset_0_1px_0_rgba(255,255,255,0.055)]">
-                <div className="px-4 py-4 border-b border-white/10">
+                <div className="border-b border-white/10 px-4 py-4">
                     <h3 className="text-sm font-semibold text-foreground">Список ПК</h3>
                     <p className="text-xs text-muted-foreground">Красивый и адаптивный список для мобильных и desktop</p>
                 </div>
@@ -222,14 +252,14 @@ const Monitoring = () => {
                         const tone = getPcTone(pc.status);
 
                         return (
-                            <div key={`row-${pc.id}`} className="px-4 py-3 flex flex-col gap-2 transition-colors hover:bg-white/[0.025] sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className={`h-10 w-10 rounded-xl border flex items-center justify-center shrink-0 ${tone.row}`}>
+                            <div key={`row-${pc.id}`} className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-white/[0.025] sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${tone.row}`}>
                                         <ComputerGlyph className={`h-5 w-6 ${tone.icon}`} />
                                     </div>
                                     <div className="min-w-0">
-                                        <div className="text-sm font-semibold text-foreground truncate">{pc.name}</div>
-                                        <div className="text-xs text-muted-foreground truncate">{pc.member || "—"}</div>
+                                        <div className="truncate text-sm font-semibold text-foreground">{pc.name}</div>
+                                        <div className="truncate text-xs text-muted-foreground">{pc.member || "-"}</div>
                                     </div>
                                 </div>
 
@@ -249,15 +279,15 @@ const Monitoring = () => {
 
             <div className="flex flex-wrap gap-4 pt-2">
                 <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded bg-success/20 border border-success/50" />
+                    <div className="h-3 w-3 rounded border border-success/50 bg-success/20" />
                     <span className="text-xs text-muted-foreground">Свободен</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded bg-orange-500/20 border border-orange-500/50" />
+                    <div className="h-3 w-3 rounded border border-orange-500/50 bg-orange-500/20" />
                     <span className="text-xs text-muted-foreground">Занят</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded bg-muted/20 border border-muted-foreground/30" />
+                    <div className="h-3 w-3 rounded border border-muted-foreground/30 bg-muted/20" />
                     <span className="text-xs text-muted-foreground">Оффлайн</span>
                 </div>
             </div>
