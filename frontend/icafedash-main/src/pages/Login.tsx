@@ -155,7 +155,7 @@ const Login = () => {
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <LottieIcon animationData={loadingAnimation} className="h-7 w-7" />
+                    <LottieIcon animationData={loadingAnimation} className="h-8 w-8 -my-2" animationClassName="brightness-0" />
                     <span>Загрузка</span>
                   </div>
                 ) : (

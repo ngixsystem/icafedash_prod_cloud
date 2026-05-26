@@ -163,10 +163,15 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       {!mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-[60] lg:hidden rounded-2xl border border-white/60 bg-white/75 p-1.5 text-slate-700 shadow-lg backdrop-blur-xl"
+          className="fixed top-3 left-3 z-[60] lg:hidden rounded-full p-1 text-white drop-shadow-[0_0_16px_rgba(255,149,0,0.38)]"
           aria-label="Открыть меню"
         >
-          <LottieIcon animationData={menuNavAnimation} loop={false} className="h-7 w-7" />
+          <LottieIcon
+            animationData={menuNavAnimation}
+            loop={false}
+            className="h-9 w-9"
+            animationClassName="brightness-0 invert"
+          />
         </button>
       )}
 

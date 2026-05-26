@@ -82,7 +82,11 @@ const Monitoring = () => {
             <div className="relative rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(24,25,28,0.96),rgba(15,16,18,0.96))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] sm:p-6 min-h-[420px] sm:min-h-[600px] overflow-auto">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
-                        <LottieIcon animationData={loadingAnimation} className="h-20 w-20" />
+                        <LottieIcon
+                            animationData={loadingAnimation}
+                            className="h-24 w-24 text-[#ff9500] drop-shadow-[0_0_22px_rgba(255,149,0,0.38)]"
+                            animationClassName="brightness-0 invert"
+                        />
                         <p className="text-sm text-muted-foreground">Загрузка карты...</p>
                     </div>
                 ) : (

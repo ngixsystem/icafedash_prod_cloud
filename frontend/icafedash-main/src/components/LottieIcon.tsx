@@ -4,14 +4,15 @@ import { cn } from "@/lib/utils";
 interface LottieIconProps {
   animationData: unknown;
   className?: string;
+  animationClassName?: string;
   loop?: boolean;
   autoplay?: boolean;
   ariaLabel?: string;
 }
 
-const LottieIcon = ({ animationData, className, loop = true, autoplay = true, ariaLabel }: LottieIconProps) => (
+const LottieIcon = ({ animationData, className, animationClassName, loop = true, autoplay = true, ariaLabel }: LottieIconProps) => (
   <span
-    className={cn("inline-flex shrink-0 items-center justify-center overflow-hidden", className)}
+    className={cn("inline-flex shrink-0 items-center justify-center overflow-visible bg-transparent", className)}
     aria-label={ariaLabel}
     aria-hidden={ariaLabel ? undefined : true}
   >
@@ -19,8 +20,9 @@ const LottieIcon = ({ animationData, className, loop = true, autoplay = true, ar
       animationData={animationData}
       loop={loop}
       autoplay={autoplay}
-      rendererSettings={{ preserveAspectRatio: "xMidYMid meet" }}
-      style={{ width: "100%", height: "100%" }}
+      className={cn("h-full w-full bg-transparent [&_svg]:!overflow-visible", animationClassName)}
+      rendererSettings={{ preserveAspectRatio: "xMidYMid meet", progressiveLoad: true }}
+      style={{ width: "100%", height: "100%", background: "transparent" }}
     />
   </span>
 );

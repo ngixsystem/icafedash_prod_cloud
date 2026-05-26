@@ -11,7 +11,11 @@ const DashboardPreloader = () => (
       <img src={fragLogo} alt="FRAG.GG" className="h-24 w-24 object-contain drop-shadow-[0_0_34px_rgba(255,149,0,0.32)]" />
       <h1 className="mt-5 font-display text-4xl leading-none tracking-wide text-white">FRAG.GG</h1>
       <p className="mt-2 text-[11px] font-black uppercase tracking-[0.34em] text-[#ff9500]">Dashboard</p>
-      <LottieIcon animationData={loadingAnimation} className="mt-5 h-24 w-24" />
+      <LottieIcon
+        animationData={loadingAnimation}
+        className="mt-5 h-24 w-24 drop-shadow-[0_0_24px_rgba(255,149,0,0.45)]"
+        animationClassName="brightness-0 invert"
+      />
       <div className="mt-2 h-1 w-36 overflow-hidden rounded-full bg-white/10">
         <div className="h-full w-2/3 animate-[pulse_1.2s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-[#ff6a00] to-[#ffb347] shadow-[0_0_18px_rgba(255,149,0,0.5)]" />
       </div>
