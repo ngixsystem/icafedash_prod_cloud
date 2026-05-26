@@ -71,6 +71,7 @@ function PcMap({
     fullscreen?: boolean;
     onBusyHover: (pc: BusyPcInfo | null) => void;
 }) {
+    const isDenseMap = pcs.length > 60;
     const bounds = useMemo(() => {
         const xs = pcs.map((pc) => Number(pc.left ?? 0));
         const ys = pcs.map((pc) => Number(pc.top ?? 0));
@@ -103,8 +104,10 @@ function PcMap({
                         key={pc.id}
                         className={`absolute flex cursor-pointer flex-col items-center justify-center border transition-all duration-200 hover:-translate-y-1 hover:scale-105 ${
                             fullscreen
-                                ? "h-[clamp(38px,8.4svh,56px)] w-[clamp(38px,8.4svh,56px)] rounded-[13px] p-1"
-                                : "h-[clamp(42px,3.55vw,58px)] w-[clamp(42px,3.55vw,58px)] rounded-[15px] p-1"
+                                ? "h-[clamp(24px,6.2svh,38px)] w-[clamp(24px,6.2svh,38px)] rounded-[10px] p-0.5"
+                                : isDenseMap
+                                    ? "h-[clamp(30px,2.55vw,42px)] w-[clamp(30px,2.55vw,42px)] rounded-[11px] p-0.5"
+                                    : "h-[clamp(34px,2.9vw,48px)] w-[clamp(34px,2.9vw,48px)] rounded-[13px] p-0.5"
                         } ${tone.card}`}
                         onMouseEnter={() => {
                             if (pc.status !== "busy") return;
@@ -123,21 +126,21 @@ function PcMap({
                         }}
                         title={`${pc.name} - ${tone.label}${pc.member ? ` (${pc.member})` : ""}`}
                     >
-                        <span className="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
+                        <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
                         {pc.status === "busy" && (
                             <span
-                                className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
+                                className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
                                 title="Клиент за ПК"
                             >
-                                <UserRound className="h-2.5 w-2.5" />
+                                <UserRound className="h-2 w-2" />
                             </span>
                         )}
-                        <ComputerGlyph className={`mb-0.5 ${fullscreen ? "h-5 w-7" : "h-6 w-8"} ${tone.icon}`} />
-                        <span className={`w-full truncate text-center font-black leading-none ${fullscreen ? "text-[8px]" : "text-[9px]"}`}>
+                        <ComputerGlyph className={`mb-0.5 ${fullscreen ? "h-3.5 w-5" : isDenseMap ? "h-4 w-5" : "h-5 w-6"} ${tone.icon}`} />
+                        <span className={`w-full truncate text-center font-black leading-none ${fullscreen || isDenseMap ? "text-[6.5px]" : "text-[8px]"}`}>
                             {pc.name}
                         </span>
                         {pc.time_left && (
-                            <span className="mt-0.5 text-[7px] font-bold opacity-80">{pc.time_left}</span>
+                            <span className="mt-0.5 text-[6px] font-bold opacity-80">{pc.time_left}</span>
                         )}
                     </div>
                 );
