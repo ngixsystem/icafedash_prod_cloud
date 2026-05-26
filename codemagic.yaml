@@ -1,0 +1,121 @@
+workflows:
+  ios-simulator-debug:
+    name: ClubFinder iOS - Simulator Debug
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      vars:
+        IOS_PROJECT_DIR: "club-finder/ios"
+        XCODE_PROJECT: "ClubFinder.xcodeproj"
+        XCODE_SCHEME: "ClubFinder"
+        SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 15 Pro,OS=latest"
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+    scripts:
+      - name: Show Xcode project info
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/$IOS_PROJECT_DIR"
+          xcodebuild -list -project "$XCODE_PROJECT"
+      - name: Build unsigned app for iOS Simulator
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/$IOS_PROJECT_DIR"
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "$SIMULATOR_DESTINATION" \
+            -derivedDataPath "$CM_BUILD_DIR/build/ios/DerivedData" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build
+    artifacts:
+      - build/ios/DerivedData/Build/Products/Debug-iphonesimulator/*.app
+      - build/ios/DerivedData/Build/Products/Debug-iphonesimulator/*.dSYM
+      - /tmp/xcodebuild_logs/*.log
+
+  ios-adhoc-ipa:
+    name: ClubFinder iOS - Signed Ad Hoc IPA
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: com.icafedash.clubfinder
+      vars:
+        IOS_PROJECT_DIR: "club-finder/ios"
+        XCODE_PROJECT: "ClubFinder.xcodeproj"
+        XCODE_SCHEME: "ClubFinder"
+    scripts:
+      - name: Set CI build number
+        script: |
+          set -euo pipefail
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CM_BUILD_NUMBER" "$CM_BUILD_DIR/$IOS_PROJECT_DIR/ClubFinder/Info.plist"
+      - name: Set up code signing from Codemagic
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/$IOS_PROJECT_DIR"
+          xcode-project use-profiles --project "$XCODE_PROJECT"
+      - name: Build signed IPA
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/$IOS_PROJECT_DIR"
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+  ios-testflight:
+    name: ClubFinder iOS - TestFlight
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: YOUR_APP_STORE_CONNECT_INTEGRATION_NAME
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.icafedash.clubfinder
+      vars:
+        IOS_PROJECT_DIR: "club-finder/ios"
+        XCODE_PROJECT: "ClubFinder.xcodeproj"
+        XCODE_SCHEME: "ClubFinder"
+    scripts:
+      - name: Set CI build number
+        script: |
+          set -euo pipefail
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CM_BUILD_NUMBER" "$CM_BUILD_DIR/$IOS_PROJECT_DIR/ClubFinder/Info.plist"
+      - name: Set up code signing from Codemagic
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/$IOS_PROJECT_DIR"
+          xcode-project use-profiles --project "$XCODE_PROJECT"
+      - name: Build signed IPA for App Store
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/$IOS_PROJECT_DIR"
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
