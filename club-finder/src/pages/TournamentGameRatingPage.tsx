@@ -125,9 +125,9 @@ function TeamPlayerRow({
       onClick={() => onPhotoClick(player)}
       className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition active:bg-white/10"
     >
-      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/7">
+      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden">
         {!isFallbackImage(player.photo) ? (
-          <img src={player.photo} alt={player.nickname} className="h-full w-full object-cover" />
+          <img src={player.photo} alt={player.nickname} className="h-[170%] w-[170%] max-w-none object-cover object-top" />
         ) : (
           <Users className="h-4 w-4 text-white/25" />
         )}
@@ -170,9 +170,9 @@ function TeamCard({
         >
           {rank}
         </div>
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-black/45">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden">
           {!isFallbackImage(team.photo) ? (
-            <img src={team.photo} alt={team.name} className="h-full w-full object-cover" />
+            <img src={team.photo} alt={team.name} className="h-full w-full object-contain" />
           ) : (
             <Shield className="h-5 w-5 text-white/25" />
           )}
@@ -238,9 +238,9 @@ function PlayerCard({
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border bg-black/35 text-sm font-black" style={{ color: accent, borderColor: `${accent}55` }}>
         {rank}
       </div>
-      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-black/45">
+      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden">
         {!isFallbackImage(player.photo) ? (
-          <img src={player.photo} alt={player.nickname} className="h-full w-full object-cover" />
+          <img src={player.photo} alt={player.nickname} className="h-[175%] w-[175%] max-w-none object-cover object-top" />
         ) : (
           <Users className="h-5 w-5 text-white/25" />
         )}
