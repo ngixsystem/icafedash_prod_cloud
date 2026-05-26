@@ -485,6 +485,32 @@
     box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
   }
 
+  .icafe-light-theme .ios26-admin main .glass-card {
+    background: #f8fbfe;
+    border-color: #dfe5ec;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .icafe-light-theme .ios26-admin main .glass-card:hover {
+    background: #f8fbfe;
+    border-color: #cfd8e3;
+  }
+
+  .icafe-light-theme .ios26-admin main .glass-card::after {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: 18px;
+    z-index: 2;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #ff605c;
+    box-shadow: 18px 0 0 #ffbd44, 36px 0 0 #00ca4e;
+    pointer-events: none;
+  }
+
   .icafe-light-theme .ios26-admin .text-white,
   .icafe-light-theme .ios26-admin .text-gray-300,
   .icafe-light-theme .ios26-admin .text-slate-300,
