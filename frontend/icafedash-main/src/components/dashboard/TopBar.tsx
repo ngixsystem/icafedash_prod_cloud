@@ -21,7 +21,7 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
   const { user, logout, isAdmin } = useAuth();
 
   return (
-    <header className="h-20 lg:h-24 px-4 lg:px-8 flex items-center justify-between shrink-0 z-20 relative">
+    <header className="sticky top-0 h-20 lg:h-24 px-4 lg:px-8 flex items-center justify-between shrink-0 z-30 border-b border-white/10 bg-[#05070b]/82 backdrop-blur-2xl shadow-[0_14px_34px_rgba(0,0,0,0.28)] supports-[backdrop-filter]:bg-[#05070b]/64 lg:relative lg:border-b-0 lg:bg-transparent lg:shadow-none lg:backdrop-blur-0">
       <div className="pl-12 lg:pl-0">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-2xl border border-white/70 bg-white/70 p-1.5 hidden sm:block shadow-[0_12px_24px_rgba(80,111,150,0.13)] backdrop-blur-xl">
