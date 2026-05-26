@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import fragLogo from "@/assets/frag.png";
 
-const brandLogo = "/logo.png";
-
 interface TopBarProps {
   onOpenSettings: () => void;
   searchQuery?: string;
@@ -26,9 +24,6 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
     <header className="fixed left-0 right-0 top-0 h-20 lg:h-24 px-4 lg:px-8 flex items-center justify-between shrink-0 z-40 border-b border-white/10 bg-[#05070b]/88 backdrop-blur-2xl shadow-[0_14px_34px_rgba(0,0,0,0.28)] supports-[backdrop-filter]:bg-[#05070b]/70 lg:sticky lg:left-auto lg:right-auto lg:border-b-0 lg:bg-transparent lg:shadow-none lg:backdrop-blur-0">
       <div className="pl-12 lg:pl-0">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl border border-white/70 bg-white/70 p-1.5 hidden sm:block shadow-[0_12px_24px_rgba(80,111,150,0.13)] backdrop-blur-xl">
-            <img src={brandLogo} alt="FRAG.GG" className="h-full w-full object-contain" />
-          </div>
           <h2 className="font-display text-2xl lg:text-3xl text-slate-950 tracking-tight">FRAG.GG</h2>
         </div>
         <div className="hidden sm:flex items-center gap-2 mt-1.5">
@@ -74,11 +69,14 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-cyan-300 via-blue-500 to-indigo-500 p-[2px] shadow-[0_0_26px_rgba(56,189,248,0.28)]">
-                  <div className="h-full w-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center overflow-hidden backdrop-blur-xl">
-                    <img src={fragLogo} alt={user?.username ?? "FRAG.GG"} className="h-full w-full object-cover" />
+                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-orange-500 via-amber-400 to-orange-600 p-[2px] shadow-[0_0_26px_rgba(255,149,0,0.24)] lg:hidden">
+                  <div className="h-full w-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center overflow-hidden p-1.5 backdrop-blur-xl">
+                    <img src={fragLogo} alt={user?.username ?? "FRAG.GG"} className="h-full w-full object-contain" />
                   </div>
                 </div>
+                <span className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 transition-colors hover:bg-white/10 lg:inline-flex">
+                  {user?.username ?? "Профиль"}
+                </span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-slate-950 border-white/10 text-gray-200">

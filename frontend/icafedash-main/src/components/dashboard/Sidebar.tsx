@@ -23,7 +23,6 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import LottieIcon from "@/components/LottieIcon";
 import menuNavAnimation from "@/assets/menunav.json";
 import fragLogo from "@/assets/frag.png";
-const brandLogo = "/logo.png";
 
 const navItems = [
   { icon: LayoutGrid, label: "Обзор", section: "main", color: "text-[#00E5FF]" },
@@ -193,9 +192,6 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           </button>
 
           <div className="flex items-center gap-3 min-w-0">
-            <div className="hidden h-9 w-9 rounded-xl border border-blue-400/25 bg-blue-600 p-1.5 shadow-[0_12px_28px_rgba(47,114,246,0.22)] shrink-0 lg:block">
-              <img src={brandLogo} alt="FRAG.GG Logo" className="h-full w-full object-contain" />
-            </div>
             <div className="min-w-0">
               <h1 className="font-display text-xl text-slate-950 leading-none truncate lg:text-base">
                 <span className="lg:hidden">FRAG.GG</span>
@@ -224,8 +220,8 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           <button className="w-full glass-card rounded-2xl p-3 flex items-center gap-3 transition-colors group">
             <div className="relative shrink-0">
               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-300 via-blue-500 to-indigo-500 p-[2px] shadow-[0_0_24px_rgba(56,189,248,0.22)]">
-                <div className="w-full h-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center overflow-hidden backdrop-blur-xl">
-                  <img src={fragLogo} alt={user?.username ?? "FRAG.GG"} className="h-full w-full object-cover" />
+                <div className="w-full h-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center overflow-hidden p-1.5 backdrop-blur-xl">
+                  <img src={fragLogo} alt={user?.username ?? "FRAG.GG"} className="h-full w-full object-contain" />
                 </div>
               </div>
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full">
