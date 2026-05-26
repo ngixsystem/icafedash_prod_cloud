@@ -182,7 +182,7 @@ const ManagerHyperOverview = () => {
           <div className="relative mt-5 border-t border-white/10 pt-5">
             <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500 font-mono">История сеансов</p>
             {shiftData?.history && shiftData.history.length > 0 ? (
-              <div className="max-h-[48svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[360px]">
+              <div className="space-y-2">
                 {shiftData.history.map((h, i) => (
                   <div key={i} className="rounded-[20px] border border-white/10 bg-black/15 px-3.5 py-3 transition-colors hover:bg-white/[0.045]">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
