@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -22,6 +22,7 @@ import UserPrivilegesPanel from "@/components/dashboard/UserPrivilegesPanel";
 import UsersPanel from "@/components/dashboard/UsersPanel";
 import TransferPanel from "@/components/dashboard/TransferPanel";
 import BannerPanel from "@/components/dashboard/BannerPanel";
+import DashboardPreloader from "@/components/dashboard/DashboardPreloader";
 
 const Index = () => {
   const { isAdmin, isCaptain, user } = useAuth();
@@ -29,9 +30,23 @@ const Index = () => {
   const initialTab = isAdmin ? "Клубы" : isCaptain ? "Турниры" : role === "member" || role === "client" ? "Турниры" : "Обзор";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [bookingSearch, setBookingSearch] = useState("");
+  const [showPreloader, setShowPreloader] = useState(() => sessionStorage.getItem("frag_dashboard_preloaded") !== "1");
+
+  useEffect(() => {
+    if (!showPreloader) return;
+
+    const timer = window.setTimeout(() => {
+      sessionStorage.setItem("frag_dashboard_preloaded", "1");
+      setShowPreloader(false);
+    }, 1400);
+
+    return () => window.clearTimeout(timer);
+  }, [showPreloader]);
 
   return (
     <div className="ios26-admin esports-shell min-h-screen text-slate-100 relative overflow-hidden">
+      {showPreloader && <DashboardPreloader />}
+
       {!isAdmin && (
         <>
           <div className="ambient-layer">
