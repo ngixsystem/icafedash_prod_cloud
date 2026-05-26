@@ -22,6 +22,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth/AuthProvider";
 import LottieIcon from "@/components/LottieIcon";
 import menuNavAnimation from "@/assets/menunav.json";
+import fragLogo from "@/assets/frag.png";
 const brandLogo = "/logo.png";
 
 const navItems = [
@@ -81,7 +82,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     refetchOnWindowFocus: true,
   });
 
-  const clubName = cfg?.club_name || "FRAG.GG Dashboard";
+  const clubName = cfg?.club_name || "FRAG.GG";
   const pendingBookingCount = bookingData?.summary?.pending_count ?? 0;
 
   useEffect(() => {
@@ -193,12 +194,12 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
           <div className="flex items-center gap-3 min-w-0">
             <div className="hidden h-9 w-9 rounded-xl border border-blue-400/25 bg-blue-600 p-1.5 shadow-[0_12px_28px_rgba(47,114,246,0.22)] shrink-0 lg:block">
-              <img src={brandLogo} alt="FRAG.GG Dashboard Logo" className="h-full w-full object-contain" />
+              <img src={brandLogo} alt="FRAG.GG Logo" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
               <h1 className="font-display text-xl text-slate-950 leading-none truncate lg:text-base">
                 <span className="lg:hidden">FRAG.GG</span>
-                <span className="hidden lg:inline">FRAG.GG Dashboard</span>
+                <span className="hidden lg:inline">FRAG.GG</span>
               </h1>
               <p className="hidden text-[9px] text-blue-400 uppercase tracking-[0.22em] mt-1 font-semibold truncate lg:block">{clubName}</p>
             </div>
@@ -223,8 +224,8 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           <button className="w-full glass-card rounded-2xl p-3 flex items-center gap-3 transition-colors group">
             <div className="relative shrink-0">
               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-300 via-blue-500 to-indigo-500 p-[2px] shadow-[0_0_24px_rgba(56,189,248,0.22)]">
-                <div className="w-full h-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center text-xs font-black uppercase text-white backdrop-blur-xl">
-                  {user?.username?.slice(0, 2) ?? "CF"}
+                <div className="w-full h-full rounded-full border border-white/10 bg-[#0b1220]/90 flex items-center justify-center overflow-hidden backdrop-blur-xl">
+                  <img src={fragLogo} alt={user?.username ?? "FRAG.GG"} className="h-full w-full object-cover" />
                 </div>
               </div>
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full">
