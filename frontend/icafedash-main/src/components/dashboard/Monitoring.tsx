@@ -65,16 +65,23 @@ const Monitoring = () => {
     const sortedPcs = [...pcs].sort((a, b) => String(a.name).localeCompare(String(b.name)));
     const mapMetrics = useMemo(() => {
         const tileSize = 70;
-        const mapPadding = 36;
-        const width = Math.max(900, ...pcs.map((pc) => Number(pc.left ?? 0) + tileSize + mapPadding));
-        const height = Math.max(420, ...pcs.map((pc) => Number(pc.top ?? 0) + tileSize + mapPadding));
-        return { width, height };
+        const mapPadding = 120;
+        const minLeft = Math.min(0, ...pcs.map((pc) => Number(pc.left ?? 0)));
+        const minTop = Math.min(0, ...pcs.map((pc) => Number(pc.top ?? 0)));
+        const maxLeft = Math.max(900, ...pcs.map((pc) => Number(pc.left ?? 0) + tileSize));
+        const maxTop = Math.max(420, ...pcs.map((pc) => Number(pc.top ?? 0) + tileSize));
+        const offsetX = mapPadding - minLeft;
+        const offsetY = mapPadding - minTop;
+        const width = maxLeft - minLeft + mapPadding * 2;
+        const height = maxTop - minTop + mapPadding * 2;
+
+        return { width, height, offsetX, offsetY };
     }, [pcs]);
     const mapScale = useMemo(() => {
         if (!mapFrameSize.width || !mapFrameSize.height) return 1;
 
         return Math.min(
-            1,
+            0.92,
             mapFrameSize.width / mapMetrics.width,
             mapFrameSize.height / mapMetrics.height,
         );
@@ -156,10 +163,10 @@ const Monitoring = () => {
                                     });
                                 }}
                                 onMouseLeave={() => setHoveredBusyPc(null)}
-                                style={{
-                                    top: pc.top ?? 0,
-                                    left: pc.left ?? 0,
-                                }}
+                                        style={{
+                                            top: Number(pc.top ?? 0) + mapMetrics.offsetY,
+                                            left: Number(pc.left ?? 0) + mapMetrics.offsetX,
+                                        }}
                                 title={`${pc.name} - ${tone.label}${pc.member ? ` (${pc.member})` : ""}`}
                             >
                                 <span className="absolute left-2 top-2 h-2 w-2 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
