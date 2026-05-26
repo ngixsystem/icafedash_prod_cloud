@@ -104,7 +104,7 @@ function PcMap({
                         key={pc.id}
                         className={`absolute flex cursor-pointer flex-col items-center justify-center border transition-all duration-200 hover:-translate-y-1 hover:scale-105 ${
                             fullscreen
-                                ? "h-[clamp(24px,6.2svh,38px)] w-[clamp(24px,6.2svh,38px)] rounded-[10px] p-0.5"
+                                ? "h-[clamp(18px,4.5svh,26px)] w-[clamp(18px,4.5svh,26px)] rounded-[7px] p-[1px]"
                                 : isDenseMap
                                     ? "h-[clamp(30px,2.55vw,42px)] w-[clamp(30px,2.55vw,42px)] rounded-[11px] p-0.5"
                                     : "h-[clamp(34px,2.9vw,48px)] w-[clamp(34px,2.9vw,48px)] rounded-[13px] p-0.5"
@@ -126,20 +126,20 @@ function PcMap({
                         }}
                         title={`${pc.name} - ${tone.label}${pc.member ? ` (${pc.member})` : ""}`}
                     >
-                        <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
+                        <span className={`absolute rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor] ${fullscreen ? "left-0.5 top-0.5 h-1 w-1" : "left-1 top-1 h-1.5 w-1.5"}`} />
                         {pc.status === "busy" && (
                             <span
-                                className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
+                                className={`absolute flex items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)] ${fullscreen ? "-right-0.5 -top-0.5 h-2.5 w-2.5" : "-right-1 -top-1 h-3.5 w-3.5"}`}
                                 title="Клиент за ПК"
                             >
-                                <UserRound className="h-2 w-2" />
+                                <UserRound className={fullscreen ? "h-1.5 w-1.5" : "h-2 w-2"} />
                             </span>
                         )}
-                        <ComputerGlyph className={`mb-0.5 ${fullscreen ? "h-3.5 w-5" : isDenseMap ? "h-4 w-5" : "h-5 w-6"} ${tone.icon}`} />
-                        <span className={`w-full truncate text-center font-black leading-none ${fullscreen || isDenseMap ? "text-[6.5px]" : "text-[8px]"}`}>
+                        <ComputerGlyph className={`mb-0.5 ${fullscreen ? "h-2.5 w-3.5" : isDenseMap ? "h-4 w-5" : "h-5 w-6"} ${tone.icon}`} />
+                        <span className={`w-full truncate text-center font-black leading-none ${fullscreen ? "text-[5px]" : isDenseMap ? "text-[6.5px]" : "text-[8px]"}`}>
                             {pc.name}
                         </span>
-                        {pc.time_left && (
+                        {pc.time_left && !fullscreen && (
                             <span className="mt-0.5 text-[6px] font-bold opacity-80">{pc.time_left}</span>
                         )}
                     </div>
@@ -213,7 +213,7 @@ const Monitoring = () => {
             </div>
 
             {isMapOpen && (
-                <div className="fixed inset-0 z-[100] bg-black md:hidden">
+                <div className="fixed inset-0 z-[9999] bg-black md:hidden">
                     <div className="absolute left-1/2 top-1/2 h-[100svh] w-[100svw] -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-black portrait:h-[100svw] portrait:w-[100svh] portrait:rotate-90">
                         <PcMap pcs={pcs} fullscreen onBusyHover={setHoveredBusyPc} />
                         <button
