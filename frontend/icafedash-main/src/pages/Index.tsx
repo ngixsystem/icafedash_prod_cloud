@@ -68,7 +68,7 @@ const Index = () => {
           searchEnabled={activeTab === "Бронирование"}
         />
 
-        <main className="px-4 pb-8 lg:px-8 lg:pt-2 relative z-10">
+        <main className="px-4 pt-24 pb-8 lg:px-8 lg:pt-2 relative z-10">
           {activeTab === "Обзор" ? (
             isAdmin ? (
               <div className="flex flex-col xl:flex-row gap-6">
