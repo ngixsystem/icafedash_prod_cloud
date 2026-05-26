@@ -182,19 +182,27 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="h-20 flex items-center px-6 relative overflow-hidden border-b border-slate-200/70">
+        <div className="h-20 flex items-center gap-3 px-5 relative overflow-hidden border-b border-slate-200/70">
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] lg:hidden"
+            aria-label="Закрыть меню"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-xl border border-blue-400/25 bg-blue-600 p-1.5 shadow-[0_12px_28px_rgba(47,114,246,0.22)] shrink-0">
+            <div className="hidden h-9 w-9 rounded-xl border border-blue-400/25 bg-blue-600 p-1.5 shadow-[0_12px_28px_rgba(47,114,246,0.22)] shrink-0 lg:block">
               <img src={brandLogo} alt="FRAG.GG Dashboard Logo" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-base text-slate-950 leading-none truncate">FRAG.GG Dashboard</h1>
-              <p className="text-[9px] text-blue-400 uppercase tracking-[0.22em] mt-1 font-semibold truncate">{clubName}</p>
+              <h1 className="font-display text-xl text-slate-950 leading-none truncate lg:text-base">
+                <span className="lg:hidden">FRAG.GG</span>
+                <span className="hidden lg:inline">FRAG.GG Dashboard</span>
+              </h1>
+              <p className="hidden text-[9px] text-blue-400 uppercase tracking-[0.22em] mt-1 font-semibold truncate lg:block">{clubName}</p>
             </div>
           </div>
-          <button onClick={() => setMobileOpen(false)} className="absolute right-4 top-1/2 -translate-y-1/2 lg:hidden text-slate-500">
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-7 px-3 space-y-2">
