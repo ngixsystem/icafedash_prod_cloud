@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { RefreshCcw, UserRound } from "lucide-react";
 import LottieIcon from "@/components/LottieIcon";
@@ -46,6 +46,8 @@ function ComputerGlyph({ className = "" }: { className?: string }) {
 }
 
 const Monitoring = () => {
+    const mapFrameRef = useRef<HTMLDivElement | null>(null);
+    const [mapFrameSize, setMapFrameSize] = useState({ width: 0, height: 0 });
     const [hoveredBusyPc, setHoveredBusyPc] = useState<{
         id: string | number;
         name: string;
@@ -61,6 +63,40 @@ const Monitoring = () => {
 
     const pcs = data?.pcs ?? [];
     const sortedPcs = [...pcs].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    const mapMetrics = useMemo(() => {
+        const tileSize = 70;
+        const mapPadding = 36;
+        const width = Math.max(900, ...pcs.map((pc) => Number(pc.left ?? 0) + tileSize + mapPadding));
+        const height = Math.max(420, ...pcs.map((pc) => Number(pc.top ?? 0) + tileSize + mapPadding));
+        return { width, height };
+    }, [pcs]);
+    const mapScale = useMemo(() => {
+        if (!mapFrameSize.width || !mapFrameSize.height) return 1;
+
+        return Math.min(
+            1,
+            mapFrameSize.width / mapMetrics.width,
+            mapFrameSize.height / mapMetrics.height,
+        );
+    }, [mapFrameSize.height, mapFrameSize.width, mapMetrics.height, mapMetrics.width]);
+
+    useLayoutEffect(() => {
+        const node = mapFrameRef.current;
+        if (!node) return;
+
+        const updateSize = () => {
+            setMapFrameSize({
+                width: node.clientWidth,
+                height: node.clientHeight,
+            });
+        };
+
+        updateSize();
+        const observer = new ResizeObserver(updateSize);
+        observer.observe(node);
+
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <div className="space-y-4">
@@ -79,9 +115,9 @@ const Monitoring = () => {
                 </button>
             </div>
 
-            <div className="relative rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(24,25,28,0.96),rgba(15,16,18,0.96))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] sm:p-6 min-h-[420px] sm:min-h-[600px] overflow-auto">
+            <div className="relative rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(24,25,28,0.96),rgba(15,16,18,0.96))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] sm:p-5">
                 {isLoading ? (
-                    <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
+                    <div className="flex h-[clamp(360px,calc(100svh-240px),620px)] flex-col items-center justify-center space-y-4">
                         <LottieIcon
                             animationData={loadingAnimation}
                             className="h-24 w-24 text-[#ff9500] drop-shadow-[0_0_22px_rgba(255,149,0,0.38)]"
@@ -90,14 +126,26 @@ const Monitoring = () => {
                         <p className="text-sm text-muted-foreground">Загрузка карты...</p>
                     </div>
                 ) : (
-                    <div className="relative w-fit h-fit min-w-full min-h-[380px] sm:min-h-[500px]">
+                    <div
+                        ref={mapFrameRef}
+                        className="relative h-[clamp(360px,calc(100svh-240px),620px)] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_50%_45%,rgba(255,149,0,0.055),transparent_46%),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[length:auto,72px_72px,72px_72px]"
+                    >
+                        <div
+                            className="absolute left-1/2 top-1/2"
+                            style={{
+                                width: mapMetrics.width,
+                                height: mapMetrics.height,
+                                transform: `translate(-50%, -50%) scale(${mapScale})`,
+                                transformOrigin: "center",
+                            }}
+                        >
                         {pcs.map((pc) => {
                             const tone = getPcTone(pc.status);
 
                             return (
                             <div
                                 key={pc.id}
-                                className={`absolute h-[62px] w-[62px] rounded-[18px] border flex flex-col items-center justify-center p-1.5 transition-all duration-200 hover:-translate-y-1 hover:scale-105 cursor-pointer sm:h-[70px] sm:w-[70px] ${tone.card}`}
+                                className={`absolute flex h-[70px] w-[70px] cursor-pointer flex-col items-center justify-center rounded-[18px] border p-1.5 transition-all duration-200 hover:-translate-y-1 hover:scale-105 ${tone.card}`}
                                 onMouseEnter={() => {
                                     if (pc.status !== "busy") return;
                                     setHoveredBusyPc({
@@ -117,22 +165,23 @@ const Monitoring = () => {
                                 <span className="absolute left-2 top-2 h-2 w-2 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]" />
                                 {pc.status === "busy" && (
                                     <span
-                                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)] flex items-center justify-center"
+                                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-orange-200/60 bg-orange-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.55)]"
                                         title="Клиент за ПК"
                                     >
                                         <UserRound className="h-3 w-3" />
                                     </span>
                                 )}
-                                <ComputerGlyph className={`mb-1 h-6 w-8 sm:h-7 sm:w-9 ${tone.icon}`} />
-                                <span className="w-full truncate text-center text-[9px] font-black leading-none sm:text-[10px]">
+                                <ComputerGlyph className={`mb-1 h-7 w-9 ${tone.icon}`} />
+                                <span className="w-full truncate text-center text-[10px] font-black leading-none">
                                     {pc.name}
                                 </span>
                                 {pc.time_left && (
-                                    <span className="mt-0.5 text-[7px] font-bold opacity-80 sm:text-[8px]">{pc.time_left}</span>
+                                    <span className="mt-0.5 text-[8px] font-bold opacity-80">{pc.time_left}</span>
                                 )}
                             </div>
                             );
                         })}
+                        </div>
                     </div>
                 )}
             </div>
