@@ -9,7 +9,7 @@ workflows:
         IOS_PROJECT_DIR: "club-finder/ios"
         XCODE_PROJECT: "ClubFinder.xcodeproj"
         XCODE_SCHEME: "ClubFinder"
-        SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 15 Pro,OS=latest"
+        SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 17 Pro,OS=latest"
     triggering:
       events:
         - push
