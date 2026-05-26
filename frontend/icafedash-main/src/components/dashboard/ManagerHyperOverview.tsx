@@ -130,9 +130,9 @@ const ManagerHyperOverview = () => {
 
   return (
     <div className="max-w-[1920px] mx-auto space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-12 xl:items-start">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-12 xl:items-stretch">
         {/* Виджет сеанса оператора */}
-        <div className="glass-card relative overflow-hidden rounded-[26px] p-4 group sm:col-span-2 sm:rounded-3xl sm:p-6 xl:col-span-4">
+        <div className="glass-card relative h-full overflow-hidden rounded-[26px] p-4 group sm:col-span-2 sm:rounded-3xl sm:p-6 xl:col-span-4">
           <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#FF9500]/10 blur-3xl" />
           <div className="relative mb-6 flex items-start justify-between">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-[#151515] text-[#FF9500] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:h-12 sm:w-12">
@@ -208,7 +208,7 @@ const ManagerHyperOverview = () => {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 sm:gap-6 xl:col-span-8">
+        <div className="grid h-full grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2 sm:gap-6 xl:col-span-8">
         <div className="glass-card relative min-h-[220px] overflow-hidden rounded-3xl p-6 group">
           <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-[#00F0FF]/10 blur-3xl" />
           <div className="flex justify-between items-start mb-6">
