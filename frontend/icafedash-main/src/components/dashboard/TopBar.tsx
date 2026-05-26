@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
 import fragLogo from "@/assets/frag.png";
 
 interface TopBarProps {
@@ -19,6 +20,11 @@ interface TopBarProps {
 
 const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnabled = false }: TopBarProps) => {
   const { user, logout, isAdmin } = useAuth();
+  const [whiteThemeQueued, setWhiteThemeQueued] = useState(() => localStorage.getItem("icafe_theme_preview") === "white");
+
+  useEffect(() => {
+    localStorage.setItem("icafe_theme_preview", whiteThemeQueued ? "white" : "dark");
+  }, [whiteThemeQueued]);
 
   return (
     <header className="fixed left-0 right-0 top-0 h-20 lg:h-24 px-4 lg:px-8 flex items-center justify-between shrink-0 z-40 border-b border-white/10 bg-[#05070b]/88 backdrop-blur-2xl shadow-[0_14px_34px_rgba(0,0,0,0.28)] supports-[backdrop-filter]:bg-[#05070b]/70 lg:sticky lg:left-auto lg:right-auto lg:border-b-0 lg:bg-transparent lg:shadow-none lg:backdrop-blur-0">
@@ -53,6 +59,26 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
         )}
 
         <div className="flex items-center gap-3 lg:gap-4 pl-3 lg:pl-6 border-l border-slate-200/70">
+          <label className="cosmic-theme-toggle" title="Переключатель будущей white темы">
+            <input
+              className="cosmic-theme-input"
+              type="checkbox"
+              checked={whiteThemeQueued}
+              onChange={(event) => setWhiteThemeQueued(event.target.checked)}
+              aria-label="Переключить тему"
+            />
+            <span className="cosmic-theme-slider">
+              <span className="cosmic-theme-stars" />
+              <span className="cosmic-theme-energy cosmic-theme-energy-a" />
+              <span className="cosmic-theme-energy cosmic-theme-energy-b" />
+              <span className="cosmic-theme-energy cosmic-theme-energy-c" />
+              <span className="cosmic-theme-orb">
+                <span className="cosmic-theme-orb-inner" />
+                <span className="cosmic-theme-ring" />
+              </span>
+            </span>
+          </label>
+
           <button className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-full glass-card flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all group">
             <Bell className="w-5 h-5 group-hover:scale-110 transition-transform" />
             <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border border-white animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.55)]" />
