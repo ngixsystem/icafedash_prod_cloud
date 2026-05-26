@@ -1,30 +1,37 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, Trophy, Users, Loader2, Shield, ChevronDown, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ChevronDown, Loader2, Shield, Trophy, Users, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import cs2Banner from "@/assets/tournamentsgcs.jpg";
 import dota2Banner from "@/assets/tournamentsgdota.jpg";
 import pubgBanner from "@/assets/tournamentsgpubg.jpg";
 import playerCardBg from "@/assets/fon_JPG.jpg";
 import {
-  useCyberUnionTeams,
   useCyberUnionPlayers,
   useCyberUnionTeamPlayers,
-  type CyberUnionTeam,
+  useCyberUnionTeams,
   type CyberUnionPlayer,
+  type CyberUnionTeam,
   type CyberUnionTeamPlayer,
 } from "@/hooks/use-cyberunion";
 
 type GameId = "cs2" | "dota2" | "pubg-mobile";
 
 const GAME_META: Record<GameId, { title: string; image: string }> = {
-  "cs2":        { title: "CS2",        image: cs2Banner   },
-  "dota2":      { title: "Dota 2",     image: dota2Banner },
-  "pubg-mobile":{ title: "PUBG Mobile",image: pubgBanner  },
+  cs2: { title: "CS2", image: cs2Banner },
+  dota2: { title: "Dota 2", image: dota2Banner },
+  "pubg-mobile": { title: "PUBG Mobile", image: pubgBanner },
 };
 
-const RANK_COLORS = ["#FEE75C", "#C0C0C0", "#CD7F32"];
+const RANK_COLORS = ["#FACC15", "#D7DEE8", "#D58A39"];
 
-// ─── Карточка игрока на весь экран ──────────────────────────────────────────
+function rankTone(rank: number) {
+  if (rank <= 3) return RANK_COLORS[rank - 1];
+  return "#FF8A00";
+}
+
+function isFallbackImage(src?: string | null) {
+  return !src || src.includes("man.png") || src.includes("no_image") || src.includes("star_default");
+}
 
 function PlayerPhotoModal({
   player,
@@ -33,92 +40,56 @@ function PlayerPhotoModal({
   player: { nickname: string; name: string; photo: string; points: number; team?: string | null };
   onClose: () => void;
 }) {
-  const isDefault = player.photo.includes("man.png") || player.photo.includes("no_image");
-
-  // Имя → первое слово фамилия, остальное имя
   const nameParts = player.name.trim().split(" ");
-  const lastName  = nameParts[0] ?? "";
+  const lastName = nameParts[0] ?? "";
   const firstName = nameParts.slice(1).join(" ");
 
   return (
-    <div className="fixed inset-0 z-[1200]" onClick={onClose}>
+    <div className="fixed inset-0 z-[1200] bg-black/80 backdrop-blur-xl" onClick={onClose}>
       <div
-        className="relative w-full max-w-[420px] h-full mx-auto overflow-hidden flex flex-col"
+        className="relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── ФОН ── */}
-        <img src={playerCardBg} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
-        {/* Затемнение для читаемости */}
-        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
-        {/* Затемнение сверху */}
-        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+        <img src={playerCardBg} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/35 to-[#070707]" />
 
-        {/* Кнопка закрыть */}
         <button
           onClick={onClose}
-          className="absolute top-12 right-5 z-10 w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors"
-          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+          className="absolute right-5 top-12 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/70 backdrop-blur"
+          aria-label="Закрыть"
         >
-          <X className="w-4 h-4" />
+          <X className="h-4 w-4" />
         </button>
 
-        {/* ── ФОТО — flex-1, занимает всё пространство выше текста ── */}
-        <div className="relative flex-1 min-h-0">
-          {!isDefault ? (
-            <img
-              src={player.photo}
-              alt={player.nickname}
-              className="absolute inset-0 w-full h-full"
-              style={{ objectFit: "contain", objectPosition: "bottom center" }}
-            />
+        <div className="relative flex flex-1 items-end justify-center">
+          {!isFallbackImage(player.photo) ? (
+            <img src={player.photo} alt={player.nickname} className="max-h-full w-full object-contain object-bottom" />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Users className="w-32 h-32 text-white/8" />
-            </div>
+            <Users className="mb-28 h-28 w-28 text-white/10" />
           )}
-          {/* Мягкий fade снизу фото → в текстовый блок */}
-          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#080b10] to-transparent pointer-events-none" />
         </div>
 
-        {/* ── ЛИНИЯ — строго между flex-1 и текстом ── */}
-        <div className="relative shrink-0 h-px mx-6 bg-gradient-to-r from-transparent via-[#FF7800]/60 to-transparent" />
-
-        {/* ── ТЕКСТ СНИЗУ ── */}
-        <div className="relative shrink-0 px-6 pt-5 pb-12" style={{ background: "linear-gradient(to bottom,rgba(0,0,0,0.7),rgba(0,0,0,0.85))" }}>
-          {/* Никнейм */}
-          <p
-            className="text-[44px] font-black leading-none tracking-tight mb-1"
-            style={{ background: "linear-gradient(90deg,#fff 60%,rgba(255,255,255,0.35))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-          >
+        <div className="relative border-t border-orange-400/40 bg-black/75 px-6 pb-12 pt-5">
+          <p className="text-[42px] font-black leading-none tracking-tight text-white">
             {player.nickname || lastName}
           </p>
-
-          {/* Имя Фамилия */}
           {player.name && (
-            <div className="flex items-baseline gap-2 mb-6">
-              <span className="text-sm font-semibold text-white/60 uppercase tracking-widest">{firstName}</span>
-              <span className="text-sm font-semibold text-white/30 uppercase tracking-widest">{lastName}</span>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-xs font-bold uppercase tracking-[0.22em] text-white/55">{firstName}</span>
+              <span className="text-xs font-bold uppercase tracking-[0.22em] text-white/25">{lastName}</span>
             </div>
           )}
 
-          {/* Команда + PTS */}
-          <div className="flex items-end justify-between">
-            {player.team ? (
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#FF7800]/50 mb-1">Команда</p>
-                <p className="text-base font-black text-white">{player.team}</p>
-              </div>
-            ) : <div />}
+          <div className="mt-7 flex items-end justify-between">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-orange-400/60">Команда</p>
+              <p className="mt-1 text-base font-black text-white">{player.team || "Без команды"}</p>
+            </div>
             <div className="text-right">
-              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#FF7800]/50 mb-1">Рейтинг</p>
-              <div className="flex items-baseline gap-1">
-                <span
-                  className="text-[40px] font-black leading-none"
-                  style={{ background: "linear-gradient(135deg,#fff 0%,#FF9A2F 50%,#FF7800 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-                >
-                  {player.points}
-                </span>
-                <span className="text-[10px] font-black text-[#FF7800]/50 uppercase tracking-widest mb-1">pts</span>
+              <p className="text-[9px] font-black uppercase tracking-[0.24em] text-orange-400/60">Рейтинг</p>
+              <div className="mt-1 flex items-end gap-1">
+                <span className="text-[38px] font-black leading-none text-orange-400">{player.points}</span>
+                <span className="mb-1 text-[10px] font-black uppercase text-orange-300/70">pts</span>
               </div>
             </div>
           </div>
@@ -128,23 +99,19 @@ function PlayerPhotoModal({
   );
 }
 
-// ─── Скелетон ───────────────────────────────────────────────────────────────
-
 function SkeletonCard() {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-[#2A2A2A] bg-[#141414] px-3 py-2.5 animate-pulse">
-      <div className="w-7 h-7 rounded-full bg-white/10 shrink-0" />
-      <div className="w-9 h-9 rounded-lg bg-white/8 shrink-0" />
-      <div className="flex-1 space-y-1.5">
-        <div className="h-3 rounded bg-white/10 w-2/3" />
-        <div className="h-2.5 rounded bg-white/6 w-1/3" />
+    <div className="flex items-center gap-3 rounded-[18px] border border-white/8 bg-white/[0.035] p-3">
+      <div className="h-9 w-9 animate-pulse rounded-2xl bg-white/10" />
+      <div className="h-11 w-11 animate-pulse rounded-2xl bg-white/10" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3 w-2/3 animate-pulse rounded bg-white/10" />
+        <div className="h-2.5 w-1/3 animate-pulse rounded bg-white/5" />
       </div>
-      <div className="w-10 h-3 rounded bg-white/10" />
+      <div className="h-5 w-12 animate-pulse rounded bg-white/10" />
     </div>
   );
 }
-
-// ─── Строка игрока в дропдауне команды ─────────────────────────────────────
 
 function TeamPlayerRow({
   player,
@@ -153,31 +120,28 @@ function TeamPlayerRow({
   player: CyberUnionTeamPlayer;
   onPhotoClick: (p: CyberUnionTeamPlayer) => void;
 }) {
-  const isDefault = player.photo.includes("man.png") || player.photo.includes("no_image");
   return (
     <button
       onClick={() => onPhotoClick(player)}
-      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 active:bg-white/8 transition-colors text-left"
+      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition active:bg-white/10"
     >
-      <div className="w-8 h-8 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center relative">
-        {!isDefault ? (
-          <img src={player.photo} alt={player.nickname} className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] max-w-none" />
+      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/7">
+        {!isFallbackImage(player.photo) ? (
+          <img src={player.photo} alt={player.nickname} className="h-full w-full object-cover" />
         ) : (
-          <Users className="w-3.5 h-3.5 text-white/20" />
+          <Users className="h-4 w-4 text-white/25" />
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-white truncate">{player.nickname || player.name}</p>
+        <p className="truncate text-xs font-black text-white">{player.nickname || player.name}</p>
         {player.nickname && player.name !== player.nickname && (
-          <p className="text-[10px] text-white/30 truncate">{player.name}</p>
+          <p className="truncate text-[10px] text-white/35">{player.name}</p>
         )}
       </div>
-      <span className="text-xs font-bold text-[#FF9A2F] shrink-0">{player.points} pts</span>
+      <span className="shrink-0 text-xs font-black text-orange-300">{player.points} pts</span>
     </button>
   );
 }
-
-// ─── Карточка команды с раскрываемым дропдауном ────────────────────────────
 
 function TeamCard({
   team,
@@ -191,63 +155,59 @@ function TeamCard({
   onPlayerPhotoClick: (p: CyberUnionTeamPlayer) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const accentColor = rank <= 3 ? RANK_COLORS[rank - 1] : "#FF7800";
-  const isDefault = team.photo.includes("star_default") || team.photo.includes("no_image");
-
   const playersQuery = useCyberUnionTeamPlayers(expanded ? team.name : null, gameId);
+  const accent = rankTone(rank);
 
   return (
-    <div className="rounded-xl border border-[#2A2A2A] bg-[#141414] overflow-hidden">
-      {/* Основная строка */}
+    <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
       <button
-        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/3 active:bg-white/5 transition-colors text-left"
+        className="flex w-full items-center gap-3 px-3 py-3 text-left transition active:bg-white/5"
         onClick={() => setExpanded((v) => !v)}
       >
         <div
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#2F3136] bg-[#1E1E1E] text-xs font-bold"
-          style={{ color: accentColor }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border bg-black/35 text-sm font-black"
+          style={{ color: accent, borderColor: `${accent}55` }}
         >
           {rank}
         </div>
-        <div className="w-9 h-9 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center">
-          {!isDefault ? (
-            <img src={team.photo} alt={team.name} className="w-full h-full object-cover" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-black/45">
+          {!isFallbackImage(team.photo) ? (
+            <img src={team.photo} alt={team.name} className="h-full w-full object-cover" />
           ) : (
-            <Shield className="w-4 h-4 text-white/20" />
+            <Shield className="h-5 w-5 text-white/25" />
           )}
         </div>
+
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-white">{team.name}</div>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="truncate text-[15px] font-black leading-tight text-white">{team.name}</div>
+          <div className="mt-1 flex items-center gap-1.5">
             {team.region_photo && !team.region_photo.includes("no_image") && (
-              <img src={team.region_photo} alt={team.region} className="w-3.5 h-3.5 rounded-sm object-cover" />
+              <img src={team.region_photo} alt={team.region} className="h-4 w-4 rounded-full object-cover" />
             )}
-            <span className="text-[11px] text-[#949BA4]">{team.region}</span>
+            <span className="truncate text-[11px] text-white/45">{team.region || "Регион не указан"}</span>
           </div>
         </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <div className="text-right">
-            <div className="text-sm font-bold text-[#FF9A2F]">{team.points}</div>
-            <div className="text-[10px] uppercase text-[#949BA4]">Pts</div>
-          </div>
-          <ChevronDown
-            className="w-4 h-4 text-white/30 transition-transform duration-200"
-            style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
-          />
+
+        <div className="shrink-0 text-right">
+          <div className="text-base font-black leading-none text-orange-400">{team.points}</div>
+          <div className="mt-1 text-[9px] font-bold uppercase tracking-wider text-white/35">pts</div>
         </div>
+        <ChevronDown
+          className="h-4 w-4 shrink-0 text-white/35 transition-transform"
+          style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+        />
       </button>
 
-      {/* Дропдаун с игроками */}
       {expanded && (
-        <div className="border-t border-[#2A2A2A] px-2 py-1.5 space-y-0.5 bg-[#111213]">
+        <div className="border-t border-white/10 bg-black/25 px-2 py-2">
           {playersQuery.isLoading ? (
-            <div className="flex justify-center py-3">
-              <Loader2 className="w-4 h-4 animate-spin text-[#FF7800]" />
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-orange-400" />
             </div>
           ) : playersQuery.isError ? (
-            <p className="text-xs text-red-400 text-center py-2">Ошибка загрузки</p>
+            <p className="py-3 text-center text-xs text-red-300">Ошибка загрузки состава</p>
           ) : !playersQuery.data?.items.length ? (
-            <p className="text-xs text-white/25 text-center py-2">Нет игроков</p>
+            <p className="py-3 text-center text-xs text-white/35">Состав пока не указан</p>
           ) : (
             playersQuery.data.items.map((p) => (
               <TeamPlayerRow key={p.id} player={p} onPhotoClick={onPlayerPhotoClick} />
@@ -259,8 +219,6 @@ function TeamCard({
   );
 }
 
-// ─── Карточка игрока (вкладка Игроки) ──────────────────────────────────────
-
 function PlayerCard({
   player,
   rank,
@@ -270,50 +228,43 @@ function PlayerCard({
   rank: number;
   onPhotoClick: (p: CyberUnionPlayer) => void;
 }) {
-  const accentColor = rank <= 3 ? RANK_COLORS[rank - 1] : "#FF7800";
-  const isDefault = player.photo.includes("man.png") || player.photo.includes("no_image");
+  const accent = rankTone(rank);
+
   return (
     <button
       onClick={() => onPhotoClick(player)}
-      className="w-full flex items-center gap-3 rounded-xl border border-[#2A2A2A] bg-[#141414] px-3 py-2.5 hover:bg-[#141414]/80 active:bg-white/5 transition-colors text-left"
+      className="flex w-full items-center gap-3 rounded-[22px] border border-white/10 bg-white/[0.04] px-3 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition active:bg-white/8"
     >
-      <div
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#2F3136] bg-[#1E1E1E] text-xs font-bold"
-        style={{ color: accentColor }}
-      >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border bg-black/35 text-sm font-black" style={{ color: accent, borderColor: `${accent}55` }}>
         {rank}
       </div>
-      <div className="w-9 h-9 overflow-hidden shrink-0 bg-[#1E1E1E] flex items-center justify-center relative">
-        {!isDefault ? (
-          <img src={player.photo} alt={player.nickname} className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] max-w-none" />
+      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-black/45">
+        {!isFallbackImage(player.photo) ? (
+          <img src={player.photo} alt={player.nickname} className="h-full w-full object-cover" />
         ) : (
-          <Users className="w-4 h-4 text-white/20" />
+          <Users className="h-5 w-5 text-white/25" />
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-white">
+        <div className="truncate text-[15px] font-black leading-tight text-white">
           {player.nickname || player.name}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-          {player.team && (
-            <span className="text-[11px] text-[#FF7800]/80 truncate max-w-[100px]">{player.team}</span>
-          )}
-          {player.team && <span className="text-[#2F3136] text-[10px]">·</span>}
+        <div className="mt-1 flex items-center gap-1.5">
+          {player.team && <span className="max-w-[110px] truncate text-[11px] text-orange-300/80">{player.team}</span>}
+          {player.team && <span className="text-white/20">·</span>}
           {player.region_photo && !player.region_photo.includes("no_image") && (
-            <img src={player.region_photo} alt={player.region} className="w-3.5 h-3.5 rounded-sm object-cover" />
+            <img src={player.region_photo} alt={player.region} className="h-4 w-4 rounded-full object-cover" />
           )}
-          <span className="text-[11px] text-[#949BA4]">{player.region}</span>
+          <span className="truncate text-[11px] text-white/45">{player.region}</span>
         </div>
       </div>
       <div className="shrink-0 text-right">
-        <div className="text-sm font-bold text-[#FF9A2F]">{player.points}</div>
-        <div className="text-[10px] uppercase text-[#949BA4]">Pts</div>
+        <div className="text-base font-black leading-none text-orange-400">{player.points}</div>
+        <div className="mt-1 text-[9px] font-bold uppercase tracking-wider text-white/35">pts</div>
       </div>
     </button>
   );
 }
-
-// ─── Основной контент вкладок ───────────────────────────────────────────────
 
 function TabContent({ gameId }: { gameId: GameId }) {
   const [tab, setTab] = useState<"teams" | "players">("teams");
@@ -322,28 +273,30 @@ function TabContent({ gameId }: { gameId: GameId }) {
   const [teamsList, setTeamsList] = useState<CyberUnionTeam[]>([]);
   const [playersList, setPlayersList] = useState<CyberUnionPlayer[]>([]);
   const [modalPlayer, setModalPlayer] = useState<{
-    nickname: string; name: string; photo: string; points: number; team?: string | null;
+    nickname: string;
+    name: string;
+    photo: string;
+    points: number;
+    team?: string | null;
   } | null>(null);
 
   const teamsQuery = useCyberUnionTeams(gameId, teamsPage);
   const playersQuery = useCyberUnionPlayers(gameId, playersPage);
 
   useEffect(() => {
-    if (teamsQuery.data) {
-      setTeamsList((prev) => {
-        const ids = new Set(prev.map((t) => t.id));
-        return [...prev, ...teamsQuery.data!.items.filter((t) => !ids.has(t.id))];
-      });
-    }
+    if (!teamsQuery.data) return;
+    setTeamsList((prev) => {
+      const ids = new Set(prev.map((t) => t.id));
+      return [...prev, ...teamsQuery.data.items.filter((t) => !ids.has(t.id))];
+    });
   }, [teamsQuery.data]);
 
   useEffect(() => {
-    if (playersQuery.data) {
-      setPlayersList((prev) => {
-        const ids = new Set(prev.map((p) => p.id));
-        return [...prev, ...playersQuery.data!.items.filter((p) => !ids.has(p.id))];
-      });
-    }
+    if (!playersQuery.data) return;
+    setPlayersList((prev) => {
+      const ids = new Set(prev.map((p) => p.id));
+      return [...prev, ...playersQuery.data.items.filter((p) => !ids.has(p.id))];
+    });
   }, [playersQuery.data]);
 
   const teamsTotal = teamsQuery.data?.total ?? 0;
@@ -358,35 +311,33 @@ function TabContent({ gameId }: { gameId: GameId }) {
 
   return (
     <>
-      {/* Tab switcher */}
-      <div className="flex gap-1 mb-4 p-1 rounded-2xl bg-[#151515] border border-[#2F3136]">
+      <div className="sticky top-[74px] z-20 -mx-1 mb-4 rounded-[22px] border border-white/10 bg-black/65 p-1 shadow-[0_12px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl">
         {([
-          { id: "teams",   label: "Команды", icon: Shield },
-          { id: "players", label: "Игроки",  icon: Users  },
+          { id: "teams", label: "Команды", icon: Shield },
+          { id: "players", label: "Игроки", icon: Users },
         ] as const).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all ${
+            className={`inline-flex w-1/2 items-center justify-center gap-2 rounded-[18px] py-3 text-[11px] font-black uppercase tracking-[0.12em] transition ${
               tab === id
-                ? "bg-[#FF7800]/15 text-[#FF7800] shadow-[0_0_12px_rgba(255,120,0,0.15)]"
-                : "text-[#949BA4] hover:text-white"
+                ? "bg-orange-500 text-black shadow-[0_0_22px_rgba(255,120,0,0.28)]"
+                : "text-white/45"
             }`}
           >
-            <Icon className="w-3.5 h-3.5" />
+            <Icon className="h-3.5 w-3.5" />
             {label}
           </button>
         ))}
       </div>
 
-      {/* List */}
-      <div className="rounded-2xl border border-[#2F3136] bg-[linear-gradient(180deg,#151515_0%,#101010_100%)] p-3 space-y-2">
+      <div className="space-y-2.5">
         {isLoading ? (
-          <><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
+          <><SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
         ) : isError ? (
-          <div className="flex flex-col items-center py-12 gap-2">
-            <p className="text-sm text-red-400 font-semibold">Ошибка загрузки</p>
-            <p className="text-xs text-[#949BA4]">Попробуйте позже</p>
+          <div className="rounded-[24px] border border-red-400/20 bg-red-500/10 py-12 text-center">
+            <p className="text-sm font-bold text-red-300">Ошибка загрузки</p>
+            <p className="mt-1 text-xs text-white/45">Попробуйте позже</p>
           </div>
         ) : tab === "teams" ? (
           <>
@@ -403,10 +354,10 @@ function TabContent({ gameId }: { gameId: GameId }) {
               <button
                 onClick={() => setTeamsPage((p) => p + 1)}
                 disabled={teamsQuery.isFetching}
-                className="w-full py-2.5 mt-1 rounded-xl text-xs font-semibold text-[#FF7800] border border-[#FF7800]/20 hover:bg-[#FF7800]/8 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-[20px] border border-orange-400/25 bg-orange-400/10 py-3 text-xs font-black uppercase tracking-wider text-orange-300 disabled:opacity-50"
               >
-                {isFetchingMore && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Загрузить ещё
+                {isFetchingMore && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Загрузить еще
               </button>
             )}
           </>
@@ -424,25 +375,20 @@ function TabContent({ gameId }: { gameId: GameId }) {
               <button
                 onClick={() => setPlayersPage((p) => p + 1)}
                 disabled={playersQuery.isFetching}
-                className="w-full py-2.5 mt-1 rounded-xl text-xs font-semibold text-[#FF7800] border border-[#FF7800]/20 hover:bg-[#FF7800]/8 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-[20px] border border-orange-400/25 bg-orange-400/10 py-3 text-xs font-black uppercase tracking-wider text-orange-300 disabled:opacity-50"
               >
-                {isFetchingMore && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Загрузить ещё
+                {isFetchingMore && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Загрузить еще
               </button>
             )}
           </>
         )}
       </div>
 
-      {/* Модалка фото */}
-      {modalPlayer && (
-        <PlayerPhotoModal player={modalPlayer} onClose={() => setModalPlayer(null)} />
-      )}
+      {modalPlayer && <PlayerPhotoModal player={modalPlayer} onClose={() => setModalPlayer(null)} />}
     </>
   );
 }
-
-// ─── Страница ───────────────────────────────────────────────────────────────
 
 export default function TournamentGameRatingPage() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -450,51 +396,72 @@ export default function TournamentGameRatingPage() {
 
   if (!meta) {
     return (
-      <div className="min-h-screen px-5 pt-7 pb-28">
-        <Link to="/ratings" className="inline-flex items-center gap-2 text-sm text-[#C4CAD2]">
+      <div className="min-h-screen px-5 pb-28 pt-7">
+        <Link to="/ratings" className="inline-flex items-center gap-2 text-sm text-white/70">
           <ArrowLeft className="h-4 w-4" />
           Назад к рейтингам
         </Link>
-        <p className="mt-5 text-[#949BA4]">Раздел не найден.</p>
+        <p className="mt-5 text-white/45">Раздел не найден.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-5 pt-7 pb-28">
-      <Link to="/ratings" className="mb-4 inline-flex items-center gap-2 text-sm text-[#C4CAD2]">
+    <div className="min-h-screen px-4 pb-28 pt-4 text-white">
+      <Link to="/ratings" className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/75">
         <ArrowLeft className="h-4 w-4" />
         Назад
       </Link>
 
-      <div className="relative mb-5 h-[122px] overflow-hidden rounded-2xl border border-[#2F3136]">
-        <img src={meta.image} alt={meta.title} className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
-        <div className="relative flex h-full items-center gap-3 px-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#2F3136] bg-[#1A1B1F] text-[#FF7800]">
-            <Trophy className="h-5 w-5" />
+      <div className="relative mb-5 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div className="relative h-[156px]">
+          <img src={meta.image} alt={meta.title} className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.9),rgba(0,0,0,0.42),rgba(255,120,0,0.24))]" />
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/85 to-transparent" />
+          <div className="relative flex h-full flex-col justify-end px-5 pb-5">
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-300/25 bg-black/45 text-orange-300 backdrop-blur">
+              <Trophy className="h-5 w-5" />
+            </div>
+            <h1 className="font-display text-[42px] leading-none tracking-wide">{meta.title}</h1>
+            <p className="mt-1 text-xs font-medium text-white/60">Рейтинг CYBER UNION · Central Asia</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 border-t border-white/10 bg-black/35 px-4 py-3 text-center">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Сезон</p>
+            <p className="mt-1 text-sm font-black text-white">2026</p>
           </div>
           <div>
-            <h1 className="text-[30px] font-display leading-none">{meta.title}</h1>
-            <p className="text-xs text-[#C4CAD2]">Рейтинг CYBER UNION · CA</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Регион</p>
+            <p className="mt-1 text-sm font-black text-white">CA</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Тип</p>
+            <p className="mt-1 text-sm font-black text-orange-300">Rating</p>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-[22px] leading-none">Топ по рейтингу</h2>
-        <span className="text-[11px] uppercase tracking-wider text-[#949BA4]">Сезон 2026</span>
+      <div className="mb-3 flex items-end justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300/70">Leaderboard</p>
+          <h2 className="font-display text-[29px] leading-none">Топ рейтинга</h2>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/45">
+          Live
+        </span>
       </div>
 
       {(gameId === "cs2" || gameId === "pubg-mobile") ? (
         <TabContent key={gameId} gameId={gameId as GameId} />
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-16 h-16 rounded-2xl border border-[#2F3136] bg-[#151515] flex items-center justify-center">
-            <Trophy className="w-7 h-7 text-[#FF7800]/50" />
+        <div className="flex flex-col items-center justify-center gap-4 py-20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[24px] border border-white/10 bg-white/[0.04]">
+            <Trophy className="h-7 w-7 text-orange-300/60" />
           </div>
-          <p className="text-lg font-bold text-white/80">Раздел в разработке</p>
-          <p className="text-sm text-[#949BA4] text-center max-w-[260px]">Рейтинг для этой игры появится в ближайшее время</p>
+          <p className="text-lg font-black text-white/85">Раздел в разработке</p>
+          <p className="max-w-[260px] text-center text-sm text-white/45">Рейтинг для этой игры появится в ближайшее время</p>
         </div>
       )}
     </div>
