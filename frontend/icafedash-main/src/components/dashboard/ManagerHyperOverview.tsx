@@ -113,6 +113,7 @@ const ManagerHyperOverview = () => {
   const activePcs = overview?.active_pcs ?? 0;
   const totalPcs = overview?.total_pcs ?? 0;
   const pcLoad = overview?.pc_load_percent ?? 0;
+  const freePcs = Math.max(0, totalPcs - activePcs);
   const latencyMs = 12;
 
   const todayIso = new Date().toISOString().slice(0, 10);
@@ -124,6 +125,8 @@ const ManagerHyperOverview = () => {
   const trendPercent = Number.isFinite(trendPercentRaw) ? trendPercentRaw : 0;
   const isTrendUp = trendPercent >= 0;
   const trendLabel = `${isTrendUp ? "+" : ""}${trendPercent.toFixed(1)}%`;
+  const todayShareOfWeek = weekRevenue > 0 ? Math.min(100, Math.round((todayRevenue / weekRevenue) * 100)) : 0;
+  const newMembersShare = members > 0 ? Math.min(100, Math.round((newMembersWeek / members) * 100)) : 0;
 
   return (
     <div className="max-w-[1920px] mx-auto space-y-6">
@@ -227,21 +230,20 @@ const ManagerHyperOverview = () => {
             <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{formatMoney(todayRevenue)}</span>
             <span className="text-sm text-slate-500 font-bold">сум</span>
           </div>
-          <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#00F0FF] to-[#2B59F9] rounded-full shimmer-bar"
-              style={{ width: `${Math.min(100, pcLoad + 54)}%` }}
-            />
-          </div>
-          <div className="mt-8 grid grid-cols-8 gap-2">
-            {dailyBars.slice(-8).map((day, index) => (
-              <div key={`today-spark-${day.day}-${index}`} className="h-12 rounded-xl bg-white/[0.035] p-1 flex items-end">
-                <div
-                  className="w-full rounded-lg bg-gradient-to-t from-[#00F0FF]/45 to-[#6aa4ff]"
-                  style={{ height: `${Math.max(18, Math.round((day.value / maxDaily) * 100))}%` }}
-                />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Вчера</span>
+              <span className="text-sm font-black text-white">{formatMoney(yesterdayRevenue)} сум</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Доля от недели</span>
+                <span className="text-xs font-black text-[#00F0FF]">{todayShareOfWeek}%</span>
               </div>
-            ))}
+              <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#00F0FF] to-[#2B59F9]" style={{ width: `${todayShareOfWeek}%` }} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -261,12 +263,26 @@ const ManagerHyperOverview = () => {
             <span className="w-1.5 h-1.5 rounded-full bg-[#BD00FF] animate-pulse" />
             +{newMembersWeek} новых за неделю
           </div>
-          <div className="mt-8 flex items-end gap-2">
-            {[42, 58, 36, 72, 54, 88, 46].map((height, index) => (
-              <div key={`members-pulse-${index}`} className="h-14 flex-1 rounded-full bg-white/[0.035] p-1">
-                <div className="w-full rounded-full bg-gradient-to-t from-[#BD00FF]/45 to-[#f08cff]" style={{ height: `${height}%`, marginTop: `${100 - height}%` }} />
+          <div className="mt-8 space-y-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Новые за неделю</span>
+                <span className="text-sm font-black text-[#BD00FF]">+{newMembersWeek}</span>
               </div>
-            ))}
+              <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#BD00FF] to-[#f08cff]" style={{ width: `${Math.max(4, newMembersShare)}%` }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Всего</p>
+                <p className="mt-1 text-lg font-black text-white">{formatMoney(members)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Рост</p>
+                <p className="mt-1 text-lg font-black text-[#BD00FF]">{newMembersShare}%</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -285,18 +301,26 @@ const ManagerHyperOverview = () => {
             <span className="text-3xl lg:text-4xl font-bold text-white tracking-tight">{(weekRevenue / 1_000_000).toFixed(1)}M</span>
             <span className="text-sm text-slate-500 font-bold">сум</span>
           </div>
-          <div className="h-16 flex items-end justify-between gap-2">
+          <div className="mt-6 space-y-2">
             {dailyBars.map((day) => {
               const weekKey = `week-${day.day}-${day.date}`;
-              const miniHeight = Math.max(6, Math.round((day.value / maxWeeklyMini) * 26));
+              const dayPercent = Math.max(4, Math.round((day.value / maxWeeklyMini) * 100));
               const isHovered = hoveredWeekKey === weekKey;
               return (
                 <div
                   key={weekKey}
-                  className="relative flex-1 h-full flex items-end"
+                  className="relative grid grid-cols-[34px_1fr_86px] items-center gap-3"
                   onMouseEnter={() => setHoveredWeekKey(weekKey)}
                   onMouseLeave={() => setHoveredWeekKey((prev) => (prev === weekKey ? null : prev))}
                 >
+                  <span className="text-[10px] font-black uppercase text-slate-500">{day.day}</span>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#2B59F9] to-[#5d7cff] shadow-[0_0_10px_rgba(43,89,249,0.28)]"
+                      style={{ width: `${dayPercent}%` }}
+                    />
+                  </div>
+                  <span className="text-right text-[10px] font-black text-white">{(day.value / 1_000_000).toFixed(1)}M</span>
                   <div
                     className={`absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-2 py-1 rounded-lg border border-white/10 bg-[#0A0A0F]/95 text-[10px] font-bold text-white whitespace-nowrap transition-all duration-150 ${
                       isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"
@@ -304,10 +328,6 @@ const ManagerHyperOverview = () => {
                   >
                     {day.day}: {formatMoney(day.value)} сум
                   </div>
-                  <div
-                    className="w-full bg-[#2B59F9] rounded-sm shadow-[0_0_10px_rgba(43,89,249,0.35)] transition-all duration-200 hover:bg-[#3E6AFB]"
-                    style={{ height: `${miniHeight}px` }}
-                  />
                 </div>
               );
             })}
@@ -339,16 +359,15 @@ const ManagerHyperOverview = () => {
               style={{ width: `${pcLoad}%` }}
             />
           </div>
-          <div className="mt-8 grid grid-cols-5 gap-2">
-            {Array.from({ length: 10 }).map((_, index) => {
-              const active = index < Math.round((pcLoad / 100) * 10);
-              return (
-                <div
-                  key={`pc-dot-${index}`}
-                  className={`h-3 rounded-full ${active ? "bg-[#00FF94] shadow-[0_0_10px_rgba(0,255,148,0.45)]" : "bg-white/[0.055]"}`}
-                />
-              );
-            })}
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-[#00FF94]/15 bg-[#00FF94]/[0.045] px-4 py-3">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Занято</p>
+              <p className="mt-1 text-xl font-black text-[#00FF94]">{activePcs}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Свободно</p>
+              <p className="mt-1 text-xl font-black text-white">{freePcs}</p>
+            </div>
           </div>
         </div>
 
@@ -385,15 +404,35 @@ const ManagerHyperOverview = () => {
               </div>
             </div>
 
-            <div className="relative h-28 min-w-0 flex-1 overflow-hidden rounded-3xl border border-white/10 bg-black/20 px-4 py-3">
-              <div className="absolute inset-x-4 top-1/2 h-px bg-white/[0.06]" />
-              <div className="relative flex h-full items-end gap-2">
-                {dailyBars.slice(-12).map((day, index) => {
-                  const height = Math.max(14, Math.round((day.value / maxDaily) * 100));
-                  return (
-                    <div key={`activity-wave-${day.day}-${index}`} className="flex-1 rounded-t-xl bg-gradient-to-t from-[#FF9500]/35 via-[#00F0FF]/40 to-[#00FF94]/60" style={{ height: `${height}%` }} />
-                  );
-                })}
+            <div className="relative min-w-0 flex-1 rounded-3xl border border-white/10 bg-black/20 px-4 py-4">
+              <div className="space-y-3">
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
+                    <span className="text-slate-500">Доход сегодня</span>
+                    <span className="text-[#FF9500]">{formatMoney(todayRevenue)} сум</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#FF9500] to-[#ffcc7a]" style={{ width: `${todayShareOfWeek}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
+                    <span className="text-slate-500">Загрузка ПК</span>
+                    <span className="text-[#00FF94]">{activePcs}/{totalPcs}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#00FF94] to-emerald-300" style={{ width: `${pcLoad}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
+                    <span className="text-slate-500">Новые участники</span>
+                    <span className="text-[#BD00FF]">+{newMembersWeek}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#BD00FF] to-[#f08cff]" style={{ width: `${Math.max(4, newMembersShare)}%` }} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
