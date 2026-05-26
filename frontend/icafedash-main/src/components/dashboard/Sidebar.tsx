@@ -5,7 +5,6 @@
   ChevronRight,
   Image,
   LayoutGrid,
-  Menu,
   MessageSquare,
   MonitorPlay,
   QrCode,
@@ -21,6 +20,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth/AuthProvider";
+import LottieIcon from "@/components/LottieIcon";
+import menuNavAnimation from "@/assets/menunav.json";
 const brandLogo = "/logo.png";
 
 const navItems = [
@@ -162,9 +163,10 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       {!mobileOpen && (
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-[60] lg:hidden rounded-2xl border border-white/60 bg-white/70 p-2 text-slate-700 shadow-lg backdrop-blur-xl"
+          className="fixed top-3 left-3 z-[60] lg:hidden rounded-2xl border border-white/60 bg-white/75 p-1.5 text-slate-700 shadow-lg backdrop-blur-xl"
+          aria-label="Открыть меню"
         >
-          <Menu className="h-5 w-5" />
+          <LottieIcon animationData={menuNavAnimation} loop={false} className="h-7 w-7" />
         </button>
       )}
 

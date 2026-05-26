@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { RefreshCcw, UserRound } from "lucide-react";
+import LottieIcon from "@/components/LottieIcon";
 import computerIcon from "@/assets/computer.png";
+import loadingAnimation from "@/assets/loading.json";
 
 function getPcTone(status: string | undefined) {
     if (status === "busy") {
@@ -80,7 +82,7 @@ const Monitoring = () => {
             <div className="relative rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(24,25,28,0.96),rgba(15,16,18,0.96))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] sm:p-6 min-h-[420px] sm:min-h-[600px] overflow-auto">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-[500px] space-y-4">
-                        <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        <LottieIcon animationData={loadingAnimation} className="h-20 w-20" />
                         <p className="text-sm text-muted-foreground">Загрузка карты...</p>
                     </div>
                 ) : (

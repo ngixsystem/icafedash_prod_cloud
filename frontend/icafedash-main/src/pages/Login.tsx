@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock, User } from "lucide-react";
+import LottieIcon from "@/components/LottieIcon";
 import fragLogo from "@/assets/frag.png";
 import loginBg from "@/assets/fon_JPG.jpg";
+import loadingAnimation from "@/assets/loading.json";
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -153,7 +155,7 @@ const Login = () => {
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 border-2 border-black/30 border-t-black animate-spin rounded-full" />
+                    <LottieIcon animationData={loadingAnimation} className="h-7 w-7" />
                     <span>Загрузка</span>
                   </div>
                 ) : (
