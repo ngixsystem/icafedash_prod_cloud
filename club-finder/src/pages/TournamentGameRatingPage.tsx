@@ -130,8 +130,7 @@ function TeamPlayerRow({
           <img
             src={player.photo}
             alt={player.nickname}
-            className="h-[240%] w-[240%] max-w-none object-cover"
-            style={{ objectPosition: "50% 18%" }}
+            className="absolute left-1/2 top-0 w-[210%] max-w-none -translate-x-1/2"
           />
         ) : (
           <Users className="h-4 w-4 text-white/25" />
@@ -248,8 +247,7 @@ function PlayerCard({
           <img
             src={player.photo}
             alt={player.nickname}
-            className="h-[245%] w-[245%] max-w-none object-cover"
-            style={{ objectPosition: "50% 18%" }}
+            className="absolute left-1/2 top-0 w-[210%] max-w-none -translate-x-1/2"
           />
         ) : (
           <Users className="h-5 w-5 text-white/25" />
