@@ -28,7 +28,7 @@ const TopBar = ({ onOpenSettings, searchQuery = "", onSearchChange, searchEnable
   }, [whiteThemeQueued]);
 
   return (
-    <header className="fixed left-0 right-0 top-0 h-20 lg:h-24 px-4 lg:px-8 flex items-center justify-between shrink-0 z-40 border-b border-white/10 bg-[#05070b]/88 backdrop-blur-2xl shadow-[0_14px_34px_rgba(0,0,0,0.28)] supports-[backdrop-filter]:bg-[#05070b]/70 lg:sticky lg:left-auto lg:right-auto lg:border-b-0 lg:bg-transparent lg:shadow-none lg:backdrop-blur-0">
+    <header className="fixed left-0 right-0 top-0 h-20 px-4 lg:px-8 flex items-center justify-between shrink-0 z-40 border-b border-white/10 bg-[#05070b]/88 backdrop-blur-2xl shadow-[0_14px_34px_rgba(0,0,0,0.28)] supports-[backdrop-filter]:bg-[#05070b]/70 lg:sticky lg:left-auto lg:right-auto lg:border-b-0 lg:bg-transparent lg:shadow-none lg:backdrop-blur-0">
       <div className="pl-12 lg:pl-0">
         <div className="flex items-center gap-3">
           <h2 className="font-display text-2xl lg:text-3xl text-slate-950 tracking-tight">FRAG.GG</h2>

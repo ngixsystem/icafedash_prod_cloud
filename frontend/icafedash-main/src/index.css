@@ -462,6 +462,10 @@
     box-shadow: none;
   }
 
+  .icafe-light-theme .ios26-admin .glass-panel > .h-20 {
+    border-bottom-color: #eef0f4 !important;
+  }
+
   .icafe-light-theme .ios26-admin .glass-card,
   .icafe-light-theme .ios26-admin [data-radix-popper-content-wrapper] [role="menu"],
   .icafe-light-theme .ios26-admin .rounded-2xl.border,
@@ -486,29 +490,49 @@
   }
 
   .icafe-light-theme .ios26-admin main .glass-card {
-    background: #f8fbfe;
-    border-color: #dfe5ec;
+    color: #111827;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border-color: #d8e1ec;
     border-radius: 8px;
     overflow: hidden;
   }
 
   .icafe-light-theme .ios26-admin main .glass-card:hover {
-    background: #f8fbfe;
-    border-color: #cfd8e3;
+    transform: none;
+    color: #111827;
+    background: linear-gradient(135deg, #ffffff 0%, #f6faff 100%);
+    border-color: #c7d4e4;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   }
 
   .icafe-light-theme .ios26-admin main .glass-card::after {
-    content: "";
-    position: absolute;
-    top: 13px;
-    left: 18px;
-    z-index: 2;
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #ff605c;
-    box-shadow: 18px 0 0 #ffbd44, 36px 0 0 #00ca4e;
-    pointer-events: none;
+    display: none;
+  }
+
+  .icafe-light-theme .ios26-admin main .glass-card .text-white {
+    color: #0f172a !important;
+  }
+
+  .icafe-light-theme .ios26-admin main .glass-card .text-slate-400,
+  .icafe-light-theme .ios26-admin main .glass-card .text-slate-500,
+  .icafe-light-theme .ios26-admin main .glass-card .text-slate-600 {
+    color: #64748b !important;
+  }
+
+  .icafe-light-theme .ios26-admin main .glass-card .bg-white\/5,
+  .icafe-light-theme .ios26-admin main .glass-card .bg-white\/\[0\.025\],
+  .icafe-light-theme .ios26-admin main .glass-card .bg-white\/\[0\.06\],
+  .icafe-light-theme .ios26-admin main .glass-card .bg-black\/15,
+  .icafe-light-theme .ios26-admin main .glass-card .bg-black\/20 {
+    background: #ffffff !important;
+  }
+
+  .icafe-light-theme .ios26-admin main .glass-card .border-white\/10 {
+    border-color: #d8e1ec !important;
+  }
+
+  .icafe-light-theme .ios26-admin main .glass-card .hover\:bg-white\/\[0\.045\]:hover {
+    background: #f1f5f9 !important;
   }
 
   .icafe-light-theme .ios26-admin .text-white,
