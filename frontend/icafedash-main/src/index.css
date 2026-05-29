@@ -558,6 +558,9 @@
   .icafe-light-theme .ios26-admin .nav-item {
     color: #111318;
     border-radius: 8px;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
   }
 
   .icafe-light-theme .ios26-admin .nav-item:hover {

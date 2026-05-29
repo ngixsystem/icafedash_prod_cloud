@@ -137,10 +137,10 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         onTabChange(item.label);
         setMobileOpen(false);
       }}
-      className={`nav-item flex w-full items-center gap-3 px-3 py-3 rounded-xl border border-transparent transition-all group ${
+      className={`nav-item flex w-full items-center gap-3 px-3 py-3 rounded-lg transition-all group ${
         activeTab === item.label
-          ? "active text-blue-400 border-blue-500/70 bg-blue-500/10"
-          : "text-slate-300 hover:bg-white/5 hover:border-white/10"
+          ? "active text-blue-400 bg-blue-500/10"
+          : "text-slate-300 hover:bg-white/5"
       }`}
     >
       <item.icon
